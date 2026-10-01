@@ -31,7 +31,7 @@ targets:
       properties: {}
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.macinmind.iceKast
+        PRODUCT_BUNDLE_IDENTIFIER: com.macinmind.icekast
         GENERATE_INFOPLIST_FILE: NO
     postBuildScripts:
       - name: Bundle Icecast
