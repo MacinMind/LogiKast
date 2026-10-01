@@ -8,8 +8,8 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "13.0"
-    MARKETING_VERSION: "0.1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.0b1"
+    CURRENT_PROJECT_VERSION: "1.0.0.2.1"
     ENABLE_HARDENED_RUNTIME: YES
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     DEVELOPMENT_TEAM: 2D3239GKS4
@@ -29,6 +29,8 @@ targets:
       path: iceKast/Info.plist
       properties:
         CFBundleDisplayName: iceKast
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSMinimumSystemVersion: "13.0"
         LSApplicationCategoryType: public.app-category.music
         NSHumanReadableCopyright: "© MacinMind Software, Inc. Free software (GPLv2)."
