@@ -35,10 +35,26 @@ final class IcecastService: ObservableObject {
 
     init() {
         refresh()
-        if isEnabled { appliedXML = try? String(contentsOf: AppPaths.icecastXML, encoding: .utf8) }
+        if isEnabled { adoptRunningServer() }
         timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refresh() }
         }
+    }
+
+    /// Attaching to a server that was started earlier (e.g. before iceKast was reopened): remember
+    /// what it is listening on, so later changes are compared against reality.
+    private func adoptRunningServer() {
+        guard let xml = try? String(contentsOf: AppPaths.icecastXML, encoding: .utf8) else { return }
+        appliedXML = xml
+        if let l = ListenSettings(xml: xml) {
+            port = l.port
+            listenKey = l.key
+        }
+    }
+
+    /// True if applying `config` needs a full restart (port or network interface changed).
+    func requiresRestart(for config: AppConfig) -> Bool {
+        isEnabled && Self.listenKey(config) != listenKey
     }
 
     // MARK: Control
@@ -92,7 +108,9 @@ final class IcecastService: ObservableObject {
     func apply(config: AppConfig, forceRestart: Bool = false) -> Bool {
         guard isEnabled else { return false }
         let needsRestart = forceRestart || Self.listenKey(config) != listenKey
-        if needsRestart, PortCheck.isInUse(port: config.server.port), config.server.port != port {
+        log.notice("apply: restart=\(needsRestart, privacy: .public) port=\(config.server.port, privacy: .public) running=\(self.port, privacy: .public)")
+        // Only a *different* port can be taken by someone else; our own port is of course busy.
+        if needsRestart, config.server.port != port, PortCheck.isInUse(port: config.server.port) {
             state = .failed("Port \(config.server.port) is already in use by another app. Choose a different port in Network settings.")
             return false
         }
@@ -181,6 +199,21 @@ final class IcecastService: ObservableObject {
     }
 
     private static func listenKey(_ c: AppConfig) -> String { "\(c.server.port)|\(c.server.bindAddress)" }
+}
+
+/// What a running server is listening on, read from its icecast.xml.
+struct ListenSettings: Equatable {
+    var port: Int
+    var bindAddress: String
+    var key: String { "\(port)|\(bindAddress)" }
+
+    init?(xml: String) {
+        guard let doc = try? XMLDocument(xmlString: xml),
+              let portText = (try? doc.nodes(forXPath: "//listen-socket/port"))?.first?.stringValue,
+              let port = Int(portText.trimmingCharacters(in: .whitespaces)) else { return nil }
+        self.port = port
+        bindAddress = (try? doc.nodes(forXPath: "//listen-socket/bind-address"))?.first?.stringValue ?? ""
+    }
 }
 
 enum Launchctl {

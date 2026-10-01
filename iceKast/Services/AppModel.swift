@@ -7,6 +7,16 @@ final class AppModel: ObservableObject {
     let server = IcecastService()
     let poller = StatusPoller()
 
+    /// Set when a change needs a server restart; the UI shows a confirmation dialog.
+    @Published var restartPrompt: RestartPrompt?
+
+    struct RestartPrompt: Identifiable {
+        let id = UUID()
+        var reason: String
+        var listeners: Int
+        var encoders: Int
+    }
+
     private var cancellables = Set<AnyCancellable>()
 
     init() {
@@ -50,6 +60,7 @@ final class AppModel: ObservableObject {
             startServer()
         }
         if CommandLine.arguments.contains("--stop") { stopServer() }   // for scripted tests
+        if CommandLine.arguments.contains("--apply") { applyChanges() }
     }
 
     // MARK: Server control
@@ -66,9 +77,26 @@ final class AppModel: ObservableObject {
 
     func applyChanges() {
         guard canStart else { return }
-        if server.apply(config: config) {
-            poller.start(port: config.server.port, bindAddress: config.server.bindAddress)
+        if server.requiresRestart(for: config) {
+            promptForRestart(reason: "Changing the port or network interface needs the server to restart.")
+        } else {
+            server.apply(config: config)
         }
+    }
+
+    /// Ask before restarting: listeners and encoders are disconnected.
+    func promptForRestart(reason: String = "The server will be stopped and started again.") {
+        guard server.isEnabled, canStart else { return }
+        restartPrompt = RestartPrompt(reason: reason,
+                                      listeners: poller.status?.totalListeners ?? 0,
+                                      encoders: poller.status?.mounts.count ?? 0)
+    }
+
+    func confirmRestart() {
+        restartPrompt = nil
+        guard canStart else { return }
+        server.apply(config: config, forceRestart: true)
+        poller.start(port: config.server.port, bindAddress: config.server.bindAddress)
     }
 
     /// True when the running server doesn't yet reflect the current settings.

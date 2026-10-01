@@ -96,14 +96,19 @@ struct ServerView: View {
                 }
             }
             Spacer()
+            if model.server.isEnabled {
+                Button("Restart Server…") { model.promptForRestart() }
+            }
         }
     }
 
     private var pendingBanner: some View {
         HStack {
-            Label("Changes not applied yet.", systemImage: "arrow.triangle.2.circlepath")
+            Label(model.server.requiresRestart(for: model.config)
+                  ? "Changes not applied yet. These need a server restart."
+                  : "Changes not applied yet.", systemImage: "arrow.triangle.2.circlepath")
             Spacer()
-            Button("Apply Changes") { model.applyChanges() }
+            Button(model.server.requiresRestart(for: model.config) ? "Restart & Apply…" : "Apply Changes") { model.applyChanges() }
                 .disabled(!model.canStart)
         }
         .padding(8)

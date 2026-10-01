@@ -32,11 +32,30 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
         }
+        .confirmationDialog("Restart the server?",
+                            isPresented: Binding(get: { model.restartPrompt != nil },
+                                                 set: { if !$0 { model.restartPrompt = nil } }),
+                            titleVisibility: .visible,
+                            presenting: model.restartPrompt) { _ in
+            Button("Restart Server", role: .destructive) { model.confirmRestart() }
+            Button("Cancel", role: .cancel) { model.restartPrompt = nil }
+        } message: { p in
+            Text("\(p.reason)\n\n\(Self.impact(p)) Encoders have to reconnect — most do this automatically.")
+        }
         .onAppear {   // lets scripted checks open straight to a mount page
             if CommandLine.arguments.contains("--show-mount"), let m = model.config.mounts.first {
                 selection = .mount(m.id)
             }
         }
+    }
+}
+
+extension ContentView {
+    static func impact(_ p: AppModel.RestartPrompt) -> String {
+        if p.listeners == 0 && p.encoders == 0 { return "Nobody is connected right now." }
+        let l = "\(p.listeners) listener\(p.listeners == 1 ? "" : "s")"
+        let e = "\(p.encoders) live stream\(p.encoders == 1 ? "" : "s")"
+        return "\(l) and \(e) will be disconnected for a few seconds."
     }
 }
 

@@ -186,3 +186,24 @@ final class PortCheckTests: XCTestCase {
         XCTAssertFalse(PortCheck.isInUse(port: 59123))
     }
 }
+
+final class ListenSettingsTests: XCTestCase {
+    func testReadsPortAndInterfaceFromWrittenConfig() throws {
+        var c = AppConfig.makeDefault()
+        c.server.port = 9123
+        c.server.bindAddress = "192.168.1.5"
+        let xml = ConfigWriter.xml(for: c, paths: IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b"))
+        let l = try XCTUnwrap(ListenSettings(xml: xml))
+        XCTAssertEqual(l.port, 9123)
+        XCTAssertEqual(l.bindAddress, "192.168.1.5")
+        XCTAssertEqual(l.key, "9123|192.168.1.5")
+
+        c.server.bindAddress = ""
+        let all = try XCTUnwrap(ListenSettings(xml: ConfigWriter.xml(for: c, paths: IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b"))))
+        XCTAssertEqual(all.key, "9123|")
+    }
+
+    func testRejectsGarbage() {
+        XCTAssertNil(ListenSettings(xml: "not xml"))
+    }
+}
