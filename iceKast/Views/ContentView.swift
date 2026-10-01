@@ -39,7 +39,7 @@ struct ServerToggleButton: View {
     @EnvironmentObject var model: AppModel
 
     var body: some View {
-        if model.server.state.isRunning {
+        if model.server.isEnabled {
             Button { model.stopServer() } label: { Label("Stop Server", systemImage: "stop.fill") }
         } else {
             Button { model.startServer() } label: { Label("Start Server", systemImage: "play.fill") }
@@ -59,7 +59,7 @@ struct SidebarView: View {
                     StatusDot(color: serverColor)
                     Text("Server")
                     Spacer()
-                    Text(model.server.state.isRunning ? "On" : "Off")
+                    Text(model.server.isEnabled ? "On" : "Off")
                         .foregroundStyle(.secondary)
                 }
                 .tag(SidebarSelection.server)
@@ -68,7 +68,7 @@ struct SidebarView: View {
                 ForEach(model.config.mounts) { mount in
                     let s = model.status(for: mount)
                     HStack {
-                        StatusDot(color: s != nil ? .green : (model.server.state.isRunning ? .orange : .gray))
+                        StatusDot(color: s != nil ? .green : (model.server.isEnabled ? .orange : .gray))
                         Text(mount.name).lineLimit(1)
                         Spacer()
                         if let s {
@@ -96,6 +96,7 @@ struct SidebarView: View {
         switch model.server.state {
         case .running: model.poller.reachable ? .green : .orange
         case .failed: .red
+        case .needsApproval: .orange
         case .stopped: .gray
         }
     }

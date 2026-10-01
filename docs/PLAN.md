@@ -23,14 +23,19 @@ options later: mbedTLS (Apache-2.0 / GPLv2+ dual) or a reverse proxy.
 1. Config model (Codable): server, ports, limits, auth, mounts (max listeners, burst, fallback,
    stream info, public/YP).
 2. Config writer -> icecast.xml in ~/Library/Application Support/iceKast/.
-3. Process manager: launch/stop/restart bundled icecast, capture logs.
+3. Service controller: Icecast runs as a per-user launch agent (SMAppService, plist in
+   Contents/Library/LaunchAgents, started via Helpers/icekast-launch which execs icecast with the
+   config in Application Support). It survives app quit/crash, restarts if it dies, starts at login.
+   Start = register, Stop = unregister, Apply = SIGHUP (port change = kickstart -k).
 4. Status poller: /status-json.xsl, per-mount listeners, source connected, title, peak.
-5. UI: stream/mount sidebar, status dashboard, settings editors, setup wizard,
+5. Menu bar item (listener count, start/stop, open window); Dock badge; the app only attaches to the service.
+6. UI: stream/mount sidebar, status dashboard, settings editors, setup wizard,
    "connect your encoder" panel (host/port/mount/password), dock badge for chosen mount.
 
 ## Milestones
 1. [done] Icecast static build proven on arm64 (MP3 source + listener verified).
 2. [done] Universal build (arm64 + x86_64, min macOS 13), iconv enabled; links only macOS system libs.
 3. [done] Xcode project (XcodeGen), process manager with hot reload, status poller, server/mount UI, dock badge, 13 unit tests.
-4. Setup wizard, menu bar item, app icon, port-conflict UX polish, visual check of dock badge, public directory (YP) settings.
-5. Sign, notarize, DMG, GitHub release.
+4. [done] Background service + menu bar item (verified: survives app quit, restarts after kill -9, hot reload keeps pid).
+5. Setup wizard, app icon, port-conflict UX polish, visual check of dock badge, public directory (YP) settings.
+6. Sign, notarize, DMG, GitHub release.

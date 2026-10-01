@@ -12,7 +12,13 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     ENABLE_HARDENED_RUNTIME: YES
     ENABLE_USER_SCRIPT_SANDBOXING: NO
-    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: 2D3239GKS4
+    CODE_SIGN_STYLE: Manual
+  configs:
+    Debug:
+      CODE_SIGN_IDENTITY: "Apple Development"
+    Release:
+      CODE_SIGN_IDENTITY: "Developer ID Application"
 targets:
   iceKast:
     type: application
@@ -44,12 +50,18 @@ targets:
             exit 1
           fi
           APP="$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH"
-          mkdir -p "$APP/Helpers" "$APP/Resources/icecast-share"
+          mkdir -p "$APP/Helpers" "$APP/Resources/icecast-share" "$APP/Library/LaunchAgents"
           cp "$SRC/icecast" "$APP/Helpers/icecast"
           rsync -a --delete "$SRC/share/" "$APP/Resources/icecast-share/"
+          # Launcher run by launchd; universal, built here so it matches the app's deployment target.
+          clang -O2 -arch arm64 -arch x86_64 -mmacosx-version-min=13.0 \
+            "$SRCROOT/Launcher/icekast-launch.c" -o "$APP/Helpers/icekast-launch"
+          cp "$SRCROOT/Launcher/com.macinmind.icekast.server.plist" "$APP/Library/LaunchAgents/"
           ID="${EXPANDED_CODE_SIGN_IDENTITY:--}"
           [ -z "$ID" ] && ID="-"
-          codesign --force --options runtime --timestamp=none --sign "$ID" "$APP/Helpers/icecast"
+          for b in icecast icekast-launch; do
+            codesign --force --options runtime --timestamp=none --sign "$ID" "$APP/Helpers/$b"
+          done
   iceKastTests:
     type: bundle.unit-test
     platform: macOS

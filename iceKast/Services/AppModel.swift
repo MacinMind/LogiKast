@@ -4,7 +4,7 @@ import Combine
 @MainActor
 final class AppModel: ObservableObject {
     @Published var config: AppConfig
-    let server = IcecastProcess()
+    let server = IcecastService()
     let poller = StatusPoller()
 
     private var cancellables = Set<AnyCancellable>()
@@ -12,6 +12,7 @@ final class AppModel: ObservableObject {
     init() {
         config = Self.load() ?? AppConfig.makeDefault()
         save()
+        AppPaths.syncShare()
 
         $config
             .dropFirst()
@@ -23,11 +24,11 @@ final class AppModel: ObservableObject {
         server.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
         poller.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
 
-        server.$state
+        server.$isEnabled
             .removeDuplicates()
-            .sink { [weak self] state in
+            .sink { [weak self] enabled in
                 guard let self else { return }
-                if state.isRunning {
+                if enabled {
                     self.poller.start(port: self.config.server.port, bindAddress: self.config.server.bindAddress)
                 } else {
                     self.poller.stop()
@@ -35,17 +36,20 @@ final class AppModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        poller.$reachable
+            .removeDuplicates()
+            .sink { [weak self] r in self?.server.reachabilityChanged(r) }
+            .store(in: &cancellables)
+
         Publishers.CombineLatest($config, poller.$status)
             .sink { [weak self] config, status in self?.updateBadge(config: config, status: status) }
             .store(in: &cancellables)
 
-        if config.startServerOnLaunch || CommandLine.arguments.contains("--autostart") {
+        // The server runs as a background service, so quitting iceKast leaves it running.
+        if CommandLine.arguments.contains("--autostart"), !server.isEnabled {
             startServer()
         }
-        NotificationCenter.default.addObserver(
-            forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.server.stop() }
-        }
+        if CommandLine.arguments.contains("--stop") { stopServer() }   // for scripted tests
     }
 
     // MARK: Server control
@@ -62,15 +66,14 @@ final class AppModel: ObservableObject {
 
     func applyChanges() {
         guard canStart else { return }
-        server.apply(config: config)
-        if server.state.isRunning {
+        if server.apply(config: config) {
             poller.start(port: config.server.port, bindAddress: config.server.bindAddress)
         }
     }
 
     /// True when the running server doesn't yet reflect the current settings.
     var hasPendingChanges: Bool {
-        guard server.state.isRunning, let applied = server.appliedXML else { return false }
+        guard server.isEnabled, let applied = server.appliedXML else { return false }
         return applied != ConfigWriter.xml(for: config, paths: AppPaths.icecastPaths)
     }
 

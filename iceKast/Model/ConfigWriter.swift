@@ -72,7 +72,7 @@ enum ConfigWriter {
 
         x.open("logging")
         x.line("accesslog", "access.log")
-        x.line("errorlog", "-")
+        x.line("errorlog", "error.log")
         x.line("loglevel", 3)
         x.line("logsize", 10000)
         x.close("logging")

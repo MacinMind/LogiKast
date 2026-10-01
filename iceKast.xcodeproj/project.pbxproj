@@ -11,6 +11,7 @@
 		26AF116D56104A92424E28A5 /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */; };
 		27463D24CF71CB1DF37052E4 /* ConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610A6376565CA78C4E42A758 /* ConfigTests.swift */; };
 		2E30914DCBECCE3C7657A8C0 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5644FE7F55B159FCA87C51DC /* Components.swift */; };
+		328C0A54CF8FBEE00A1EEE16 /* IcecastService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531E5028415A84690E541BEC /* IcecastService.swift */; };
 		3C5022967D33ABAA0CCA0F22 /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = C676164C4C310CCEE9148E6F /* AppPaths.swift */; };
 		58E83162EBEE0AC7C56F244F /* ServerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F0C5D22C5427ED56B258CC /* ServerView.swift */; };
 		6836B71669609FF48B76ED58 /* iceKastApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAFCBBA30FAD9516949B899 /* iceKastApp.swift */; };
@@ -21,7 +22,6 @@
 		A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D35D86879EE68B5922EBDCD /* MountView.swift */; };
 		A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79FC1BC9BE4F429C9A957680 /* ContentView.swift */; };
 		AD5EA5C61B6D72D55EAD5B0D /* Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB853C43E6424077C91F3D3A /* Validator.swift */; };
-		BEDE7E5683189AABFDB3E939 /* IcecastProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA97362268116A110C3DC83 /* IcecastProcess.swift */; };
 		E1C899DA158C9994A5C958CC /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF5C092EAC8C690C680366E /* Config.swift */; };
 /* End PBXBuildFile section */
 
@@ -36,10 +36,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		2BA97362268116A110C3DC83 /* IcecastProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IcecastProcess.swift; sourceTree = "<group>"; };
 		31124CD52E82DBF1E0AD3469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		31535E4E7D3D40A948F266E3 /* StatusParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusParser.swift; sourceTree = "<group>"; };
 		4D35D86879EE68B5922EBDCD /* MountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountView.swift; sourceTree = "<group>"; };
+		531E5028415A84690E541BEC /* IcecastService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IcecastService.swift; sourceTree = "<group>"; };
 		5644FE7F55B159FCA87C51DC /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		57F0C5D22C5427ED56B258CC /* ServerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerView.swift; sourceTree = "<group>"; };
 		5FF5C092EAC8C690C680366E /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
@@ -85,7 +85,7 @@
 			children = (
 				B73ED26928D799F4A29B7C20 /* AppModel.swift */,
 				C676164C4C310CCEE9148E6F /* AppPaths.swift */,
-				2BA97362268116A110C3DC83 /* IcecastProcess.swift */,
+				531E5028415A84690E541BEC /* IcecastService.swift */,
 				8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */,
 				7DEADF34A869370614DE3E80 /* PortCheck.swift */,
 				7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */,
@@ -189,6 +189,14 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					44B4E3566E74816763EAE881 = {
+						DevelopmentTeam = 2D3239GKS4;
+						ProvisioningStyle = Manual;
+					};
+					64543A0CEF5170FD3D167B61 = {
+						DevelopmentTeam = 2D3239GKS4;
+						ProvisioningStyle = Manual;
+					};
 				};
 			};
 			buildConfigurationList = 218D04DC99D9F976BCDEF7A5 /* Build configuration list for PBXProject "iceKast" */;
@@ -229,7 +237,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\nSRC=\"$SRCROOT/build/icecast\"\nif [ ! -x \"$SRC/icecast\" ]; then\n  echo \"error: build/icecast/icecast missing. Run scripts/build-icecast.sh first.\"\n  exit 1\nfi\nAPP=\"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH\"\nmkdir -p \"$APP/Helpers\" \"$APP/Resources/icecast-share\"\ncp \"$SRC/icecast\" \"$APP/Helpers/icecast\"\nrsync -a --delete \"$SRC/share/\" \"$APP/Resources/icecast-share/\"\nID=\"${EXPANDED_CODE_SIGN_IDENTITY:--}\"\n[ -z \"$ID\" ] && ID=\"-\"\ncodesign --force --options runtime --timestamp=none --sign \"$ID\" \"$APP/Helpers/icecast\"\n";
+			shellScript = "set -euo pipefail\nSRC=\"$SRCROOT/build/icecast\"\nif [ ! -x \"$SRC/icecast\" ]; then\n  echo \"error: build/icecast/icecast missing. Run scripts/build-icecast.sh first.\"\n  exit 1\nfi\nAPP=\"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH\"\nmkdir -p \"$APP/Helpers\" \"$APP/Resources/icecast-share\" \"$APP/Library/LaunchAgents\"\ncp \"$SRC/icecast\" \"$APP/Helpers/icecast\"\nrsync -a --delete \"$SRC/share/\" \"$APP/Resources/icecast-share/\"\n# Launcher run by launchd; universal, built here so it matches the app's deployment target.\nclang -O2 -arch arm64 -arch x86_64 -mmacosx-version-min=13.0 \\\n  \"$SRCROOT/Launcher/icekast-launch.c\" -o \"$APP/Helpers/icekast-launch\"\ncp \"$SRCROOT/Launcher/com.macinmind.icekast.server.plist\" \"$APP/Library/LaunchAgents/\"\nID=\"${EXPANDED_CODE_SIGN_IDENTITY:--}\"\n[ -z \"$ID\" ] && ID=\"-\"\nfor b in icecast icekast-launch; do\n  codesign --force --options runtime --timestamp=none --sign \"$ID\" \"$APP/Helpers/$b\"\ndone\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -244,7 +252,7 @@
 				E1C899DA158C9994A5C958CC /* Config.swift in Sources */,
 				26AF116D56104A92424E28A5 /* ConfigWriter.swift in Sources */,
 				A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */,
-				BEDE7E5683189AABFDB3E939 /* IcecastProcess.swift in Sources */,
+				328C0A54CF8FBEE00A1EEE16 /* IcecastService.swift in Sources */,
 				A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */,
 				9ED733F0CE23A69C8280F1BC /* NetworkInfo.swift in Sources */,
 				0CD2D013DC0E6431D00D05EA /* PortCheck.swift in Sources */,
@@ -342,10 +350,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 2D3239GKS4;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -420,10 +430,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 2D3239GKS4;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;

@@ -8,6 +8,9 @@ struct ServerView: View {
         Form {
             Section {
                 header
+                if model.server.state == .needsApproval {
+                    Button("Open Login Items Settings…") { model.server.openLoginItemsSettings() }
+                }
                 IssuesView(issues: model.issues)
                 if model.hasPendingChanges { pendingBanner }
             }
@@ -51,7 +54,8 @@ struct ServerView: View {
             }
 
             Section("App") {
-                Toggle("Start server when iceKast opens", isOn: $model.config.startServerOnLaunch)
+                Text("The server runs in the background: it keeps running when you close or quit iceKast, restarts if it stops unexpectedly, and starts when you log in. Use Stop Server to turn it off.")
+                    .font(.callout).foregroundStyle(.secondary)
                 Picker("Dock badge shows", selection: $model.config.badge) {
                     Text("Nothing").tag(BadgeTarget.none)
                     Text("Total listeners").tag(BadgeTarget.total)
@@ -107,6 +111,7 @@ struct ServerView: View {
         switch model.server.state {
         case .stopped: "Server is off"
         case .running: model.poller.reachable ? "Server is running" : "Server is starting…"
+        case .needsApproval: "Allow iceKast in System Settings › Login Items to run the server in the background."
         case .failed(let msg): msg
         }
     }
@@ -115,6 +120,7 @@ struct ServerView: View {
         switch model.server.state {
         case .stopped: .gray
         case .running: model.poller.reachable ? .green : .orange
+        case .needsApproval: .orange
         case .failed: .red
         }
     }

@@ -113,7 +113,6 @@ struct AppConfig: Codable, Equatable {
     var server = ServerSettings()
     var mounts: [Mount] = [Mount()]
     var badge = BadgeTarget.total
-    var startServerOnLaunch = false
 
     init() {}
 
@@ -122,7 +121,6 @@ struct AppConfig: Codable, Equatable {
         server = try c.decodeIfPresent(ServerSettings.self, forKey: .server) ?? ServerSettings()
         mounts = try c.decodeIfPresent([Mount].self, forKey: .mounts) ?? [Mount()]
         badge = try c.decodeIfPresent(BadgeTarget.self, forKey: .badge) ?? .total
-        startServerOnLaunch = try c.decodeIfPresent(Bool.self, forKey: .startServerOnLaunch) ?? false
     }
 
     /// A fresh config with random passwords so a new install is secure by default.
