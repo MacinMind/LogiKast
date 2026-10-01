@@ -8,7 +8,7 @@ station setup. No audio encoding (BUTT, Audio Hijack, LadioCast etc. handle that
 - One Icecast server, many mounts.
 - Direct distribution: Developer ID signed + notarized DMG ("MacinMind Software, Inc.").
 - Public GPLv2 repo (Icecast is GPLv2, so source must be available).
-- Formats: MP3, AAC, HE-AAC only (pass-through; `audio/mpeg`, `audio/aac`, `audio/aacp`).
+- Formats: MP3, AAC, HE-AAC pass through untouched. The encoder decides the format; iceKast never sets or forces it, it only detects and displays it.
 - Icecast and all libraries are built from source, statically linked, bundled in the app.
   No Homebrew or other installs for the end user.
 

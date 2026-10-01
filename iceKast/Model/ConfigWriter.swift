@@ -52,7 +52,6 @@ enum ConfigWriter {
                 x.line("fallback-mount", m.fallbackMount)
                 x.line("fallback-override", m.fallbackOverride ? 1 : 0)
             }
-            x.line("type", m.format.contentType)
             x.line("charset", "UTF-8")
             x.line("public", m.isPublic ? 1 : 0)
             if !m.streamName.isEmpty { x.line("stream-name", m.streamName) }

@@ -24,11 +24,10 @@ struct MountView: View {
                 CopyableRow(label: "Mount", value: mount.name)
                 CopyableRow(label: "Username", value: "source")
                 CopyableRow(label: "Password", value: mount.customPassword.isEmpty ? model.config.server.sourcePassword : mount.customPassword, secret: true)
-                CopyableRow(label: "Format", value: mount.format.label)
             } header: {
                 Text("Connect your encoder (BUTT, Audio Hijack, LadioCast, …)")
             } footer: {
-                Text("The username is always “source” (lowercase) — type it exactly like that in your encoder. The password is the encoder password.")
+                Text("The username is always “source” (lowercase) — type it exactly like that in your encoder. The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; iceKast detects them once it connects.")
             }
 
             Section("Listen link") {
@@ -41,9 +40,6 @@ struct MountView: View {
             Section("Mount") {
                 LabeledContent("Mount name") {
                     TextField("", text: $mount.name, prompt: Text("/live")).multilineTextAlignment(.trailing)
-                }
-                Picker("Format", selection: $mount.format) {
-                    ForEach(StreamFormat.allCases) { Text($0.label).tag($0) }
                 }
                 IntField(title: "Max listeners (0 = no limit)", value: $mount.maxListeners)
                 IntField(title: "Burst size", value: $mount.burstSize, suffix: "bytes")
@@ -120,13 +116,6 @@ struct MountView: View {
                 }
                 if let s = status, let line = encoderLine(s) {
                     Text(line).font(.caption).foregroundStyle(.secondary)
-                }
-                if let s = status, let sent = s.contentType.flatMap(StreamFormat.init(contentType:)), sent != mount.format {
-                    HStack {
-                        Label("Encoder is sending \(sent.label), but this mount is set to \(mount.format.label).", systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange).font(.callout)
-                        Button("Switch mount to \(sent.label)") { mount.format = sent }
-                    }
                 }
             }
             Spacer()

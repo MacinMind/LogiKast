@@ -1,9 +1,9 @@
 import Foundation
 
-enum StreamFormat: String, Codable, CaseIterable, Identifiable {
+/// Audio formats iceKast can recognise in a live stream. The encoder decides the format;
+/// Icecast just passes it through, so this is only used to display what was detected.
+enum StreamFormat: String, CaseIterable {
     case mp3, aac, aacPlus
-
-    var id: String { rawValue }
 
     var label: String {
         switch self {
@@ -40,7 +40,6 @@ struct Mount: Codable, Identifiable, Equatable {
     var streamDescription = ""
     var genre = ""
     var streamURL = ""
-    var format = StreamFormat.mp3
     /// 0 = no per-mount limit (the server-wide client limit still applies).
     var maxListeners = 0
     /// Bytes sent to a new listener immediately on connect, to fill their buffer.
@@ -62,7 +61,6 @@ struct Mount: Codable, Identifiable, Equatable {
         streamDescription = try c.decodeIfPresent(String.self, forKey: .streamDescription) ?? ""
         genre = try c.decodeIfPresent(String.self, forKey: .genre) ?? ""
         streamURL = try c.decodeIfPresent(String.self, forKey: .streamURL) ?? ""
-        format = try c.decodeIfPresent(StreamFormat.self, forKey: .format) ?? .mp3
         maxListeners = try c.decodeIfPresent(Int.self, forKey: .maxListeners) ?? 0
         burstSize = try c.decodeIfPresent(Int.self, forKey: .burstSize) ?? 65536
         fallbackMount = try c.decodeIfPresent(String.self, forKey: .fallbackMount) ?? ""

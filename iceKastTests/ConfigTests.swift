@@ -10,7 +10,6 @@ final class ConfigWriterTests: XCTestCase {
         c.server.maxClients = 42
         var m = Mount()
         m.name = "/radio"
-        m.format = .aacPlus
         m.maxListeners = 7
         m.burstSize = 1234
         m.fallbackMount = "/backup"
@@ -21,7 +20,7 @@ final class ConfigWriterTests: XCTestCase {
         XCTAssertTrue(xml.contains("<mount-name>/radio</mount-name>"))
         XCTAssertTrue(xml.contains("<max-listeners>7</max-listeners>"))
         XCTAssertTrue(xml.contains("<burst-size>1234</burst-size>"))
-        XCTAssertTrue(xml.contains("<type>audio/aacp</type>"))
+        XCTAssertFalse(xml.contains("<type>"), "format is decided by the encoder, never forced")
         XCTAssertTrue(xml.contains("<fallback-mount>/backup</fallback-mount>"))
         // Must be well-formed XML.
         XCTAssertNoThrow(try XMLDocument(xmlString: xml))
