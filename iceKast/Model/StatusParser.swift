@@ -6,6 +6,9 @@ struct MountStatus: Identifiable, Equatable {
     var peak: Int
     var title: String?
     var streamName: String?
+    var genre: String?
+    var streamURL: String?
+    var streamDescription: String?
     var contentType: String?
     var bitrate: Int?
     var streamStart: Date?
@@ -44,7 +47,10 @@ enum StatusParser {
                 listeners: int(src["listeners"]) ?? 0,
                 peak: int(src["listener_peak"]) ?? 0,
                 title: (src["title"] as? String).flatMap { $0.isEmpty ? nil : $0 },
-                streamName: src["server_name"] as? String,
+                streamName: nonEmpty(src["server_name"], ignoring: ["Unspecified name"]),
+                genre: nonEmpty(src["genre"], ignoring: ["various"]),
+                streamURL: nonEmpty(src["server_url"]),
+                streamDescription: nonEmpty(src["server_description"], ignoring: ["Unspecified description"]),
                 contentType: (src["server_type"] as? String) ?? (src["content-type"] as? String),
                 bitrate: int(src["bitrate"]) ?? int(src["ice-bitrate"]),
                 streamStart: (src["stream_start_iso8601"] as? String).flatMap(date)
@@ -54,6 +60,13 @@ enum StatusParser {
             serverID: stats["server_id"] as? String,
             serverStart: (stats["server_start_iso8601"] as? String).flatMap(date),
             mounts: mounts.sorted { $0.path < $1.path })
+    }
+
+    /// Trimmed string value, or nil if empty or one of Icecast's placeholder defaults.
+    private static func nonEmpty(_ v: Any?, ignoring placeholders: [String] = []) -> String? {
+        guard let s = (v as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !s.isEmpty, !placeholders.contains(s) else { return nil }
+        return s
     }
 
     private static func int(_ v: Any?) -> Int? {

@@ -117,6 +117,17 @@ final class StatusParserTests: XCTestCase {
         XCTAssertEqual(s.totalListeners, 3)
     }
 
+    func testEncoderStreamInfoIsCaptured() throws {
+        let json = #"{"icestats":{"source":{"listeners":1,"listenurl":"http://h:8000/live","server_name":"Radiologik Trance","genre":"Trance","server_url":"https://www.radiologik.com/trance","server_description":"Unspecified description","server_type":"audio/aacp","bitrate":64}}}"#
+        let m = try XCTUnwrap(StatusParser.parse(Data(json.utf8))?.mount("/live"))
+        XCTAssertEqual(m.streamName, "Radiologik Trance")
+        XCTAssertEqual(m.genre, "Trance")
+        XCTAssertEqual(m.streamURL, "https://www.radiologik.com/trance")
+        XCTAssertNil(m.streamDescription)          // Icecast's placeholder is ignored
+        XCTAssertEqual(m.bitrate, 64)
+        XCTAssertEqual(StreamFormat(contentType: m.contentType ?? ""), .aacPlus)
+    }
+
     func testGarbageReturnsNil() {
         XCTAssertNil(StatusParser.parse(Data("not json".utf8)))
     }

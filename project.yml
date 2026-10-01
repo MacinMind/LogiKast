@@ -54,17 +54,29 @@ targets:
           fi
           APP="$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH"
           mkdir -p "$APP/Helpers" "$APP/Resources/icecast-share" "$APP/Library/LaunchAgents"
-          cp "$SRC/icecast" "$APP/Helpers/icecast"
-          rsync -a --delete "$SRC/share/" "$APP/Resources/icecast-share/"
-          # Launcher run by launchd; universal, built here so it matches the app's deployment target.
-          clang -O2 -arch arm64 -arch x86_64 -mmacosx-version-min=13.0 \
-            "$SRCROOT/Launcher/icekast-launch.c" -o "$APP/Helpers/icekast-launch"
-          cp "$SRCROOT/Launcher/com.macinmind.icekast.server.plist" "$APP/Library/LaunchAgents/"
           ID="${EXPANDED_CODE_SIGN_IDENTITY:--}"
           [ -z "$ID" ] && ID="-"
-          for b in icecast icekast-launch; do
-            codesign --force --options runtime --timestamp=none --sign "$ID" "$APP/Helpers/$b"
-          done
+          # Only replace the bundled icecast when it changed. In a dev
+          # build the running background server executes this very file, and rewriting or
+          # re-signing it would make macOS kill the server and drop live streams.
+          STAMP_FILE="$TARGET_TEMP_DIR/icecast.stamp"
+          STAMP="$(shasum -a 256 "$SRC/icecast" | cut -d' ' -f1)"
+          if [ ! -x "$APP/Helpers/icecast" ] || [ "$(cat "$STAMP_FILE" 2>/dev/null)" != "$STAMP" ]; then
+            cp "$SRC/icecast" "$APP/Helpers/icecast"
+            codesign --force --options runtime --timestamp=none --sign "$ID" "$APP/Helpers/icecast"
+            echo "$STAMP" > "$STAMP_FILE"
+          fi
+          rsync -a --delete "$SRC/share/" "$APP/Resources/icecast-share/"
+          # Launcher run by launchd; universal, built here so it matches the app's deployment target.
+          LSTAMP_FILE="$TARGET_TEMP_DIR/launcher.stamp"
+          LSTAMP="$(shasum -a 256 "$SRCROOT/Launcher/icekast-launch.c" | cut -d' ' -f1)"
+          if [ ! -x "$APP/Helpers/icekast-launch" ] || [ "$(cat "$LSTAMP_FILE" 2>/dev/null)" != "$LSTAMP" ]; then
+            clang -O2 -arch arm64 -arch x86_64 -mmacosx-version-min=13.0 \
+              "$SRCROOT/Launcher/icekast-launch.c" -o "$APP/Helpers/icekast-launch"
+            codesign --force --options runtime --timestamp=none --sign "$ID" "$APP/Helpers/icekast-launch"
+            echo "$LSTAMP" > "$LSTAMP_FILE"
+          fi
+          cp "$SRCROOT/Launcher/com.macinmind.icekast.server.plist" "$APP/Library/LaunchAgents/"
   iceKastTests:
     type: bundle.unit-test
     platform: macOS

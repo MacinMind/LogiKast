@@ -59,15 +59,21 @@ struct MountView: View {
             }
 
             Section {
-                LabeledContent("Name") { TextField("", text: $mount.streamName, prompt: Text("e.g. My Radio Station")).multilineTextAlignment(.trailing) }
-                LabeledContent("Description") { TextField("", text: $mount.streamDescription, prompt: Text("e.g. Classic hits, all day")).multilineTextAlignment(.trailing) }
-                LabeledContent("Genre") { TextField("", text: $mount.genre, prompt: Text("e.g. Variety")).multilineTextAlignment(.trailing) }
-                LabeledContent("Website") { TextField("", text: $mount.streamURL, prompt: Text("https://")).multilineTextAlignment(.trailing) }
+                LabeledContent("Name") { TextField("", text: $mount.streamName, prompt: Text(status?.streamName ?? "e.g. My Radio Station")).multilineTextAlignment(.trailing) }
+                LabeledContent("Description") { TextField("", text: $mount.streamDescription, prompt: Text(status?.streamDescription ?? "e.g. Classic hits, all day")).multilineTextAlignment(.trailing) }
+                LabeledContent("Genre") { TextField("", text: $mount.genre, prompt: Text(status?.genre ?? "e.g. Variety")).multilineTextAlignment(.trailing) }
+                LabeledContent("Website") { TextField("", text: $mount.streamURL, prompt: Text(status?.streamURL ?? "https://")).multilineTextAlignment(.trailing) }
+                if let s = status, hasEncoderInfo(s) {
+                    Button("Copy Encoder's Info Into These Fields") { copyEncoderInfo(s) }
+                        .help("Saves what your encoder is sending here, so it stays even if the encoder stops sending it")
+                }
                 Toggle("List in public directory", isOn: $mount.isPublic)
             } header: {
                 Text("Stream info")
             } footer: {
-                Text("What listeners and directories see about this stream. Leave a field blank to use whatever your encoder sends; anything you enter here replaces the encoder's value.")
+                Text(status != nil
+                     ? "Grey text is what your encoder is sending right now, and listeners see it. Type here only to override it."
+                     : "What listeners and directories see about this stream. Leave a field blank to use whatever your encoder sends; anything you enter here replaces the encoder's value.")
             }
 
             Section {
@@ -83,6 +89,24 @@ struct MountView: View {
         }
     }
 
+    private func encoderLine(_ s: MountStatus) -> String? {
+        var parts: [String] = []
+        if let f = s.contentType.flatMap(StreamFormat.init(contentType:)) { parts.append(f.label) }
+        if let b = s.bitrate { parts.append("\(b) kbps") }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    private func hasEncoderInfo(_ s: MountStatus) -> Bool {
+        s.streamName != nil || s.genre != nil || s.streamURL != nil || s.streamDescription != nil
+    }
+
+    private func copyEncoderInfo(_ s: MountStatus) {
+        if let v = s.streamName { mount.streamName = v }
+        if let v = s.genre { mount.genre = v }
+        if let v = s.streamURL { mount.streamURL = v }
+        if let v = s.streamDescription { mount.streamDescription = v }
+    }
+
     private var statusCard: some View {
         HStack(alignment: .top, spacing: 24) {
             VStack(alignment: .leading, spacing: 4) {
@@ -93,6 +117,16 @@ struct MountView: View {
                 }
                 if let title = status?.title {
                     Text(title).foregroundStyle(.secondary).lineLimit(2)
+                }
+                if let s = status, let line = encoderLine(s) {
+                    Text(line).font(.caption).foregroundStyle(.secondary)
+                }
+                if let s = status, let sent = s.contentType.flatMap(StreamFormat.init(contentType:)), sent != mount.format {
+                    HStack {
+                        Label("Encoder is sending \(sent.label), but this mount is set to \(mount.format.label).", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange).font(.callout)
+                        Button("Switch mount to \(sent.label)") { mount.format = sent }
+                    }
                 }
             }
             Spacer()

@@ -20,6 +20,11 @@ enum StreamFormat: String, Codable, CaseIterable, Identifiable {
         case .aacPlus: "audio/aacp"
         }
     }
+
+    init?(contentType: String) {
+        guard let f = Self.allCases.first(where: { $0.contentType == contentType.lowercased() }) else { return nil }
+        self = f
+    }
 }
 
 enum BadgeTarget: Codable, Hashable {
