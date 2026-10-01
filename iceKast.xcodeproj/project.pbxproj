@@ -1,0 +1,504 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		26AF116D56104A92424E28A5 /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */; };
+		27463D24CF71CB1DF37052E4 /* ConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610A6376565CA78C4E42A758 /* ConfigTests.swift */; };
+		2E30914DCBECCE3C7657A8C0 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5644FE7F55B159FCA87C51DC /* Components.swift */; };
+		3C5022967D33ABAA0CCA0F22 /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = C676164C4C310CCEE9148E6F /* AppPaths.swift */; };
+		58E83162EBEE0AC7C56F244F /* ServerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F0C5D22C5427ED56B258CC /* ServerView.swift */; };
+		6836B71669609FF48B76ED58 /* iceKastApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAFCBBA30FAD9516949B899 /* iceKastApp.swift */; };
+		70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */; };
+		86C35CCCD314E286FA4310C1 /* StatusParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31535E4E7D3D40A948F266E3 /* StatusParser.swift */; };
+		9197E600CD085B542496E3FE /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73ED26928D799F4A29B7C20 /* AppModel.swift */; };
+		9ED733F0CE23A69C8280F1BC /* NetworkInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */; };
+		A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D35D86879EE68B5922EBDCD /* MountView.swift */; };
+		A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79FC1BC9BE4F429C9A957680 /* ContentView.swift */; };
+		AD5EA5C61B6D72D55EAD5B0D /* Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB853C43E6424077C91F3D3A /* Validator.swift */; };
+		BEDE7E5683189AABFDB3E939 /* IcecastProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BA97362268116A110C3DC83 /* IcecastProcess.swift */; };
+		E1C899DA158C9994A5C958CC /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF5C092EAC8C690C680366E /* Config.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		EEB6318B5196ABB95A8CEFEA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 22CEAB74B9D80F4133EB5899 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 44B4E3566E74816763EAE881;
+			remoteInfo = iceKast;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2BA97362268116A110C3DC83 /* IcecastProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IcecastProcess.swift; sourceTree = "<group>"; };
+		31124CD52E82DBF1E0AD3469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		31535E4E7D3D40A948F266E3 /* StatusParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusParser.swift; sourceTree = "<group>"; };
+		4D35D86879EE68B5922EBDCD /* MountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountView.swift; sourceTree = "<group>"; };
+		5644FE7F55B159FCA87C51DC /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		57F0C5D22C5427ED56B258CC /* ServerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerView.swift; sourceTree = "<group>"; };
+		5FF5C092EAC8C690C680366E /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		610A6376565CA78C4E42A758 /* ConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigTests.swift; sourceTree = "<group>"; };
+		79FC1BC9BE4F429C9A957680 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPoller.swift; sourceTree = "<group>"; };
+		81326921DC024F3508FF803E /* iceKastTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iceKastTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInfo.swift; sourceTree = "<group>"; };
+		92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigWriter.swift; sourceTree = "<group>"; };
+		AC2E5DE04E8C8B115D5F42CE /* iceKast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iceKast.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ACAFCBBA30FAD9516949B899 /* iceKastApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iceKastApp.swift; sourceTree = "<group>"; };
+		B73ED26928D799F4A29B7C20 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		BF81CF1BC5A8D32216E95419 /* iceKast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iceKast.entitlements; sourceTree = "<group>"; };
+		C676164C4C310CCEE9148E6F /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
+		FB853C43E6424077C91F3D3A /* Validator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validator.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		02C50238D71CB5ACAAC8B804 /* iceKastTests */ = {
+			isa = PBXGroup;
+			children = (
+				610A6376565CA78C4E42A758 /* ConfigTests.swift */,
+			);
+			path = iceKastTests;
+			sourceTree = "<group>";
+		};
+		0359EDB9D6814CB2BC93C074 /* iceKast */ = {
+			isa = PBXGroup;
+			children = (
+				BF81CF1BC5A8D32216E95419 /* iceKast.entitlements */,
+				31124CD52E82DBF1E0AD3469 /* Info.plist */,
+				7D2C310C27ABF25EB213BC69 /* App */,
+				8FDAFDF974E42BBC20EA1AE0 /* Model */,
+				680A13B2498926035A05484F /* Services */,
+				DA31F67415290C1B8A8711D6 /* Views */,
+			);
+			path = iceKast;
+			sourceTree = "<group>";
+		};
+		680A13B2498926035A05484F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B73ED26928D799F4A29B7C20 /* AppModel.swift */,
+				C676164C4C310CCEE9148E6F /* AppPaths.swift */,
+				2BA97362268116A110C3DC83 /* IcecastProcess.swift */,
+				8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */,
+				7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		7D2C310C27ABF25EB213BC69 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				ACAFCBBA30FAD9516949B899 /* iceKastApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		8FDAFDF974E42BBC20EA1AE0 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				5FF5C092EAC8C690C680366E /* Config.swift */,
+				92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */,
+				31535E4E7D3D40A948F266E3 /* StatusParser.swift */,
+				FB853C43E6424077C91F3D3A /* Validator.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		ABC2754F1102E4F8CDB12FB6 = {
+			isa = PBXGroup;
+			children = (
+				0359EDB9D6814CB2BC93C074 /* iceKast */,
+				02C50238D71CB5ACAAC8B804 /* iceKastTests */,
+				B608ED05D17B3978849F42D3 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B608ED05D17B3978849F42D3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AC2E5DE04E8C8B115D5F42CE /* iceKast.app */,
+				81326921DC024F3508FF803E /* iceKastTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DA31F67415290C1B8A8711D6 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				5644FE7F55B159FCA87C51DC /* Components.swift */,
+				79FC1BC9BE4F429C9A957680 /* ContentView.swift */,
+				4D35D86879EE68B5922EBDCD /* MountView.swift */,
+				57F0C5D22C5427ED56B258CC /* ServerView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		44B4E3566E74816763EAE881 /* iceKast */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ED824A107567315E837AEAC5 /* Build configuration list for PBXNativeTarget "iceKast" */;
+			buildPhases = (
+				81F118436C94ED6C9D534CA5 /* Sources */,
+				D3EEA0E1BF9CD6CE0B6FF5CE /* Bundle Icecast */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iceKast;
+			packageProductDependencies = (
+			);
+			productName = iceKast;
+			productReference = AC2E5DE04E8C8B115D5F42CE /* iceKast.app */;
+			productType = "com.apple.product-type.application";
+		};
+		64543A0CEF5170FD3D167B61 /* iceKastTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 87C4E1594F234C18D9A6D036 /* Build configuration list for PBXNativeTarget "iceKastTests" */;
+			buildPhases = (
+				B1D944B501E3378449C66679 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				59C2BADB6F3E816E44DD9D48 /* PBXTargetDependency */,
+			);
+			name = iceKastTests;
+			packageProductDependencies = (
+			);
+			productName = iceKastTests;
+			productReference = 81326921DC024F3508FF803E /* iceKastTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		22CEAB74B9D80F4133EB5899 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 218D04DC99D9F976BCDEF7A5 /* Build configuration list for PBXProject "iceKast" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = ABC2754F1102E4F8CDB12FB6;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B608ED05D17B3978849F42D3 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				44B4E3566E74816763EAE881 /* iceKast */,
+				64543A0CEF5170FD3D167B61 /* iceKastTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		D3EEA0E1BF9CD6CE0B6FF5CE /* Bundle Icecast */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle Icecast";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\nSRC=\"$SRCROOT/build/icecast\"\nif [ ! -x \"$SRC/icecast\" ]; then\n  echo \"error: build/icecast/icecast missing. Run scripts/build-icecast.sh first.\"\n  exit 1\nfi\nAPP=\"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH\"\nmkdir -p \"$APP/Helpers\" \"$APP/Resources/icecast-share\"\ncp \"$SRC/icecast\" \"$APP/Helpers/icecast\"\nrsync -a --delete \"$SRC/share/\" \"$APP/Resources/icecast-share/\"\nID=\"${EXPANDED_CODE_SIGN_IDENTITY:--}\"\n[ -z \"$ID\" ] && ID=\"-\"\ncodesign --force --options runtime --timestamp=none --sign \"$ID\" \"$APP/Helpers/icecast\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		81F118436C94ED6C9D534CA5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9197E600CD085B542496E3FE /* AppModel.swift in Sources */,
+				3C5022967D33ABAA0CCA0F22 /* AppPaths.swift in Sources */,
+				2E30914DCBECCE3C7657A8C0 /* Components.swift in Sources */,
+				E1C899DA158C9994A5C958CC /* Config.swift in Sources */,
+				26AF116D56104A92424E28A5 /* ConfigWriter.swift in Sources */,
+				A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */,
+				BEDE7E5683189AABFDB3E939 /* IcecastProcess.swift in Sources */,
+				A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */,
+				9ED733F0CE23A69C8280F1BC /* NetworkInfo.swift in Sources */,
+				58E83162EBEE0AC7C56F244F /* ServerView.swift in Sources */,
+				86C35CCCD314E286FA4310C1 /* StatusParser.swift in Sources */,
+				70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */,
+				AD5EA5C61B6D72D55EAD5B0D /* Validator.swift in Sources */,
+				6836B71669609FF48B76ED58 /* iceKastApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B1D944B501E3378449C66679 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				27463D24CF71CB1DF37052E4 /* ConfigTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		59C2BADB6F3E816E44DD9D48 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 44B4E3566E74816763EAE881 /* iceKast */;
+			targetProxy = EEB6318B5196ABB95A8CEFEA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		266FD60BBC8C66A72A210056 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = iceKast/iceKast.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = iceKast/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.macinmind.iceKast;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2D232E15216C76784A495C58 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = iceKast/iceKast.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = iceKast/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.macinmind.iceKast;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		3C9D95DF22EE3EAE4FEF86B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		5850D0E3382F3C70E75DBEFD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.macinmind.iceKastTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iceKast.app/Contents/MacOS/iceKast";
+			};
+			name = Debug;
+		};
+		6DB20404084C28F87CA4DC65 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		8DB0CE82A02C59CDA388AA2E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.macinmind.iceKastTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iceKast.app/Contents/MacOS/iceKast";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		218D04DC99D9F976BCDEF7A5 /* Build configuration list for PBXProject "iceKast" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6DB20404084C28F87CA4DC65 /* Debug */,
+				3C9D95DF22EE3EAE4FEF86B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		87C4E1594F234C18D9A6D036 /* Build configuration list for PBXNativeTarget "iceKastTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5850D0E3382F3C70E75DBEFD /* Debug */,
+				8DB0CE82A02C59CDA388AA2E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		ED824A107567315E837AEAC5 /* Build configuration list for PBXNativeTarget "iceKast" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2D232E15216C76784A495C58 /* Debug */,
+				266FD60BBC8C66A72A210056 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 22CEAB74B9D80F4133EB5899 /* Project object */;
+}

@@ -1,0 +1,72 @@
+name: iceKast
+options:
+  bundleIdPrefix: com.macinmind
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_HARDENED_RUNTIME: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    CODE_SIGN_IDENTITY: "-"
+targets:
+  iceKast:
+    type: application
+    platform: macOS
+    sources:
+      - iceKast
+    info:
+      path: iceKast/Info.plist
+      properties:
+        CFBundleDisplayName: iceKast
+        LSMinimumSystemVersion: "13.0"
+        LSApplicationCategoryType: public.app-category.music
+        NSHumanReadableCopyright: "© MacinMind Software, Inc. Free software (GPLv2)."
+    entitlements:
+      path: iceKast/iceKast.entitlements
+      properties: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.macinmind.iceKast
+        GENERATE_INFOPLIST_FILE: NO
+    postBuildScripts:
+      - name: Bundle Icecast
+        basedOnDependencyAnalysis: false
+        script: |
+          set -euo pipefail
+          SRC="$SRCROOT/build/icecast"
+          if [ ! -x "$SRC/icecast" ]; then
+            echo "error: build/icecast/icecast missing. Run scripts/build-icecast.sh first."
+            exit 1
+          fi
+          APP="$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH"
+          mkdir -p "$APP/Helpers" "$APP/Resources/icecast-share"
+          cp "$SRC/icecast" "$APP/Helpers/icecast"
+          rsync -a --delete "$SRC/share/" "$APP/Resources/icecast-share/"
+          ID="${EXPANDED_CODE_SIGN_IDENTITY:--}"
+          [ -z "$ID" ] && ID="-"
+          codesign --force --options runtime --timestamp=none --sign "$ID" "$APP/Helpers/icecast"
+  iceKastTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - iceKastTests
+    dependencies:
+      - target: iceKast
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iceKast.app/Contents/MacOS/iceKast"
+schemes:
+  iceKast:
+    build:
+      targets:
+        iceKast: all
+    test:
+      targets:
+        - iceKastTests

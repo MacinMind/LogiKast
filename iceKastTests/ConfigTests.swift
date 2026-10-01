@@ -1,0 +1,154 @@
+import XCTest
+@testable import iceKast
+
+final class ConfigWriterTests: XCTestCase {
+    private let paths = IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b")
+
+    func testWritesMountsAndLimits() throws {
+        var c = AppConfig.makeDefault()
+        c.server.port = 8123
+        c.server.maxClients = 42
+        var m = Mount()
+        m.name = "/radio"
+        m.format = .aacPlus
+        m.maxListeners = 7
+        m.burstSize = 1234
+        m.fallbackMount = "/backup"
+        c.mounts = [m]
+        let xml = ConfigWriter.xml(for: c, paths: paths)
+        XCTAssertTrue(xml.contains("<port>8123</port>"))
+        XCTAssertTrue(xml.contains("<clients>42</clients>"))
+        XCTAssertTrue(xml.contains("<mount-name>/radio</mount-name>"))
+        XCTAssertTrue(xml.contains("<max-listeners>7</max-listeners>"))
+        XCTAssertTrue(xml.contains("<burst-size>1234</burst-size>"))
+        XCTAssertTrue(xml.contains("<type>audio/aacp</type>"))
+        XCTAssertTrue(xml.contains("<fallback-mount>/backup</fallback-mount>"))
+        // Must be well-formed XML.
+        XCTAssertNoThrow(try XMLDocument(xmlString: xml))
+    }
+
+    func testEscapesSpecialCharacters() throws {
+        var c = AppConfig.makeDefault()
+        c.server.sourcePassword = "a&b<c>\"d'"
+        c.mounts[0].streamName = "Rock & Roll <live>"
+        let xml = ConfigWriter.xml(for: c, paths: paths)
+        let doc = try XMLDocument(xmlString: xml)
+        let pw = try doc.nodes(forXPath: "//source-password").first?.stringValue
+        XCTAssertEqual(pw, "a&b<c>\"d'")
+        let name = try doc.nodes(forXPath: "//mount/stream-name").first?.stringValue
+        XCTAssertEqual(name, "Rock & Roll <live>")
+    }
+
+    func testOmitsOptionalMountFields() {
+        var c = AppConfig.makeDefault()
+        c.mounts[0].maxListeners = 0
+        let xml = ConfigWriter.xml(for: c, paths: paths)
+        XCTAssertFalse(xml.contains("<max-listeners>"))
+        XCTAssertFalse(xml.contains("<fallback-mount>"))
+        XCTAssertFalse(xml.contains("<bind-address>"))
+    }
+
+    func testConfigRoundTripAndForwardCompat() throws {
+        let c = AppConfig.makeDefault()
+        let data = try JSONEncoder().encode(c)
+        XCTAssertEqual(try JSONDecoder().decode(AppConfig.self, from: data), c)
+        // Old/partial JSON still decodes with defaults.
+        let partial = try JSONDecoder().decode(AppConfig.self, from: Data(#"{"server":{"port":9000}}"#.utf8))
+        XCTAssertEqual(partial.server.port, 9000)
+        XCTAssertEqual(partial.server.maxClients, 100)
+    }
+}
+
+final class ValidatorTests: XCTestCase {
+    func testDefaultIsValid() {
+        XCTAssertFalse(ConfigValidator.hasErrors(AppConfig.makeDefault()))
+    }
+
+    func testCatchesProblems() {
+        var c = AppConfig.makeDefault()
+        c.server.port = 80
+        c.mounts = [Mount(), Mount()]
+        c.mounts[1].name = "no-slash"
+        XCTAssertTrue(ConfigValidator.hasErrors(c))
+        let msgs = ConfigValidator.issues(for: c).map(\.message).joined(separator: "\n")
+        XCTAssertTrue(msgs.contains("1024"))
+        XCTAssertTrue(msgs.contains("must start with /"))
+
+        c.server.port = 8000
+        c.mounts[1].name = "/live"   // duplicate
+        XCTAssertTrue(ConfigValidator.issues(for: c).contains { $0.message.contains("more than once") })
+
+        c.mounts[1].name = "/a b"
+        XCTAssertTrue(ConfigValidator.issues(for: c).contains { $0.message.contains("special") })
+    }
+
+    func testEmptyPasswordAndSelfFallback() {
+        var c = AppConfig.makeDefault()
+        c.server.sourcePassword = ""
+        c.mounts[0].fallbackMount = c.mounts[0].name
+        let msgs = ConfigValidator.issues(for: c).map(\.message).joined(separator: "\n")
+        XCTAssertTrue(msgs.contains("Source password"))
+        XCTAssertTrue(msgs.contains("itself"))
+    }
+}
+
+final class StatusParserTests: XCTestCase {
+    func testNoSources() throws {
+        let json = #"{"icestats":{"server_id":"Icecast 2.5.0","dummy":null}}"#
+        let s = try XCTUnwrap(StatusParser.parse(Data(json.utf8)))
+        XCTAssertTrue(s.mounts.isEmpty)
+        XCTAssertEqual(s.totalListeners, 0)
+    }
+
+    func testSingleSourceObject() throws {
+        let json = #"{"icestats":{"source":{"listeners":3,"listener_peak":5,"listenurl":"http://h:8000/live.mp3","server_type":"audio/mpeg","title":"Song","stream_start_iso8601":"2026-10-01T13:06:46-0500"}}}"#
+        let s = try XCTUnwrap(StatusParser.parse(Data(json.utf8)))
+        XCTAssertEqual(s.mounts.count, 1)
+        XCTAssertEqual(s.mount("/live.mp3")?.listeners, 3)
+        XCTAssertEqual(s.mount("/live.mp3")?.peak, 5)
+        XCTAssertEqual(s.mount("/live.mp3")?.title, "Song")
+        XCTAssertNotNil(s.mount("/live.mp3")?.streamStart)
+    }
+
+    func testMultipleSourcesArray() throws {
+        let json = #"{"icestats":{"source":[{"listeners":1,"listenurl":"http://h:8000/b"},{"listeners":2,"listenurl":"http://h:8000/a"}]}}"#
+        let s = try XCTUnwrap(StatusParser.parse(Data(json.utf8)))
+        XCTAssertEqual(s.mounts.map(\.path), ["/a", "/b"])
+        XCTAssertEqual(s.totalListeners, 3)
+    }
+
+    func testGarbageReturnsNil() {
+        XCTAssertNil(StatusParser.parse(Data("not json".utf8)))
+    }
+}
+
+@MainActor
+final class BadgeTests: XCTestCase {
+    private func status(_ pairs: [(String, Int)]) -> ServerStatus {
+        ServerStatus(mounts: pairs.map { MountStatus(path: $0.0, listeners: $0.1, peak: $0.1) })
+    }
+
+    func testBadgeModes() {
+        var c = AppConfig.makeDefault()
+        c.mounts = [Mount(), Mount()]
+        c.mounts[0].name = "/a"; c.mounts[1].name = "/b"
+        let st = status([("/a", 3), ("/b", 4)])
+
+        c.badge = .none
+        XCTAssertNil(AppModel.badgeLabel(config: c, status: st))
+        c.badge = .total
+        XCTAssertEqual(AppModel.badgeLabel(config: c, status: st), "7")
+        c.badge = .mount(c.mounts[1].id)
+        XCTAssertEqual(AppModel.badgeLabel(config: c, status: st), "4")
+    }
+
+    func testBadgeEdgeCases() {
+        var c = AppConfig.makeDefault()
+        c.badge = .mount(c.mounts[0].id)
+        // Server down: no badge. Server up but mount offline: shows 0.
+        XCTAssertNil(AppModel.badgeLabel(config: c, status: nil))
+        XCTAssertEqual(AppModel.badgeLabel(config: c, status: status([])), "0")
+        c.badge = .total
+        XCTAssertEqual(AppModel.badgeLabel(config: c, status: status([])), "0")
+    }
+}

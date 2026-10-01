@@ -31,6 +31,6 @@ options later: mbedTLS (Apache-2.0 / GPLv2+ dual) or a reverse proxy.
 ## Milestones
 1. [done] Icecast static build proven on arm64 (MP3 source + listener verified).
 2. [done] Universal build (arm64 + x86_64, min macOS 13), iconv enabled; links only macOS system libs.
-3. Xcode project, process manager + status poller, minimal UI.
-4. Config editors, wizard, dock badge.
+3. [done] Xcode project (XcodeGen), process manager with hot reload, status poller, server/mount UI, dock badge, 13 unit tests.
+4. Setup wizard, menu bar item, app icon, port-conflict UX polish, visual check of dock badge, public directory (YP) settings.
 5. Sign, notarize, DMG, GitHub release.

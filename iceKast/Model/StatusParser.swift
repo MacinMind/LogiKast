@@ -1,0 +1,74 @@
+import Foundation
+
+struct MountStatus: Identifiable, Equatable {
+    var path: String
+    var listeners: Int
+    var peak: Int
+    var title: String?
+    var streamName: String?
+    var contentType: String?
+    var bitrate: Int?
+    var streamStart: Date?
+    var id: String { path }
+}
+
+struct ServerStatus: Equatable {
+    var serverID: String?
+    var serverStart: Date?
+    var mounts: [MountStatus]
+
+    var totalListeners: Int { mounts.reduce(0) { $0 + $1.listeners } }
+
+    func mount(_ path: String) -> MountStatus? { mounts.first { $0.path == path } }
+}
+
+enum StatusParser {
+    /// Parses Icecast's /status-json.xsl. Icecast emits `source` as an object for one
+    /// mount, an array for several, and omits it when nothing is connected.
+    static func parse(_ data: Data) -> ServerStatus? {
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let stats = root["icestats"] as? [String: Any] else { return nil }
+
+        var sources: [[String: Any]] = []
+        if let one = stats["source"] as? [String: Any] {
+            sources = [one]
+        } else if let many = stats["source"] as? [[String: Any]] {
+            sources = many
+        }
+
+        let mounts: [MountStatus] = sources.compactMap { src in
+            guard let listenURL = src["listenurl"] as? String,
+                  let path = URL(string: listenURL)?.path, !path.isEmpty else { return nil }
+            return MountStatus(
+                path: path,
+                listeners: int(src["listeners"]) ?? 0,
+                peak: int(src["listener_peak"]) ?? 0,
+                title: (src["title"] as? String).flatMap { $0.isEmpty ? nil : $0 },
+                streamName: src["server_name"] as? String,
+                contentType: (src["server_type"] as? String) ?? (src["content-type"] as? String),
+                bitrate: int(src["bitrate"]) ?? int(src["ice-bitrate"]),
+                streamStart: (src["stream_start_iso8601"] as? String).flatMap(date)
+            )
+        }
+        return ServerStatus(
+            serverID: stats["server_id"] as? String,
+            serverStart: (stats["server_start_iso8601"] as? String).flatMap(date),
+            mounts: mounts.sorted { $0.path < $1.path })
+    }
+
+    private static func int(_ v: Any?) -> Int? {
+        if let i = v as? Int { return i }
+        if let d = v as? Double { return Int(d) }
+        if let s = v as? String { return Int(s) }
+        return nil
+    }
+
+    private static func date(_ s: String) -> Date? {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd'T'HH:mmZ"
+        if let d = f.date(from: s) { return d }
+        f.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+        return f.date(from: s)
+    }
+}
