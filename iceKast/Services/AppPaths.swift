@@ -2,6 +2,10 @@ import Foundation
 
 enum AppPaths {
     static var supportDir: URL {
+        // Unit tests run inside the real app; keep them away from the user's actual settings.
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            return FileManager.default.temporaryDirectory.appendingPathComponent("iceKast-tests", isDirectory: true)
+        }
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent("iceKast", isDirectory: true)
     }
