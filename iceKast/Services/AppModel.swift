@@ -9,6 +9,8 @@ final class AppModel: ObservableObject {
 
     /// Set when a change needs a server restart; the UI shows a confirmation dialog.
     @Published var restartPrompt: RestartPrompt?
+    /// Shows the setup assistant: automatically on a new install, or from Help › Setup Assistant.
+    @Published var showSetup = false
 
     struct RestartPrompt: Identifiable {
         let id = UUID()
@@ -23,6 +25,7 @@ final class AppModel: ObservableObject {
         config = Self.load() ?? AppConfig.makeDefault()
         save()
         AppPaths.syncShare()
+        showSetup = !config.setupCompleted || CommandLine.arguments.contains("--show-setup")
 
         $config
             .dropFirst()

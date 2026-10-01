@@ -32,6 +32,9 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
         }
+        .sheet(isPresented: $model.showSetup) {
+            SetupWizard().environmentObject(model)
+        }
         .confirmationDialog("Restart the server?",
                             isPresented: Binding(get: { model.restartPrompt != nil },
                                                  set: { if !$0 { model.restartPrompt = nil } }),

@@ -1,0 +1,31 @@
+import XCTest
+import SwiftUI
+@testable import iceKast
+
+/// Renders views offscreen to PNGs for visual review. Only runs when
+/// TEST_RUNNER_ICEKAST_SNAPSHOT_DIR is set (xcodebuild passes it as ICEKAST_SNAPSHOT_DIR).
+@MainActor
+final class SnapshotTests: XCTestCase {
+    func testRenderWizardSteps() throws {
+        guard let dir = ProcessInfo.processInfo.environment["ICEKAST_SNAPSHOT_DIR"] else {
+            throw XCTSkip("snapshot directory not set")
+        }
+        try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        let model = AppModel()
+        for step in WizardStep.allCases {
+            let host = NSHostingView(rootView: SetupWizard(initialStep: step).environmentObject(model))
+            host.frame = NSRect(x: 0, y: 0, width: 640, height: 650)
+            // A real (never shown) window, so AppKit-backed controls such as Form rows draw.
+            let window = NSWindow(contentRect: host.frame, styleMask: [.titled], backing: .buffered, defer: false)
+            window.contentView = host
+            window.layoutIfNeeded()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.6))   // let .onAppear / state settle
+            host.layoutSubtreeIfNeeded()
+            guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds),
+                  let png = { host.cacheDisplay(in: host.bounds, to: rep); return rep.representation(using: .png, properties: [:]) }() else {
+                XCTFail("could not render \(step)"); continue
+            }
+            try png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("wizard-\(step.rawValue)-\(step).png"))
+        }
+    }
+}

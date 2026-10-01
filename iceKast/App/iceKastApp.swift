@@ -9,10 +9,13 @@ struct iceKastApp: App {
         Window("iceKast", id: "main") {
             ContentView()
                 .environmentObject(model)
-                .frame(minWidth: 820, minHeight: 560)
+                .frame(minWidth: 820, minHeight: 680)
         }
         .commands {
             CommandGroup(replacing: .newItem) {}
+            CommandGroup(after: .help) {
+                Button("Setup Assistant…") { model.showSetup = true }
+            }
         }
 
         MenuBarExtra {
@@ -54,6 +57,11 @@ struct MenuBarContent: View {
             Button("Stop Server") { model.stopServer() }
         } else {
             Button("Start Server") { model.startServer() }.disabled(!model.canStart)
+        }
+        Button("Setup Assistant…") {
+            openWindow(id: "main")
+            NSApp.activate(ignoringOtherApps: true)
+            model.showSetup = true
         }
         Button("Open iceKast…") {
             openWindow(id: "main")

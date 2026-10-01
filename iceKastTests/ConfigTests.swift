@@ -207,3 +207,44 @@ final class ListenSettingsTests: XCTestCase {
         XCTAssertNil(ListenSettings(xml: "not xml"))
     }
 }
+
+final class SetupLogicTests: XCTestCase {
+    func testBandwidthEstimate() {
+        XCTAssertEqual(SetupLogic.uploadMbps(listeners: 100, kbps: 64), 6.4, accuracy: 0.0001)
+        XCTAssertEqual(SetupLogic.uploadMbps(listeners: 0, kbps: 128), 0)
+        XCTAssertEqual(SetupLogic.describe(mbps: 6.4), "6.4 Mbps")
+        XCTAssertEqual(SetupLogic.describe(mbps: 32.1), "33 Mbps")
+    }
+
+    func testPortStatus() {
+        let busy: Set<Int> = [8000]
+        let inUse = { busy.contains($0) }
+        XCTAssertEqual(SetupLogic.status(port: 8000, ownPort: nil, isInUse: inUse), .inUse)
+        XCTAssertEqual(SetupLogic.status(port: 8000, ownPort: 8000, isInUse: inUse), .available, "our own server's port is fine")
+        XCTAssertEqual(SetupLogic.status(port: 8010, ownPort: nil, isInUse: inUse), .available)
+        XCTAssertEqual(SetupLogic.status(port: 80, ownPort: nil, isInUse: inUse), .tooLow)
+        XCTAssertEqual(SetupLogic.status(port: 0, ownPort: nil, isInUse: inUse), .invalid)
+        XCTAssertEqual(SetupLogic.status(port: 70000, ownPort: nil, isInUse: inUse), .invalid)
+    }
+
+    func testSuggestPortSkipsBusyOnes() {
+        let busy: Set<Int> = [8000, 8010]
+        XCTAssertEqual(SetupLogic.suggestPort(preferred: 8000, isInUse: { busy.contains($0) }), 8080)
+        XCTAssertEqual(SetupLogic.suggestPort(preferred: 8000, isInUse: { _ in false }), 8000)
+        XCTAssertNil(SetupLogic.suggestPort(preferred: 8000, isInUse: { _ in true }))
+    }
+
+    func testAudienceMapping() {
+        XCTAssertEqual(SetupAudience.thisMac.bindAddress, "127.0.0.1")
+        XCTAssertEqual(SetupAudience.anyone.bindAddress, "")
+        XCTAssertEqual(SetupAudience(bindAddress: "127.0.0.1"), .thisMac)
+        XCTAssertEqual(SetupAudience(bindAddress: ""), .anyone)
+        XCTAssertEqual(SetupAudience(bindAddress: "192.168.1.5"), .anyone)
+    }
+
+    func testNewInstallNeedsSetupButOldConfigDoesNot() throws {
+        XCTAssertFalse(AppConfig.makeDefault().setupCompleted)
+        let old = try JSONDecoder().decode(AppConfig.self, from: Data(#"{"server":{"port":9000}}"#.utf8))
+        XCTAssertTrue(old.setupCompleted)
+    }
+}

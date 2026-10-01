@@ -116,6 +116,8 @@ struct AppConfig: Codable, Equatable {
     var server = ServerSettings()
     var mounts: [Mount] = [Mount()]
     var badge = BadgeTarget.total
+    /// False on a brand-new install until the setup assistant is finished or skipped.
+    var setupCompleted = true
 
     init() {}
 
@@ -124,6 +126,7 @@ struct AppConfig: Codable, Equatable {
         server = try c.decodeIfPresent(ServerSettings.self, forKey: .server) ?? ServerSettings()
         mounts = try c.decodeIfPresent([Mount].self, forKey: .mounts) ?? [Mount()]
         badge = try c.decodeIfPresent(BadgeTarget.self, forKey: .badge) ?? .total
+        setupCompleted = try c.decodeIfPresent(Bool.self, forKey: .setupCompleted) ?? true   // configs from before the wizard existed
     }
 
     /// A fresh config with random passwords so a new install is secure by default.
@@ -131,6 +134,7 @@ struct AppConfig: Codable, Equatable {
         var c = AppConfig()
         c.server.sourcePassword = Password.random()
         c.server.adminPassword = Password.random()
+        c.setupCompleted = false
         return c
     }
 }
