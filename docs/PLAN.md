@@ -12,6 +12,11 @@ station setup. No audio encoding (BUTT, Audio Hijack, LadioCast etc. handle that
 - Icecast and all libraries are built from source, statically linked, bundled in the app.
   No Homebrew or other installs for the end user.
 
+## Versioning
+Public `MAJOR.MINORbN` (beta) or `MAJOR.MINOR` (final); internal build `MAJOR.MINOR.PATCH.BUILD.BETA`.
+`scripts/bump-version.sh beta|final|start X.Y [--commit]` updates project.yml and the README, and with
+`--commit` commits and tags `vX`. Run when cutting a release build, not on every commit.
+
 ## Bundled binary (scripts/build-icecast.sh)
 libogg, libvorbis (required by Icecast's configure), libxml2, libxslt, rhash, libigloo, curl
 (HTTP only, for YP directory listing), icecast 2.5.0. Sources pinned + SHA256 in third_party/SHA256SUMS.
