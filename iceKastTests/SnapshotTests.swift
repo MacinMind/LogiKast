@@ -12,6 +12,13 @@ final class SnapshotTests: XCTestCase {
         }
         try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         let model = AppModel()
+        // The mount page (this is where raw markdown once showed up in a heading).
+        struct MountHost: View {
+            @State var mount = Mount()
+            var body: some View { MountView(mount: $mount, onDelete: {}) }
+        }
+        try snapshot(MountHost().environmentObject(model), size: NSSize(width: 640, height: 900), to: "mount.png", in: dir)
+
         for step in WizardStep.allCases {
             let host = NSHostingView(rootView: SetupWizard(initialStep: step).environmentObject(model))
             host.frame = NSRect(x: 0, y: 0, width: 640, height: 650)
@@ -27,5 +34,18 @@ final class SnapshotTests: XCTestCase {
             }
             try png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("wizard-\(step.rawValue)-\(step).png"))
         }
+    }
+
+    private func snapshot<V: View>(_ view: V, size: NSSize, to name: String, in dir: String) throws {
+        let host = NSHostingView(rootView: view)
+        host.frame = NSRect(origin: .zero, size: size)
+        let window = NSWindow(contentRect: host.frame, styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        window.layoutIfNeeded()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.6))
+        host.layoutSubtreeIfNeeded()
+        guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { return XCTFail("render \(name)") }
+        host.cacheDisplay(in: host.bounds, to: rep)
+        try rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: dir).appendingPathComponent(name))
     }
 }

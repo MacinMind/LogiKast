@@ -25,7 +25,7 @@ struct MountView: View {
                 CopyableRow(label: "Username", value: "source")
                 CopyableRow(label: "Password", value: mount.customPassword.isEmpty ? model.config.server.sourcePassword : mount.customPassword, secret: true)
             } header: {
-                Text(LocalizedStringKey("Connect your encoder (\(Encoders.linkedList))"))
+                markdownText("Connect your encoder (\(Encoders.linkedList))")
             } footer: {
                 Text("The username is always “source” (lowercase) — type it exactly like that in your encoder. The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; iceKast detects them once it connects.")
             }
@@ -71,7 +71,7 @@ struct MountView: View {
                     Text(status != nil
                          ? "Grey text is what your encoder is sending right now, and listeners see it. Type here only to override it."
                          : "What listeners and directories see about this stream. Anything you enter here replaces the encoder's value.")
-                    Text(LocalizedStringKey(Encoders.streamInfoNote))
+                    markdownText(Encoders.streamInfoNote)
                 }
             }
 

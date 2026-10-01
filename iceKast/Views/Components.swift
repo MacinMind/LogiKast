@@ -90,3 +90,12 @@ struct DescriptionField: View {
         }
     }
 }
+
+/// Text with [links](https://…) rendered. Pass the complete string: SwiftUI does not parse
+/// markdown inside a string that is interpolated into another literal.
+func markdownText(_ markdown: String) -> Text {
+    if let attributed = try? AttributedString(markdown: markdown) {
+        return Text(attributed)
+    }
+    return Text(markdown)
+}
