@@ -14,8 +14,7 @@ station setup. No audio encoding (BUTT, Audio Hijack, LadioCast etc. handle that
 
 ## Versioning
 Public `MAJOR.MINORbN` (beta) or `MAJOR.MINOR` (final); internal build `MAJOR.MINOR.PATCH.BUILD.BETA`.
-`scripts/bump-version.sh beta|final|start X.Y [--commit]` updates project.yml and the README, and with
-`--commit` commits and tags `vX`. Run when cutting a release build, not on every commit.
+Bumped when a release build is cut, not on every commit (maintainer-local script).
 
 ## Bundled binary (scripts/build-icecast.sh)
 libogg, libvorbis (required by Icecast's configure), libxml2, libxslt, rhash, libigloo, curl
