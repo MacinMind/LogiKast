@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0CD2D013DC0E6431D00D05EA /* PortCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEADF34A869370614DE3E80 /* PortCheck.swift */; };
 		26AF116D56104A92424E28A5 /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */; };
 		27463D24CF71CB1DF37052E4 /* ConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610A6376565CA78C4E42A758 /* ConfigTests.swift */; };
 		2E30914DCBECCE3C7657A8C0 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5644FE7F55B159FCA87C51DC /* Components.swift */; };
@@ -45,6 +46,7 @@
 		610A6376565CA78C4E42A758 /* ConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigTests.swift; sourceTree = "<group>"; };
 		79FC1BC9BE4F429C9A957680 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPoller.swift; sourceTree = "<group>"; };
+		7DEADF34A869370614DE3E80 /* PortCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortCheck.swift; sourceTree = "<group>"; };
 		81326921DC024F3508FF803E /* iceKastTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iceKastTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInfo.swift; sourceTree = "<group>"; };
 		92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigWriter.swift; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 				C676164C4C310CCEE9148E6F /* AppPaths.swift */,
 				2BA97362268116A110C3DC83 /* IcecastProcess.swift */,
 				8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */,
+				7DEADF34A869370614DE3E80 /* PortCheck.swift */,
 				7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */,
 			);
 			path = Services;
@@ -244,6 +247,7 @@
 				BEDE7E5683189AABFDB3E939 /* IcecastProcess.swift in Sources */,
 				A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */,
 				9ED733F0CE23A69C8280F1BC /* NetworkInfo.swift in Sources */,
+				0CD2D013DC0E6431D00D05EA /* PortCheck.swift in Sources */,
 				58E83162EBEE0AC7C56F244F /* ServerView.swift in Sources */,
 				86C35CCCD314E286FA4310C1 /* StatusParser.swift in Sources */,
 				70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */,

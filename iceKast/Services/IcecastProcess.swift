@@ -29,6 +29,10 @@ final class IcecastProcess: ObservableObject {
             state = .failed("The bundled Icecast server is missing from the app.")
             return
         }
+        if PortCheck.isInUse(port: config.server.port) {
+            state = .failed("Port \(config.server.port) is already in use by another app. Choose a different port in Network settings.")
+            return
+        }
         do {
             try FileManager.default.createDirectory(at: AppPaths.logDir, withIntermediateDirectories: true)
             let xml = ConfigWriter.xml(for: config, paths: AppPaths.icecastPaths)

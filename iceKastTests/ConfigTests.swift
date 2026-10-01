@@ -152,3 +152,27 @@ final class BadgeTests: XCTestCase {
         XCTAssertEqual(AppModel.badgeLabel(config: c, status: status([])), "0")
     }
 }
+
+final class PortCheckTests: XCTestCase {
+    func testDetectsListeningPort() throws {
+        let fd = socket(AF_INET, SOCK_STREAM, 0)
+        defer { close(fd) }
+        var a = sockaddr_in()
+        a.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        a.sin_family = sa_family_t(AF_INET)
+        a.sin_port = 0
+        a.sin_addr.s_addr = inet_addr("127.0.0.1")
+        let bound = withUnsafePointer(to: &a) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) } }
+        XCTAssertEqual(bound, 0)
+        XCTAssertEqual(listen(fd, 1), 0)
+        var out = sockaddr_in(); var len = socklen_t(MemoryLayout<sockaddr_in>.size)
+        _ = withUnsafeMutablePointer(to: &out) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(fd, $0, &len) } }
+        let port = Int(UInt16(bigEndian: out.sin_port))
+        XCTAssertTrue(PortCheck.isInUse(port: port))
+        close(fd)
+    }
+
+    func testFreePortIsNotInUse() {
+        XCTAssertFalse(PortCheck.isInUse(port: 59123))
+    }
+}
