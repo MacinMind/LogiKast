@@ -20,6 +20,8 @@ settings:
     Release:
       CODE_SIGN_IDENTITY: "Developer ID Application"
       OTHER_CODE_SIGN_FLAGS: "--timestamp"
+      # Xcode otherwise adds the debugging entitlement get-task-allow, which Apple refuses to notarize.
+      CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
 targets:
   iceKast:
     type: application
