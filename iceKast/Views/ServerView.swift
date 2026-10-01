@@ -92,7 +92,6 @@ struct ServerView: View {
                 }
             }
             Spacer()
-            ServerToggleButton()
         }
     }
 
