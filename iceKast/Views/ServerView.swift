@@ -36,12 +36,16 @@ struct ServerView: View {
                 IntField(title: "Encoder timeout", value: $model.config.server.sourceTimeout, suffix: "s")
             }
 
-            Section("Passwords") {
+            Section {
                 PasswordRow(label: "Encoder password", value: $model.config.server.sourcePassword)
                 PasswordRow(label: "Admin password", value: $model.config.server.adminPassword)
                 LabeledContent("Admin user") {
                     TextField("", text: $model.config.server.adminUser).multilineTextAlignment(.trailing)
                 }
+            } header: {
+                Text("Passwords")
+            } footer: {
+                Text("Encoders connect with the username “source” and the encoder password. The admin user and password are only for Icecast's web admin pages, never for encoders.")
             }
 
             Section("Station info") {

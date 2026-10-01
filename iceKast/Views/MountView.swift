@@ -17,14 +17,18 @@ struct MountView: View {
                 IssuesView(issues: model.issues.filter { $0.mountID == mount.id })
             }
 
-            Section("Connect your encoder (BUTT, Audio Hijack, LadioCast, …)") {
+            Section {
                 CopyableRow(label: "Server type", value: "Icecast")
                 CopyableRow(label: "Address", value: host)
                 CopyableRow(label: "Port", value: String(port))
                 CopyableRow(label: "Mount", value: mount.name)
-                CopyableRow(label: "User", value: "source")
+                CopyableRow(label: "Username", value: "source")
                 CopyableRow(label: "Password", value: mount.customPassword.isEmpty ? model.config.server.sourcePassword : mount.customPassword, secret: true)
                 CopyableRow(label: "Format", value: mount.format.label)
+            } header: {
+                Text("Connect your encoder (BUTT, Audio Hijack, LadioCast, …)")
+            } footer: {
+                Text("The username is always “source” (lowercase) — type it exactly like that in your encoder. The password is the encoder password.")
             }
 
             Section("Listen link") {
@@ -54,12 +58,16 @@ struct MountView: View {
                 }
             }
 
-            Section("Stream info") {
-                LabeledContent("Name") { TextField("", text: $mount.streamName).multilineTextAlignment(.trailing) }
-                LabeledContent("Description") { TextField("", text: $mount.streamDescription).multilineTextAlignment(.trailing) }
-                LabeledContent("Genre") { TextField("", text: $mount.genre).multilineTextAlignment(.trailing) }
-                LabeledContent("Website") { TextField("", text: $mount.streamURL).multilineTextAlignment(.trailing) }
+            Section {
+                LabeledContent("Name") { TextField("", text: $mount.streamName, prompt: Text("e.g. My Radio Station")).multilineTextAlignment(.trailing) }
+                LabeledContent("Description") { TextField("", text: $mount.streamDescription, prompt: Text("e.g. Classic hits, all day")).multilineTextAlignment(.trailing) }
+                LabeledContent("Genre") { TextField("", text: $mount.genre, prompt: Text("e.g. Variety")).multilineTextAlignment(.trailing) }
+                LabeledContent("Website") { TextField("", text: $mount.streamURL, prompt: Text("https://")).multilineTextAlignment(.trailing) }
                 Toggle("List in public directory", isOn: $mount.isPublic)
+            } header: {
+                Text("Stream info")
+            } footer: {
+                Text("What listeners and directories see about this stream. Leave a field blank to use whatever your encoder sends; anything you enter here replaces the encoder's value.")
             }
 
             Section {

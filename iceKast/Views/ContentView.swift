@@ -32,6 +32,11 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
         }
+        .onAppear {   // lets scripted checks open straight to a mount page
+            if CommandLine.arguments.contains("--show-mount"), let m = model.config.mounts.first {
+                selection = .mount(m.id)
+            }
+        }
     }
 }
 
