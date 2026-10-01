@@ -19,6 +19,9 @@ final class SnapshotTests: XCTestCase {
         }
         try snapshot(MountHost().environmentObject(model), size: NSSize(width: 640, height: 900), to: "mount.png", in: dir)
 
+        try snapshot(SetupWizard(initialStep: .welcome, isRerun: true).environmentObject(model),
+                     size: NSSize(width: 640, height: 650), to: "wizard-rerun-welcome.png", in: dir)
+
         for step in WizardStep.allCases {
             let host = NSHostingView(rootView: SetupWizard(initialStep: step).environmentObject(model))
             host.frame = NSRect(x: 0, y: 0, width: 640, height: 650)

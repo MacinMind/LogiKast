@@ -14,7 +14,7 @@ struct iceKastApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
             CommandGroup(after: .help) {
-                Button("Setup Assistant…") { model.showSetup = true }
+                Button("Setup Assistant…") { model.requestSetup() }
                 Menu("Encoder Apps") { EncoderLinkButtons() }
             }
         }
@@ -62,7 +62,7 @@ struct MenuBarContent: View {
         Button("Setup Assistant…") {
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
-            model.showSetup = true
+            model.requestSetup()
         }
         Menu("Encoder Apps") { EncoderLinkButtons() }
         Button("Open iceKast…") {

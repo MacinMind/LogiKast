@@ -33,7 +33,13 @@ struct ContentView: View {
             ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
         }
         .sheet(isPresented: $model.showSetup) {
-            SetupWizard().environmentObject(model)
+            SetupWizard(isRerun: model.setupIsRerun).environmentObject(model)
+        }
+        .confirmationDialog("Run the Setup Assistant again?", isPresented: $model.showSetupWarning, titleVisibility: .visible) {
+            Button("Continue to Setup Assistant") { model.confirmSetupRerun() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(model.setupWarningMessage)
         }
         .confirmationDialog("Restart the server?",
                             isPresented: Binding(get: { model.restartPrompt != nil },

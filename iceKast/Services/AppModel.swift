@@ -11,6 +11,10 @@ final class AppModel: ObservableObject {
     @Published var restartPrompt: RestartPrompt?
     /// Shows the setup assistant: automatically on a new install, or from Help › Setup Assistant.
     @Published var showSetup = false
+    /// Asked before the assistant opens on a station that is already set up.
+    @Published var showSetupWarning = false
+    /// True when the assistant was opened on an existing setup (it then warns and confirms changes).
+    private(set) var setupIsRerun = false
 
     struct RestartPrompt: Identifiable {
         let id = UUID()
@@ -26,6 +30,7 @@ final class AppModel: ObservableObject {
         save()
         AppPaths.syncShare()
         showSetup = !config.setupCompleted || CommandLine.arguments.contains("--show-setup")
+        setupIsRerun = config.setupCompleted
 
         $config
             .dropFirst()
@@ -64,6 +69,34 @@ final class AppModel: ObservableObject {
         }
         if CommandLine.arguments.contains("--stop") { stopServer() }   // for scripted tests
         if CommandLine.arguments.contains("--apply") { applyChanges() }
+    }
+
+    // MARK: Setup assistant
+
+    /// Opens the assistant. On an existing setup it asks first, because the assistant edits
+    /// the server settings and the first mount.
+    func requestSetup() {
+        if config.setupCompleted {
+            showSetupWarning = true
+        } else {
+            setupIsRerun = false
+            showSetup = true
+        }
+    }
+
+    func confirmSetupRerun() {
+        showSetupWarning = false
+        setupIsRerun = true
+        showSetup = true
+    }
+
+    /// Mount names with live listener counts, for the warning text.
+    var setupWarningMessage: String {
+        let mounts = config.mounts.map { m -> String in
+            let l = status(for: m)?.listeners
+            return l.map { "\(m.name) (\($0) listening)" } ?? m.name
+        }.joined(separator: ", ")
+        return "You already have a station set up (\(mounts)). The assistant is for first-time setup: it changes your server settings and your first mount, and encoders using a mount you rename will be disconnected.\n\nTo add another stream, cancel and use the + button above the mount list instead.\n\nNothing is saved until you confirm at the end."
     }
 
     // MARK: Server control

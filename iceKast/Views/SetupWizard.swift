@@ -25,8 +25,14 @@ struct SetupWizard: View {
     @State private var portStatus = PortStatus.available
     @State private var loaded = false
 
-    init(initialStep: WizardStep = .welcome) {
+    /// True when opened on a station that is already set up: warns, and confirms changes before saving.
+    let isRerun: Bool
+    @State private var pendingChanges: [SetupChange] = []
+    @State private var confirmChanges = false
+
+    init(initialStep: WizardStep = .welcome, isRerun: Bool = false) {
         _step = State(initialValue: initialStep)
+        self.isRerun = isRerun
     }
 
     private var ownPort: Int? { model.server.isEnabled ? model.config.server.port : nil }
@@ -38,7 +44,7 @@ struct SetupWizard: View {
             Divider()
             Group {
                 switch step {
-                case .welcome: WelcomeStep()
+                case .welcome: WelcomeStep(isRerun: isRerun, mounts: model.config.mounts.map(\.name))
                 case .station: stationStep
                 case .network: networkStep
                 case .listeners: listenersStep
@@ -51,6 +57,22 @@ struct SetupWizard: View {
         }
         .frame(width: 640, height: 650)
         .onAppear(perform: load)
+        .alert("Change your existing station?", isPresented: $confirmChanges) {
+            Button("Apply Changes", role: pendingChanges.contains { $0.disruptive } ? .destructive : nil) {
+                commit(); applyIfRunning(); step = .encoder
+            }
+            Button("Go Back", role: .cancel) {}
+        } message: {
+            Text(changeSummary)
+        }
+    }
+
+    private var changeSummary: String {
+        var lines = pendingChanges.map { "• \($0.text)\($0.disruptive ? "  ⚠︎" : "")" }
+        if pendingChanges.contains(where: { $0.disruptive }) {
+            lines.append("\n⚠︎ These changes can disconnect listeners and encoders; encoders may need new settings.")
+        }
+        return lines.joined(separator: "\n")
     }
 
     // MARK: Chrome
@@ -72,7 +94,7 @@ struct SetupWizard: View {
     private var footer: some View {
         HStack {
             if step == .welcome {
-                Button("Skip Setup") { finish(skip: true) }
+                Button(isRerun ? "Cancel" : "Skip Setup") { finish(skip: true) }
             } else {
                 Button("Back") { go(-1) }
             }
@@ -238,17 +260,34 @@ struct SetupWizard: View {
 
     private func go(_ delta: Int) {
         guard let next = WizardStep(rawValue: step.rawValue + delta) else { return }
-        if next == .encoder { commit(); applyIfRunning() }
+        if next == .encoder {
+            if isRerun {
+                let changes = SetupLogic.changes(from: model.config, to: committedConfig())
+                if !changes.isEmpty {
+                    pendingChanges = changes
+                    confirmChanges = true
+                    return                      // stays put until the user confirms
+                }
+            } else {
+                commit(); applyIfRunning()
+            }
+        }
         step = next
     }
 
-    /// Saves the draft as the app's configuration.
-    private func commit() {
+    /// The configuration the draft would produce, without saving it.
+    private func committedConfig() -> AppConfig {
         var c = draft
         c.server.bindAddress = audience.bindAddress
         if audience == .thisMac { c.server.hostname = "localhost" }
         if c.server.hostname.trimmingCharacters(in: .whitespaces).isEmpty { c.server.hostname = "localhost" }
         c.setupCompleted = true
+        return c
+    }
+
+    /// Saves the draft as the app's configuration.
+    private func commit() {
+        let c = committedConfig()
         draft = c
         model.config = c
     }
@@ -261,7 +300,7 @@ struct SetupWizard: View {
 
     private func finish(skip: Bool) {
         if skip {
-            model.config.setupCompleted = true
+            if !isRerun { model.config.setupCompleted = true }   // a re-run Cancel changes nothing
         } else {
             commit()
             applyIfRunning()
@@ -273,10 +312,26 @@ struct SetupWizard: View {
 // MARK: - Welcome
 
 private struct WelcomeStep: View {
+    var isRerun = false
+    var mounts: [String] = []
+
     var body: some View {
-        VStack(spacing: 22) {
+        VStack(spacing: isRerun ? 14 : 22) {
+            if isRerun {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("You already have a station set up", systemImage: "exclamationmark.triangle.fill")
+                        .font(.headline).foregroundStyle(.orange)
+                    Text("This assistant is for first-time setup. It changes your server settings and your first mount (\(mounts.first ?? "/live")), and encoders using a mount you rename will be disconnected. To add another stream, cancel and use the + button above the mount list. Nothing is saved until you confirm at the end.")
+                        .font(.callout)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                .padding(.horizontal, 24)
+            }
             Image(nsImage: NSApp.applicationIconImage)
-                .resizable().frame(width: 96, height: 96)
+                .resizable().frame(width: isRerun ? 56 : 96, height: isRerun ? 56 : 96)
             Text("Let's get your station on the air.")
                 .font(.title3)
             VStack(alignment: .leading, spacing: 14) {
@@ -290,7 +345,7 @@ private struct WelcomeStep: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
         }
-        .padding(.top, 24)
+        .padding(.top, isRerun ? 12 : 24)
     }
 
     private func row(_ icon: String, _ title: String, _ detail: String) -> some View {

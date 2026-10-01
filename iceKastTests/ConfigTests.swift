@@ -289,3 +289,42 @@ final class StreamInfoTextTests: XCTestCase {
         XCTAssertEqual(try doc.nodes(forXPath: "//mount/stream-description").first?.stringValue, "OneTwo")
     }
 }
+
+final class SetupChangesTests: XCTestCase {
+    private func base() -> AppConfig {
+        var c = AppConfig.makeDefault()
+        c.mounts[0].name = "/live"
+        c.mounts[0].streamName = "My Station"
+        return c
+    }
+
+    func testNoChangesWhenUntouched() {
+        XCTAssertTrue(SetupLogic.changes(from: base(), to: base()).isEmpty)
+    }
+
+    func testRenamingTheMountIsFlaggedAsDisruptive() throws {
+        var new = base()
+        new.mounts[0].name = "/newstation"
+        let changes = SetupLogic.changes(from: base(), to: new)
+        let mount = try XCTUnwrap(changes.first { $0.text.hasPrefix("Mount name") })
+        XCTAssertTrue(mount.disruptive)
+        XCTAssertEqual(mount.text, "Mount name: /live → /newstation")
+    }
+
+    func testStreamInfoChangeIsNotDisruptive() throws {
+        var new = base()
+        new.mounts[0].streamName = "Other"
+        new.mounts[0].genre = "Jazz"
+        let changes = SetupLogic.changes(from: base(), to: new)
+        XCTAssertEqual(changes.count, 2)
+        XCTAssertFalse(changes.contains { $0.disruptive })
+    }
+
+    func testPortAndAudienceAreDisruptive() {
+        var new = base()
+        new.server.port = 9000
+        new.server.bindAddress = "127.0.0.1"
+        let changes = SetupLogic.changes(from: base(), to: new)
+        XCTAssertEqual(changes.filter(\.disruptive).count, 2)
+    }
+}
