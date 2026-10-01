@@ -1,0 +1,38 @@
+--- a/src/common/thread/thread.c
++++ b/src/common/thread/thread.c
+@@ -314,7 +314,7 @@
+         if (pthread_create (&thread->sys_thread, &attr, _start_routine, start) == 0)
+         {
+             pthread_attr_destroy (&attr);
+-#ifdef HAVE_PTHREAD_SETNAME_NP
++#if defined(HAVE_PTHREAD_SETNAME_NP) && !defined(__APPLE__)
+             if (pthread_setname_np(thread->sys_thread, name) != 0) {
+                 /* If the call above did not work it was likely due to name limit restrictions.
+                  * In that case we retry with a fixed name so we do not inherit our parent's name.
+@@ -515,7 +515,9 @@
+ {
+     pthread_condattr_t attr;
+     pthread_condattr_init(&attr);
++#ifndef __APPLE__
+     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
++#endif
+     pthread_cond_init(&cond->sys_cond, &attr);
+     pthread_condattr_destroy(&attr);
+     pthread_mutex_init(&cond->cond_mutex, NULL);
+@@ -540,6 +542,16 @@
+ void thread_cond_timedwait_c(cond_t *cond, int millis, int line, char *file)
+ {
+     struct timespec time;
++
++#ifdef __APPLE__
++    /* macOS has no pthread_condattr_setclock(); use the relative-time wait instead. */
++    time.tv_sec  = millis / 1000;
++    time.tv_nsec = (millis % 1000) * 1000000L;
++    pthread_mutex_lock(&cond->cond_mutex);
++    pthread_cond_timedwait_relative_np(&cond->sys_cond, &cond->cond_mutex, &time);
++    pthread_mutex_unlock(&cond->cond_mutex);
++    return;
++#endif
+ 
+     clock_gettime(CLOCK_MONOTONIC, &time);
+ 
