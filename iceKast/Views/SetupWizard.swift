@@ -101,13 +101,17 @@ struct SetupWizard: View {
     private var stationStep: some View {
         Form {
             Section {
-                Text("This is what listeners and directories see. You can change it any time, and anything you leave blank is filled in by your encoder.")
-                    .foregroundStyle(.secondary)
-            }
-            Section {
                 LabeledContent("Station name") { TextField("", text: mountBinding.streamName, prompt: Text("e.g. My Radio Station")).multilineTextAlignment(.trailing) }
+                LabeledContent("Description") { TextField("", text: mountBinding.streamDescription, prompt: Text("e.g. Classic hits, all day")).multilineTextAlignment(.trailing) }
                 LabeledContent("Genre") { TextField("", text: mountBinding.genre, prompt: Text("e.g. Variety")).multilineTextAlignment(.trailing) }
                 LabeledContent("Website") { TextField("", text: mountBinding.streamURL, prompt: Text("https://")).multilineTextAlignment(.trailing) }
+            } header: {
+                Text("What listeners see")
+            } footer: {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("This is shown to listeners and in directories. You can change it any time.")
+                    Text(LocalizedStringKey(Encoders.streamInfoNote))
+                }
             }
             Section {
                 DisclosureGroup("Advanced") {
@@ -279,7 +283,7 @@ private struct WelcomeStep: View {
                 row("1.circle.fill", "Name your station", "What listeners see.")
                 row("2.circle.fill", "Choose how people connect", "Port and who can listen.")
                 row("3.circle.fill", "Set your listener limit", "And see the internet speed it needs.")
-                row("4.circle.fill", "Connect your encoder", "BUTT, Audio Hijack, LadioCast or similar sends your audio here.")
+                row("4.circle.fill", "Connect your encoder", "An encoder app such as \(Encoders.linkedList) sends your audio here.")
             }
             Text("iceKast runs the server in the background, so your station stays on the air even when this window is closed.")
                 .font(.callout).foregroundStyle(.secondary)
@@ -294,7 +298,7 @@ private struct WelcomeStep: View {
             Image(systemName: icon).font(.title2).foregroundStyle(Color.accentColor)
             VStack(alignment: .leading) {
                 Text(title).font(.headline)
-                Text(detail).foregroundStyle(.secondary)
+                Text(LocalizedStringKey(detail)).foregroundStyle(.secondary)
             }
         }
     }
@@ -337,7 +341,7 @@ private struct EncoderStep: View {
             } header: {
                 Text("2. Enter these in your encoder")
             } footer: {
-                Text("Choose “Icecast” as the server type. The username is always “source”. Format and bitrate are chosen in your encoder.")
+                Text(LocalizedStringKey("Choose “Icecast” as the server type. The username is always “source”. Format and bitrate are chosen in your encoder. Need one? Get \(Encoders.linkedList)."))
             }
 
             Section("3. Check the connection") {

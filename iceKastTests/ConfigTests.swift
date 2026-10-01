@@ -248,3 +248,19 @@ final class SetupLogicTests: XCTestCase {
         XCTAssertTrue(old.setupCompleted)
     }
 }
+
+final class EncodersTests: XCTestCase {
+    func testOrderAndLinks() {
+        XCTAssertEqual(Encoders.all.map(\.name), ["Audio Hijack", "LadioCast", "BUTT", "BUTTM"])
+        XCTAssertEqual(Encoders.all.map { $0.url.host }, ["rogueamoeba.com", "apps.apple.com", "danielnoethen.de", "buttm.app"])
+        XCTAssertEqual(Encoders.all.filter { !$0.sendsDescription }.map(\.name), ["Audio Hijack"])
+    }
+
+    func testMarkdownListKeepsOrderAndLinks() {
+        let md = Encoders.linkedList
+        XCTAssertTrue(md.hasPrefix("[Audio Hijack](https://rogueamoeba.com/audiohijack/), [LadioCast]("))
+        XCTAssertTrue(md.hasSuffix(" and [BUTTM](https://buttm.app)"))
+        XCTAssertTrue(Encoders.streamInfoNote.contains("[Audio Hijack]"))
+        XCTAssertTrue(Encoders.streamInfoNote.contains("not a description"))
+    }
+}

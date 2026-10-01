@@ -19,6 +19,7 @@
 		70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */; };
 		86C35CCCD314E286FA4310C1 /* StatusParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31535E4E7D3D40A948F266E3 /* StatusParser.swift */; };
 		9197E600CD085B542496E3FE /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73ED26928D799F4A29B7C20 /* AppModel.swift */; };
+		97917B74A15552A6C141652F /* Encoders.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6340ADCFC2C60345328F66AE /* Encoders.swift */; };
 		9ED733F0CE23A69C8280F1BC /* NetworkInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */; };
 		A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D35D86879EE68B5922EBDCD /* MountView.swift */; };
 		A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79FC1BC9BE4F429C9A957680 /* ContentView.swift */; };
@@ -48,6 +49,7 @@
 		57F0C5D22C5427ED56B258CC /* ServerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerView.swift; sourceTree = "<group>"; };
 		5FF5C092EAC8C690C680366E /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		610A6376565CA78C4E42A758 /* ConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigTests.swift; sourceTree = "<group>"; };
+		6340ADCFC2C60345328F66AE /* Encoders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encoders.swift; sourceTree = "<group>"; };
 		6341B04511F3D36DBC0DBCAA /* SetupWizard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupWizard.swift; sourceTree = "<group>"; };
 		79FC1BC9BE4F429C9A957680 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPoller.swift; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 			children = (
 				5FF5C092EAC8C690C680366E /* Config.swift */,
 				92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */,
+				6340ADCFC2C60345328F66AE /* Encoders.swift */,
 				99884DE231B60532FBAA60E4 /* SetupLogic.swift */,
 				31535E4E7D3D40A948F266E3 /* StatusParser.swift */,
 				FB853C43E6424077C91F3D3A /* Validator.swift */,
@@ -276,6 +279,7 @@
 				E1C899DA158C9994A5C958CC /* Config.swift in Sources */,
 				26AF116D56104A92424E28A5 /* ConfigWriter.swift in Sources */,
 				A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */,
+				97917B74A15552A6C141652F /* Encoders.swift in Sources */,
 				328C0A54CF8FBEE00A1EEE16 /* IcecastService.swift in Sources */,
 				A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */,
 				9ED733F0CE23A69C8280F1BC /* NetworkInfo.swift in Sources */,

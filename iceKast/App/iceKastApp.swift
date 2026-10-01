@@ -15,6 +15,7 @@ struct iceKastApp: App {
             CommandGroup(replacing: .newItem) {}
             CommandGroup(after: .help) {
                 Button("Setup Assistant…") { model.showSetup = true }
+                Menu("Encoder Apps") { EncoderLinkButtons() }
             }
         }
 
@@ -63,6 +64,7 @@ struct MenuBarContent: View {
             NSApp.activate(ignoringOtherApps: true)
             model.showSetup = true
         }
+        Menu("Encoder Apps") { EncoderLinkButtons() }
         Button("Open iceKast…") {
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
@@ -78,6 +80,15 @@ struct MenuBarContent: View {
         case .running: return model.poller.reachable ? "Server is running" : "Server is starting…"
         case .needsApproval: return "Needs approval in Login Items"
         case .failed: return "Server problem — open iceKast"
+        }
+    }
+}
+
+/// One menu item per encoder app, opening its website.
+struct EncoderLinkButtons: View {
+    var body: some View {
+        ForEach(Encoders.all) { e in
+            Button(e.name) { NSWorkspace.shared.open(e.url) }
         }
     }
 }

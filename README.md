@@ -5,7 +5,7 @@
 **Version 1.0b1 (beta)**
 
 A free macOS app that makes running an [Icecast](https://icecast.org) streaming server easy.
-Built for Radiologik users, but works with any encoder (BUTT, Audio Hijack, LadioCast…).
+Built for Radiologik users, but works with any Icecast-compatible encoder, such as [Audio Hijack](https://rogueamoeba.com/audiohijack/), [LadioCast](https://apps.apple.com/us/app/ladiocast/id411213048), [BUTT](https://danielnoethen.de/butt/) and [BUTTM](https://buttm.app).
 Icecast is bundled; nothing else needs to be installed. MP3, AAC and HE-AAC streams.
 
 - One Icecast server with any number of mounts; per-mount max listeners, burst size, fallback and stream info
