@@ -22,6 +22,7 @@
 		A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D35D86879EE68B5922EBDCD /* MountView.swift */; };
 		A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79FC1BC9BE4F429C9A957680 /* ContentView.swift */; };
 		AD5EA5C61B6D72D55EAD5B0D /* Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB853C43E6424077C91F3D3A /* Validator.swift */; };
+		C4667516C71D1F93E004A086 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 86A786A69B79DBD00861CE27 /* Assets.xcassets */; };
 		E1C899DA158C9994A5C958CC /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF5C092EAC8C690C680366E /* Config.swift */; };
 /* End PBXBuildFile section */
 
@@ -49,6 +50,7 @@
 		7DEADF34A869370614DE3E80 /* PortCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortCheck.swift; sourceTree = "<group>"; };
 		81326921DC024F3508FF803E /* iceKastTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iceKastTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInfo.swift; sourceTree = "<group>"; };
+		86A786A69B79DBD00861CE27 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigWriter.swift; sourceTree = "<group>"; };
 		AC2E5DE04E8C8B115D5F42CE /* iceKast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iceKast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACAFCBBA30FAD9516949B899 /* iceKastApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iceKastApp.swift; sourceTree = "<group>"; };
@@ -70,6 +72,7 @@
 		0359EDB9D6814CB2BC93C074 /* iceKast */ = {
 			isa = PBXGroup;
 			children = (
+				86A786A69B79DBD00861CE27 /* Assets.xcassets */,
 				BF81CF1BC5A8D32216E95419 /* iceKast.entitlements */,
 				31124CD52E82DBF1E0AD3469 /* Info.plist */,
 				7D2C310C27ABF25EB213BC69 /* App */,
@@ -149,6 +152,7 @@
 			buildConfigurationList = ED824A107567315E837AEAC5 /* Build configuration list for PBXNativeTarget "iceKast" */;
 			buildPhases = (
 				81F118436C94ED6C9D534CA5 /* Sources */,
+				1EEAB333041A02A56A14FD91 /* Resources */,
 				D3EEA0E1BF9CD6CE0B6FF5CE /* Bundle Icecast */,
 			);
 			buildRules = (
@@ -218,6 +222,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1EEAB333041A02A56A14FD91 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C4667516C71D1F93E004A086 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		D3EEA0E1BF9CD6CE0B6FF5CE /* Bundle Icecast */ = {

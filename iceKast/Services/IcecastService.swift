@@ -1,5 +1,6 @@
 import Foundation
 import ServiceManagement
+import os
 
 /// Controls Icecast as a per-user launch agent (SMAppService), so the server keeps running
 /// when iceKast is closed, restarts if it crashes, and starts at login.
@@ -23,6 +24,7 @@ final class IcecastService: ObservableObject {
     /// The icecast.xml the running server was last given.
     @Published private(set) var appliedXML: String?
 
+    private let log = Logger(subsystem: "com.macinmind.icekast", category: "service")
     private let service = SMAppService.agent(plistName: IcecastService.plistName)
     private var timer: Timer?
     private var enabledSince: Date?
@@ -42,6 +44,7 @@ final class IcecastService: ObservableObject {
     // MARK: Control
 
     func start(config: AppConfig) {
+        log.notice("start requested (enabled=\(self.isEnabled, privacy: .public), args=\(CommandLine.arguments.dropFirst().joined(separator: " "), privacy: .public))")
         if isEnabled {            // already registered: just (re)start it with current settings
             apply(config: config, forceRestart: true)
             return
@@ -73,6 +76,7 @@ final class IcecastService: ObservableObject {
     }
 
     func stop() {
+        log.notice("stop requested")
         do { try service.unregister() } catch {
             state = .failed("Could not stop the background server: \(error.localizedDescription)")
         }
