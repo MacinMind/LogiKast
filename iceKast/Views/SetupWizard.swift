@@ -102,7 +102,7 @@ struct SetupWizard: View {
         Form {
             Section {
                 LabeledContent("Station name") { TextField("", text: mountBinding.streamName, prompt: Text("e.g. My Radio Station")).multilineTextAlignment(.trailing) }
-                LabeledContent("Description") { TextField("", text: mountBinding.streamDescription, prompt: Text("e.g. Classic hits, all day")).multilineTextAlignment(.trailing) }
+                DescriptionField(text: mountBinding.streamDescription, prompt: "e.g. Classic hits, all day")
                 LabeledContent("Genre") { TextField("", text: mountBinding.genre, prompt: Text("e.g. Variety")).multilineTextAlignment(.trailing) }
                 LabeledContent("Website") { TextField("", text: mountBinding.streamURL, prompt: Text("https://")).multilineTextAlignment(.trailing) }
             } header: {

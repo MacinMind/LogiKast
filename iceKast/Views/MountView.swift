@@ -56,7 +56,7 @@ struct MountView: View {
 
             Section {
                 LabeledContent("Name") { TextField("", text: $mount.streamName, prompt: Text(status?.streamName ?? "e.g. My Radio Station")).multilineTextAlignment(.trailing) }
-                LabeledContent("Description") { TextField("", text: $mount.streamDescription, prompt: Text(status?.streamDescription ?? "e.g. Classic hits, all day")).multilineTextAlignment(.trailing) }
+                DescriptionField(text: $mount.streamDescription, prompt: status?.streamDescription ?? "e.g. Classic hits, all day")
                 LabeledContent("Genre") { TextField("", text: $mount.genre, prompt: Text(status?.genre ?? "e.g. Variety")).multilineTextAlignment(.trailing) }
                 LabeledContent("Website") { TextField("", text: $mount.streamURL, prompt: Text(status?.streamURL ?? "https://")).multilineTextAlignment(.trailing) }
                 if let s = status, hasEncoderInfo(s) {

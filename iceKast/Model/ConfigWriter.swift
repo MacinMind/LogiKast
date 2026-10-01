@@ -54,9 +54,9 @@ enum ConfigWriter {
             }
             x.line("charset", "UTF-8")
             x.line("public", m.isPublic ? 1 : 0)
-            if !m.streamName.isEmpty { x.line("stream-name", m.streamName) }
-            if !m.streamDescription.isEmpty { x.line("stream-description", m.streamDescription) }
-            if !m.genre.isEmpty { x.line("genre", m.genre) }
+            if !m.streamName.isEmpty { x.line("stream-name", StreamInfoText.clean(m.streamName)) }
+            if !m.streamDescription.isEmpty { x.line("stream-description", StreamInfoText.clean(m.streamDescription)) }
+            if !m.genre.isEmpty { x.line("genre", StreamInfoText.clean(m.genre)) }
             if !m.streamURL.isEmpty { x.line("stream-url", m.streamURL) }
             x.close("mount")
         }

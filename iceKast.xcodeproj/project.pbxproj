@@ -22,6 +22,7 @@
 		97917B74A15552A6C141652F /* Encoders.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6340ADCFC2C60345328F66AE /* Encoders.swift */; };
 		9ED733F0CE23A69C8280F1BC /* NetworkInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */; };
 		A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D35D86879EE68B5922EBDCD /* MountView.swift */; };
+		A325D6AD4A7A2981DFD839F0 /* StreamInfoText.swift in Sources */ = {isa = PBXBuildFile; fileRef = D45F394AA924C7161E3255AF /* StreamInfoText.swift */; };
 		A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79FC1BC9BE4F429C9A957680 /* ContentView.swift */; };
 		AAC00DFD6C2D7E2DE2FEDD53 /* SnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD932A8C31C8D974532BC57 /* SnapshotTests.swift */; };
 		AD5EA5C61B6D72D55EAD5B0D /* Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB853C43E6424077C91F3D3A /* Validator.swift */; };
@@ -65,6 +66,7 @@
 		BAD932A8C31C8D974532BC57 /* SnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotTests.swift; sourceTree = "<group>"; };
 		BF81CF1BC5A8D32216E95419 /* iceKast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iceKast.entitlements; sourceTree = "<group>"; };
 		C676164C4C310CCEE9148E6F /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
+		D45F394AA924C7161E3255AF /* StreamInfoText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamInfoText.swift; sourceTree = "<group>"; };
 		FB853C43E6424077C91F3D3A /* Validator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -121,6 +123,7 @@
 				6340ADCFC2C60345328F66AE /* Encoders.swift */,
 				99884DE231B60532FBAA60E4 /* SetupLogic.swift */,
 				31535E4E7D3D40A948F266E3 /* StatusParser.swift */,
+				D45F394AA924C7161E3255AF /* StreamInfoText.swift */,
 				FB853C43E6424077C91F3D3A /* Validator.swift */,
 			);
 			path = Model;
@@ -289,6 +292,7 @@
 				E1BA22D5E03A2E9F680B9716 /* SetupWizard.swift in Sources */,
 				86C35CCCD314E286FA4310C1 /* StatusParser.swift in Sources */,
 				70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */,
+				A325D6AD4A7A2981DFD839F0 /* StreamInfoText.swift in Sources */,
 				AD5EA5C61B6D72D55EAD5B0D /* Validator.swift in Sources */,
 				6836B71669609FF48B76ED58 /* iceKastApp.swift in Sources */,
 			);

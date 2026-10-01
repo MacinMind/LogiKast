@@ -62,3 +62,31 @@ struct IssuesView: View {
         }
     }
 }
+
+/// Description editor: wraps over a few lines like a text area, but never accepts line breaks.
+struct DescriptionField: View {
+    @Binding var text: String
+    var prompt: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Description")
+            TextField("", text: $text, prompt: Text(prompt), axis: .vertical)
+                .lineLimit(2...4)
+                .textFieldStyle(.roundedBorder)
+            HStack {
+                if text.count > StreamInfoText.softLimit {
+                    Text("Shorter descriptions work best in directories.")
+                }
+                Spacer()
+                Text("\(text.count)/\(StreamInfoText.softLimit)").monospacedDigit()
+            }
+            .font(.caption)
+            .foregroundStyle(text.count > StreamInfoText.softLimit ? Color.orange : Color.secondary)
+        }
+        .onChange(of: text) { new in
+            let cleaned = StreamInfoText.clean(new)
+            if cleaned != new { text = cleaned }
+        }
+    }
+}

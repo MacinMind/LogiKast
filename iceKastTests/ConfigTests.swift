@@ -264,3 +264,28 @@ final class EncodersTests: XCTestCase {
         XCTAssertTrue(Encoders.streamInfoNote.contains("not a description"))
     }
 }
+
+final class StreamInfoTextTests: XCTestCase {
+    func testNewlinesAreRemoved() {
+        XCTAssertEqual(StreamInfoText.clean("Line one\nLine two\r\nThree"), "Line oneLine twoThree")
+    }
+
+    func testHardLimit() {
+        XCTAssertEqual(StreamInfoText.clean(String(repeating: "a", count: 900)).count, StreamInfoText.hardLimit)
+        XCTAssertEqual(StreamInfoText.clean("short"), "short")
+    }
+
+    func testLimitsStayBelowIcecastsRequestCutoff() {
+        // Icecast refuses source connections whose request exceeds 4096 bytes (~3,900 chars of description).
+        XCTAssertLessThan(StreamInfoText.hardLimit, 3900)
+        XCTAssertLessThan(StreamInfoText.softLimit, StreamInfoText.hardLimit)
+    }
+
+    func testConfigNeverContainsLineBreaksInDescription() throws {
+        var c = AppConfig.makeDefault()
+        c.mounts[0].streamDescription = "One\nTwo"
+        let xml = ConfigWriter.xml(for: c, paths: IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b"))
+        let doc = try XMLDocument(xmlString: xml)
+        XCTAssertEqual(try doc.nodes(forXPath: "//mount/stream-description").first?.stringValue, "OneTwo")
+    }
+}
