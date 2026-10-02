@@ -9,7 +9,7 @@ struct iceKastApp: App {
         Window("iceKast", id: "main") {
             ContentView()
                 .environmentObject(model)
-                .frame(minWidth: 820, minHeight: 710)
+                .frame(minWidth: 820, minHeight: 730)
         }
         .commands {
             CommandGroup(replacing: .newItem) {}
