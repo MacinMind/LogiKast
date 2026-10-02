@@ -17,7 +17,7 @@ final class SnapshotTests: XCTestCase {
             @State var mount = Mount()
             var body: some View { MountView(mount: $mount, onDelete: {}) }
         }
-        try snapshot(MountHost().environmentObject(model), size: NSSize(width: 640, height: 900), to: "mount.png", in: dir)
+        try snapshot(MountHost().environmentObject(model), size: NSSize(width: 640, height: 1750), to: "mount.png", in: dir)
 
         try snapshot(SetupWizard(initialStep: .welcome, isRerun: true).environmentObject(model),
                      size: NSSize(width: 640, height: 650), to: "wizard-rerun-welcome.png", in: dir)

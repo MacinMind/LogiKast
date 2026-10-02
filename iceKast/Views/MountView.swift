@@ -9,6 +9,9 @@ struct MountView: View {
     private var status: MountStatus? { model.status(for: mount) }
     private var host: String { model.config.server.hostname.isEmpty ? "localhost" : model.config.server.hostname }
     private var port: Int { model.config.server.port }
+    private var share: ShareLinks {
+        ShareLinks(host: host, port: port, mount: mount.name, title: mount.streamName.isEmpty ? (status?.streamName ?? "") : mount.streamName)
+    }
 
     var body: some View {
         Form {
@@ -30,11 +33,22 @@ struct MountView: View {
                 Text("The username is always “source” (lowercase) — type it exactly like that in your encoder. The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; iceKast detects them once it connects.")
             }
 
-            Section("Listen link") {
-                CopyableRow(label: "URL", value: "http://\(host):\(port)\(mount.name)")
+            Section {
+                CopyableRow(label: "Listen link", value: share.listenURL)
+                CopyableRow(label: "Playlist (.m3u)", value: share.playlistURL)
                 ForEach(NetworkInfo.lanIPv4Addresses(), id: \.self) { ip in
                     CopyableRow(label: "On your network", value: "http://\(ip):\(port)\(mount.name)")
                 }
+                if DirectoryListing.isPrivateHost(host) {
+                    Label("These links use \"\(host)\", which only works on this Mac or your own network. For people on the internet, enter your public address under Server › Network › Public host name.",
+                          systemImage: "info.circle").foregroundStyle(.secondary).font(.callout)
+                }
+                SharePlayerView(share: share)
+                QRShareView(url: share.listenURL, mountName: mount.name)
+            } header: {
+                Text("Share your stream")
+            } footer: {
+                Text("Listeners open the link or playlist in any player. The website player code works on any web page. " + ShareLinks.httpsNote)
             }
 
             Section("Mount") {

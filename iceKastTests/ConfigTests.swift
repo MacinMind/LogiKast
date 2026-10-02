@@ -398,3 +398,36 @@ final class DirectoryListingTests: XCTestCase {
         try c.server.sourcePassword.write(toFile: dir + "/pw", atomically: true, encoding: .utf8)
     }
 }
+
+import CoreImage
+
+final class ShareLinksTests: XCTestCase {
+    func testLinks() {
+        let s = ShareLinks(host: "radio.example.com", port: 8000, mount: "/live", title: "My Station")
+        XCTAssertEqual(s.listenURL, "http://radio.example.com:8000/live")
+        XCTAssertEqual(s.playlistURL, "http://radio.example.com:8000/live.m3u")
+    }
+
+    func testBlankHostFallsBackAndIPv6IsBracketed() {
+        XCTAssertEqual(ShareLinks(host: " ", port: 8000, mount: "/a", title: "").listenURL, "http://localhost:8000/a")
+        XCTAssertEqual(ShareLinks(host: "2001:db8::1", port: 8000, mount: "/a", title: "").listenURL, "http://[2001:db8::1]:8000/a")
+    }
+
+    func testPlayerHTMLEscapesTheTitle() {
+        let html = ShareLinks(host: "h.com", port: 80, mount: "/m", title: "Rock & \"Roll\" <live>").playerHTML
+        XCTAssertTrue(html.contains("aria-label=\"Rock &amp; &quot;Roll&quot; &lt;live&gt;\""))
+        XCTAssertTrue(html.contains("src=\"http://h.com:80/m\""))
+        XCTAssertFalse(html.contains("<live>"))
+    }
+
+    func testQRCodeDecodesBackToTheLink() throws {
+        let url = "http://radio.example.com:8000/live"
+        let image = try XCTUnwrap(QRCode.image(for: url, size: 300))
+        let cg = try XCTUnwrap(image.cgImage(forProposedRect: nil, context: nil, hints: nil))
+        let detector = try XCTUnwrap(CIDetector(ofType: CIDetectorTypeQRCode, context: nil,
+                                                options: [CIDetectorAccuracy: CIDetectorAccuracyHigh]))
+        let found = detector.features(in: CIImage(cgImage: cg)).compactMap { ($0 as? CIQRCodeFeature)?.messageString }
+        XCTAssertEqual(found, [url], "the QR code must decode to exactly the listen link")
+        XCTAssertNotNil(QRCode.pngData(for: url))
+    }
+}

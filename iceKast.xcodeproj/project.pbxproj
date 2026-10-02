@@ -14,6 +14,7 @@
 		2E30914DCBECCE3C7657A8C0 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5644FE7F55B159FCA87C51DC /* Components.swift */; };
 		328C0A54CF8FBEE00A1EEE16 /* IcecastService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531E5028415A84690E541BEC /* IcecastService.swift */; };
 		3C5022967D33ABAA0CCA0F22 /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = C676164C4C310CCEE9148E6F /* AppPaths.swift */; };
+		4D3FAAC2346F469C51FF1BC9 /* ShareViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73863A5A273666FD146C34BF /* ShareViews.swift */; };
 		58E83162EBEE0AC7C56F244F /* ServerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F0C5D22C5427ED56B258CC /* ServerView.swift */; };
 		6836B71669609FF48B76ED58 /* iceKastApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAFCBBA30FAD9516949B899 /* iceKastApp.swift */; };
 		70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */; };
@@ -28,6 +29,7 @@
 		AAC00DFD6C2D7E2DE2FEDD53 /* SnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD932A8C31C8D974532BC57 /* SnapshotTests.swift */; };
 		AD5EA5C61B6D72D55EAD5B0D /* Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB853C43E6424077C91F3D3A /* Validator.swift */; };
 		C4667516C71D1F93E004A086 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 86A786A69B79DBD00861CE27 /* Assets.xcassets */; };
+		CA744E4C9B4D50BF4F61EA54 /* ShareLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = D27A557DEC9605FFCEAD1A93 /* ShareLinks.swift */; };
 		E1BA22D5E03A2E9F680B9716 /* SetupWizard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6341B04511F3D36DBC0DBCAA /* SetupWizard.swift */; };
 		E1C899DA158C9994A5C958CC /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF5C092EAC8C690C680366E /* Config.swift */; };
 /* End PBXBuildFile section */
@@ -53,6 +55,7 @@
 		610A6376565CA78C4E42A758 /* ConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigTests.swift; sourceTree = "<group>"; };
 		6340ADCFC2C60345328F66AE /* Encoders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Encoders.swift; sourceTree = "<group>"; };
 		6341B04511F3D36DBC0DBCAA /* SetupWizard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupWizard.swift; sourceTree = "<group>"; };
+		73863A5A273666FD146C34BF /* ShareViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViews.swift; sourceTree = "<group>"; };
 		79FC1BC9BE4F429C9A957680 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPoller.swift; sourceTree = "<group>"; };
 		7DEADF34A869370614DE3E80 /* PortCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortCheck.swift; sourceTree = "<group>"; };
@@ -67,6 +70,7 @@
 		BAD932A8C31C8D974532BC57 /* SnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotTests.swift; sourceTree = "<group>"; };
 		BF81CF1BC5A8D32216E95419 /* iceKast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iceKast.entitlements; sourceTree = "<group>"; };
 		C676164C4C310CCEE9148E6F /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
+		D27A557DEC9605FFCEAD1A93 /* ShareLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareLinks.swift; sourceTree = "<group>"; };
 		D45F394AA924C7161E3255AF /* StreamInfoText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamInfoText.swift; sourceTree = "<group>"; };
 		EE3DBED1D2ACB1F8185BE6B1 /* DirectoryListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectoryListing.swift; sourceTree = "<group>"; };
 		FB853C43E6424077C91F3D3A /* Validator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validator.swift; sourceTree = "<group>"; };
@@ -125,6 +129,7 @@
 				EE3DBED1D2ACB1F8185BE6B1 /* DirectoryListing.swift */,
 				6340ADCFC2C60345328F66AE /* Encoders.swift */,
 				99884DE231B60532FBAA60E4 /* SetupLogic.swift */,
+				D27A557DEC9605FFCEAD1A93 /* ShareLinks.swift */,
 				31535E4E7D3D40A948F266E3 /* StatusParser.swift */,
 				D45F394AA924C7161E3255AF /* StreamInfoText.swift */,
 				FB853C43E6424077C91F3D3A /* Validator.swift */,
@@ -158,6 +163,7 @@
 				4D35D86879EE68B5922EBDCD /* MountView.swift */,
 				57F0C5D22C5427ED56B258CC /* ServerView.swift */,
 				6341B04511F3D36DBC0DBCAA /* SetupWizard.swift */,
+				73863A5A273666FD146C34BF /* ShareViews.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -294,6 +300,8 @@
 				58E83162EBEE0AC7C56F244F /* ServerView.swift in Sources */,
 				0625E6E12BF8933D99D18513 /* SetupLogic.swift in Sources */,
 				E1BA22D5E03A2E9F680B9716 /* SetupWizard.swift in Sources */,
+				CA744E4C9B4D50BF4F61EA54 /* ShareLinks.swift in Sources */,
+				4D3FAAC2346F469C51FF1BC9 /* ShareViews.swift in Sources */,
 				86C35CCCD314E286FA4310C1 /* StatusParser.swift in Sources */,
 				70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */,
 				A325D6AD4A7A2981DFD839F0 /* StreamInfoText.swift in Sources */,
