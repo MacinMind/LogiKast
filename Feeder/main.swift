@@ -1,4 +1,4 @@
-// icekast-feeder: streams each mount's backup audio file to the local Icecast server at normal
+// logikast-feeder: streams each mount's backup audio file to the local Icecast server at normal
 // playback speed (like a live encoder), looping forever. Icecast's own file fallback sends files
 // far faster than real time, so listeners end up playing a big backlog after the live stream
 // returns; a real-time source avoids that. Runs under the same launchd job as Icecast.
@@ -8,7 +8,7 @@ import Darwin
 setvbuf(stdout, nil, _IOLBF, 0)
 signal(SIGPIPE, SIG_IGN)
 
-let support = (ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory()) + "/Library/Application Support/iceKast"
+let support = (ProcessInfo.processInfo.environment["HOME"] ?? NSHomeDirectory()) + "/Library/Application Support/LogiKast"
 let feedsPath = support + "/backup-feeds.json"
 let statusPath = support + "/backup-status.json"
 
@@ -103,7 +103,7 @@ final class Worker {
 
         let auth = Data("source:\(password)".utf8).base64EncodedString()
         let header = "SOURCE \(feed.mount) HTTP/1.0\r\nAuthorization: Basic \(auth)\r\nContent-Type: \(feed.contentType)\r\n"
-            + "ice-name: \(feed.name)\r\nice-public: 0\r\nUser-Agent: iceKast-backup\r\n\r\n"
+            + "ice-name: \(feed.name)\r\nice-public: 0\r\nUser-Agent: LogiKast-backup\r\n\r\n"
         guard Array(header.utf8).withUnsafeBytes({ writeAll(fd, $0) }) else { set("error", "Lost the connection to the server."); return }
         guard let status = readStatusLine(fd) else { set("error", "The server did not answer."); return }
         guard status.contains(" 200") else {

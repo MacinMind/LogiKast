@@ -1,6 +1,6 @@
 import Foundation
 
-/// What the app asks the background feeder to stream (written by iceKast, read by icekast-feeder).
+/// What the app asks the background feeder to stream (written by LogiKast, read by logikast-feeder).
 struct BackupFeedsFile: Codable, Equatable {
     struct Feed: Codable, Equatable {
         var mount: String           // internal mount the audio is sent to, e.g. /_backup/live
@@ -14,7 +14,7 @@ struct BackupFeedsFile: Codable, Equatable {
     var feeds: [Feed]
 }
 
-/// What the feeder reports back (written by icekast-feeder every second, read by iceKast).
+/// What the feeder reports back (written by logikast-feeder every second, read by LogiKast).
 struct BackupFeederStatus: Codable, Equatable {
     struct FeedState: Codable, Equatable {
         var mount: String

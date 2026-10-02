@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds a Release iceKast, signs it with the MacinMind Developer ID, and packs it into a DMG
+# Builds a Release LogiKast, signs it with the MacinMind Developer ID, and packs it into a DMG
 # in build/release/. NOT notarized: on another Mac, copy it without the download quarantine
 # flag (USB, network share, scp) or see the notes printed at the end.
 #
@@ -44,22 +44,22 @@ fi
 
 VERSION=$(sed -nE 's/^ *MARKETING_VERSION: *"([^"]+)".*/\1/p' project.yml)
 BUILD=$(sed -nE 's/^ *CURRENT_PROJECT_VERSION: *"([^"]+)".*/\1/p' project.yml)
-echo "== iceKast $VERSION (build $BUILD)"
+echo "== LogiKast $VERSION (build $BUILD)"
 
 echo "== Building Release (universal)"
 xcodegen generate >/dev/null
-xcodebuild -project iceKast.xcodeproj -scheme iceKast -configuration Release \
+xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -configuration Release \
   -derivedDataPath "$DERIVED" ONLY_ACTIVE_ARCH=NO clean build 2>&1 | grep -E "error:|warning: .*sign|BUILD (SUCCEEDED|FAILED)"
 
-APP="$DERIVED/Build/Products/Release/iceKast.app"
+APP="$DERIVED/Build/Products/Release/LogiKast.app"
 [ -d "$APP" ] || { echo "error: build failed" >&2; exit 1; }
 
 echo "== Verifying"
 codesign --verify --deep --strict --verbose=1 "$APP" 2>&1 | tail -2
-for f in "$APP" "$APP/Contents/Helpers/icecast" "$APP/Contents/Helpers/icekast-launch"; do
+for f in "$APP" "$APP/Contents/Helpers/icecast" "$APP/Contents/Helpers/logikast-launch"; do
   info=$(codesign -dvv "$f" 2>&1)
   echo "$(basename "$f"): $(echo "$info" | sed -nE 's/^Authority=(Developer ID Application.*)/\1/p' | head -1) | $(echo "$info" | grep -o 'flags=0x[0-9a-f]*([a-z,]*)') | timestamp: $(echo "$info" | grep -c '^Timestamp=')"
-  bin="$f"; [ -d "$f" ] && bin="$f/Contents/MacOS/iceKast"
+  bin="$f"; [ -d "$f" ] && bin="$f/Contents/MacOS/LogiKast"
   lipo -archs "$bin" | sed 's/^/    archs: /'
 done
 plutil -p "$APP/Contents/Info.plist" | grep -E "CFBundleShortVersionString|\"CFBundleVersion|LSMinimumSystemVersion"
@@ -67,9 +67,9 @@ plutil -p "$APP/Contents/Info.plist" | grep -E "CFBundleShortVersionString|\"CFB
 rm -rf "$OUT"; mkdir -p "$OUT"
 if [ "$NOTARIZE" = 1 ]; then
   echo "== Notarizing the app"
-  ditto -c -k --keepParent "$APP" "$OUT/iceKast-app.zip"
-  notarize "$OUT/iceKast-app.zip"
-  rm -f "$OUT/iceKast-app.zip"
+  ditto -c -k --keepParent "$APP" "$OUT/LogiKast-app.zip"
+  notarize "$OUT/LogiKast-app.zip"
+  rm -f "$OUT/LogiKast-app.zip"
   xcrun stapler staple "$APP" 2>&1 | tail -1
   xcrun stapler validate "$APP" 2>&1 | tail -1
 fi
@@ -78,8 +78,8 @@ echo "== Creating DMG"
 mkdir -p "$OUT/stage"
 cp -R "$APP" "$OUT/stage/"
 ln -s /Applications "$OUT/stage/Applications"
-DMG="$OUT/iceKast-$VERSION.dmg"
-hdiutil create -volname "iceKast $VERSION" -srcfolder "$OUT/stage" -ov -format UDZO "$DMG" >/dev/null
+DMG="$OUT/LogiKast-$VERSION.dmg"
+hdiutil create -volname "LogiKast $VERSION" -srcfolder "$OUT/stage" -ov -format UDZO "$DMG" >/dev/null
 rm -rf "$OUT/stage"
 codesign --force --sign "$IDENTITY" --timestamp "$DMG"
 codesign --verify --verbose=1 "$DMG" 2>&1 | tail -1

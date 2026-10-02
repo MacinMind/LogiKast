@@ -1,4 +1,4 @@
-name: iceKast
+name: LogiKast
 options:
   bundleIdPrefix: com.macinmind
   deploymentTarget:
@@ -9,7 +9,7 @@ settings:
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "13.0"
     MARKETING_VERSION: "1.0b2"
-    CURRENT_PROJECT_VERSION: "1.0.0.6.2"
+    CURRENT_PROJECT_VERSION: "1.0.0.7.2"
     ENABLE_HARDENED_RUNTIME: YES
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     DEVELOPMENT_TEAM: 2D3239GKS4
@@ -23,27 +23,27 @@ settings:
       # Xcode otherwise adds the debugging entitlement get-task-allow, which Apple refuses to notarize.
       CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
 targets:
-  iceKast:
+  LogiKast:
     type: application
     platform: macOS
     sources:
-      - iceKast
+      - LogiKast
       - Feeder/FeedModels.swift
     info:
-      path: iceKast/Info.plist
+      path: LogiKast/Info.plist
       properties:
-        CFBundleDisplayName: iceKast
+        CFBundleDisplayName: LogiKast
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSMinimumSystemVersion: "13.0"
         LSApplicationCategoryType: public.app-category.music
         NSHumanReadableCopyright: "© MacinMind Software, Inc. Free software (GPLv2)."
     entitlements:
-      path: iceKast/iceKast.entitlements
+      path: LogiKast/LogiKast.entitlements
       properties: {}
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.macinmind.icekast
+        PRODUCT_BUNDLE_IDENTIFIER: com.macinmind.logikast
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     postBuildScripts:
@@ -75,46 +75,46 @@ targets:
           rsync -a --delete "$SRC/share/" "$APP/Resources/icecast-share/"
           # Launcher run by launchd; universal, built here so it matches the app's deployment target.
           LSTAMP_FILE="$TARGET_TEMP_DIR/launcher.stamp"
-          LSTAMP="$(cat "$SRCROOT/Launcher/icekast-launch.c" | shasum -a 256 | cut -d' ' -f1)"
-          if [ ! -x "$APP/Helpers/icekast-launch" ] || [ "$(cat "$LSTAMP_FILE" 2>/dev/null)" != "$LSTAMP" ]; then
+          LSTAMP="$(cat "$SRCROOT/Launcher/logikast-launch.c" | shasum -a 256 | cut -d' ' -f1)"
+          if [ ! -x "$APP/Helpers/logikast-launch" ] || [ "$(cat "$LSTAMP_FILE" 2>/dev/null)" != "$LSTAMP" ]; then
             clang -O2 -arch arm64 -arch x86_64 -mmacosx-version-min=13.0 \
-              "$SRCROOT/Launcher/icekast-launch.c" -o "$APP/Helpers/icekast-launch"
-            codesign --force --options runtime $TS --sign "$ID" "$APP/Helpers/icekast-launch"
+              "$SRCROOT/Launcher/logikast-launch.c" -o "$APP/Helpers/logikast-launch"
+            codesign --force --options runtime $TS --sign "$ID" "$APP/Helpers/logikast-launch"
             echo "$LSTAMP" > "$LSTAMP_FILE"
           fi
           # Backup-audio feeder (Swift), universal, rebuilt only when its sources change.
           FSTAMP_FILE="$TARGET_TEMP_DIR/feeder.stamp"
           FSTAMP="$(cat "$SRCROOT"/Feeder/*.swift | shasum -a 256 | cut -d' ' -f1)"
-          if [ ! -x "$APP/Helpers/icekast-feeder" ] || [ "$(cat "$FSTAMP_FILE" 2>/dev/null)" != "$FSTAMP" ]; then
+          if [ ! -x "$APP/Helpers/logikast-feeder" ] || [ "$(cat "$FSTAMP_FILE" 2>/dev/null)" != "$FSTAMP" ]; then
             FT="$TARGET_TEMP_DIR/feeder-build"; mkdir -p "$FT"
             for arch in arm64 x86_64; do
               swiftc -O -swift-version 5 -target "$arch-apple-macos13.0" \
                 "$SRCROOT/Feeder/main.swift" "$SRCROOT/Feeder/AudioFrames.swift" "$SRCROOT/Feeder/FeedModels.swift" \
                 -o "$FT/feeder-$arch"
             done
-            lipo -create "$FT/feeder-arm64" "$FT/feeder-x86_64" -output "$APP/Helpers/icekast-feeder"
-            codesign --force --options runtime $TS --sign "$ID" "$APP/Helpers/icekast-feeder"
+            lipo -create "$FT/feeder-arm64" "$FT/feeder-x86_64" -output "$APP/Helpers/logikast-feeder"
+            codesign --force --options runtime $TS --sign "$ID" "$APP/Helpers/logikast-feeder"
             echo "$FSTAMP" > "$FSTAMP_FILE"
           fi
-          cp "$SRCROOT/Launcher/com.macinmind.icekast.server.plist" "$APP/Library/LaunchAgents/"
-  iceKastTests:
+          cp "$SRCROOT/Launcher/com.macinmind.logikast.server.plist" "$APP/Library/LaunchAgents/"
+  LogiKastTests:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - iceKastTests
+      - LogiKastTests
       - Feeder/AudioFrames.swift
     dependencies:
-      - target: iceKast
+      - target: LogiKast
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
         BUNDLE_LOADER: "$(TEST_HOST)"
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iceKast.app/Contents/MacOS/iceKast"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/LogiKast.app/Contents/MacOS/LogiKast"
 schemes:
-  iceKast:
+  LogiKast:
     build:
       targets:
-        iceKast: all
+        LogiKast: all
     test:
       targets:
-        - iceKastTests
+        - LogiKastTests

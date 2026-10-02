@@ -1,0 +1,81 @@
+import XCTest
+import SwiftUI
+@testable import LogiKast
+
+/// Load test against a scratch Icecast with ~1000 simulated listeners. Only runs when LOGIKAST_LOAD_PORT is set
+/// (admin user "admin", password "ap", mount /live); LOGIKAST_SNAPSHOT_DIR also saves a picture of the table.
+@MainActor
+final class ListenerLoadTests: XCTestCase {
+    func testThousandListenersEndToEnd() async throws {
+        guard let portText = ProcessInfo.processInfo.environment["LOGIKAST_LOAD_PORT"], let port = Int(portText) else {
+            throw XCTSkip("no load-test server")
+        }
+        let client = AdminClient(port: port, bindAddress: "127.0.0.1", user: "admin", password: "ap")
+
+        var fetchTimes: [Double] = []
+        var listeners: [Listener] = []
+        for _ in 0..<5 {
+            let t = Date()
+            let got = await client.listeners(mount: "/live")
+            listeners = try XCTUnwrap(got)
+            fetchTimes.append(Date().timeIntervalSince(t) * 1000)
+        }
+        print("LOAD listeners=\(listeners.count) fetch+parse ms: \(fetchTimes.map { String(Int($0)) }.joined(separator: ", "))")
+        XCTAssertGreaterThan(listeners.count, 900)
+
+        var t = Date()
+        _ = ListenerList.filtered(listeners, search: "vlc", sort: .address)
+        _ = ListenerList.summary(listeners)
+        print("LOAD filter+sort+summary ms: \(Int(Date().timeIntervalSince(t) * 1000))")
+
+        // Bandwidth meter against the real admin statistics: 64 kb/s encoder, many listeners.
+        let stats = URL(string: "http://127.0.0.1:\(port)/admin/stats.xml")!
+        func counters() async throws -> ([String: ByteCounters], Int, Double) {
+            var req = URLRequest(url: stats)
+            req.setValue("Basic " + Data("admin:ap".utf8).base64EncodedString(), forHTTPHeaderField: "Authorization")
+            let t = Date()
+            let (data, _) = try await URLSession.shared.data(for: req)
+            let c = AdminStats.byteCounters(from: data)
+            return (c, data.count, Date().timeIntervalSince(t) * 1000)
+        }
+        var meter = BandwidthMeter()
+        let first = try await counters()
+        _ = meter.update(first.0, at: Date())
+        var second = first
+        var latest: BandwidthRates?
+        for _ in 0..<6 {                       // the app polls every 2 s; the meter averages the last ~8 s
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+            second = try await counters()
+            latest = meter.update(second.0, at: Date()) ?? latest
+        }
+        let rates = try XCTUnwrap(latest)
+        let out = BandwidthRates.format(rates.totalOut), inn = BandwidthRates.format(rates.totalIn)
+        print("LOAD bandwidth out=\(out.value) \(out.unit) in=\(inn.value) \(inn.unit); stats.xml \(second.1) bytes, fetch+parse \(Int(second.2)) ms")
+
+        // Render the real view with that many listeners and see how long the first draw takes and how a refresh behaves.
+        let model = AppModel()
+        let counter = Counter()
+        let view = ListenersSection(mount: Mount(), source: { counter.n += 1; return listeners }).environmentObject(model)
+        let host = NSHostingView(rootView: view)
+        host.frame = NSRect(x: 0, y: 0, width: 700, height: 600)
+        let window = NSWindow(contentRect: host.frame, styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        t = Date()
+        window.layoutIfNeeded()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.8))
+        host.layoutSubtreeIfNeeded()
+        print("LOAD first render (incl. 0.8s settle) ms: \(Int(Date().timeIntervalSince(t) * 1000)), fetches=\(counter.n)")
+
+        t = Date()
+        host.layoutSubtreeIfNeeded()
+        let rep = try XCTUnwrap(host.bitmapImageRepForCachingDisplay(in: host.bounds))
+        host.cacheDisplay(in: host.bounds, to: rep)
+        print("LOAD one full redraw ms: \(Int(Date().timeIntervalSince(t) * 1000))")
+        if let dir = ProcessInfo.processInfo.environment["LOGIKAST_SNAPSHOT_DIR"] {
+            try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            try rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: dir).appendingPathComponent("listeners-1000.png"))
+        }
+    }
+}
+
+final class Counter { var n = 0 }

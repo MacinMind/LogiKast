@@ -1,4 +1,4 @@
-# iceKast – Plan
+# LogiKast – Plan
 
 Free, GPLv2 macOS GUI wrapper around Icecast, aimed at Radiologik customers who want an easy
 station setup. No audio encoding (BUTT, Audio Hijack, LadioCast etc. handle that).
@@ -8,7 +8,7 @@ station setup. No audio encoding (BUTT, Audio Hijack, LadioCast etc. handle that
 - One Icecast server, many mounts.
 - Direct distribution: Developer ID signed + notarized DMG ("MacinMind Software, Inc.").
 - Public GPLv2 repo (Icecast is GPLv2, so source must be available).
-- Formats: MP3, AAC, HE-AAC pass through untouched. The encoder decides the format; iceKast never sets or forces it, it only detects and displays it.
+- Formats: MP3, AAC, HE-AAC pass through untouched. The encoder decides the format; LogiKast never sets or forces it, it only detects and displays it.
 - Icecast and all libraries are built from source, statically linked, bundled in the app.
   No Homebrew or other installs for the end user.
 
@@ -26,22 +26,22 @@ options later: mbedTLS (Apache-2.0 / GPLv2+ dual) or a reverse proxy.
 ## App architecture
 1. Config model (Codable): server, ports, limits, auth, mounts (max listeners, burst, fallback,
    stream info, public/YP).
-2. Config writer -> icecast.xml in ~/Library/Application Support/iceKast/.
+2. Config writer -> icecast.xml in ~/Library/Application Support/LogiKast/.
 3. Service controller: Icecast runs as a per-user launch agent (SMAppService, plist in
-   Contents/Library/LaunchAgents, started via Helpers/icekast-launch which execs icecast with the
+   Contents/Library/LaunchAgents, started via Helpers/logikast-launch which execs icecast with the
    config in Application Support). It survives app quit/crash, restarts if it dies, starts at login.
    Start = register, Stop = unregister, Apply = SIGHUP (port change = kickstart -k).
 4. Status poller: /status-json.xsl, per-mount listeners, source connected, title, peak.
    Backup audio: Icecast's own fallback-file feature sends the file far faster than real time, so players
-   buffer a huge backlog and never return to live promptly. Instead `icekast-feeder` (Feeder/, runs next to
-   Icecast under the same launchd job, supervised by `icekast-launch`) streams the file to a hidden internal
+   buffer a huge backlog and never return to live promptly. Instead `logikast-feeder` (Feeder/, runs next to
+   Icecast under the same launchd job, supervised by `logikast-launch`) streams the file to a hidden internal
    mount (/_backup/<mount>) at normal speed, and the mount's fallback points at that mount.
 5. Menu bar item (listener count, start/stop, open window); Dock badge; the app only attaches to the service.
 6. UI: stream/mount sidebar, status dashboard, settings editors, setup wizard,
    "connect your encoder" panel (host/port/mount/password), dock badge for chosen mount.
 
 ## Testing
-- `xcodebuild test`: unit tests plus offscreen renders of every page (set ICEKAST_SNAPSHOT_DIR to save PNGs).
+- `xcodebuild test`: unit tests plus offscreen renders of every page (set LOGIKAST_SNAPSHOT_DIR to save PNGs).
 - Offscreen renders cannot catch layout bugs that only appear in a window that is actually on screen
   (one blanked the whole window). Run `scripts/smoke-window.sh` after UI changes: it launches the built
   app, captures its real window for the Server page and every mount tab, and fails if any is blank.

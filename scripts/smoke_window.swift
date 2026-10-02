@@ -1,12 +1,12 @@
-// Launches the real iceKast app, captures its real window, and fails if it is blank.
+// Launches the real LogiKast app, captures its real window, and fails if it is blank.
 // Offscreen tests can't see layout bugs that only show in a displayed window.
-// Usage: swift scripts/smoke_window.swift /path/to/iceKast.app
+// Usage: swift scripts/smoke_window.swift /path/to/LogiKast.app
 import AppKit
 import CoreGraphics
 import Foundation
 
 let appPath = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : ""
-guard FileManager.default.fileExists(atPath: appPath) else { print("usage: smoke_window.swift <iceKast.app>"); exit(2) }
+guard FileManager.default.fileExists(atPath: appPath) else { print("usage: smoke_window.swift <LogiKast.app>"); exit(2) }
 
 func run(_ exe: String, _ args: [String]) {
     let p = Process(); p.executableURL = URL(fileURLWithPath: exe); p.arguments = args
@@ -15,7 +15,7 @@ func run(_ exe: String, _ args: [String]) {
 }
 func windowID() -> Int? {
     let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
-    return list.first { ($0[kCGWindowOwnerName as String] as? String) == "iceKast" && ($0[kCGWindowLayer as String] as? Int) == 0 }?[kCGWindowNumber as String] as? Int
+    return list.first { ($0[kCGWindowOwnerName as String] as? String) == "LogiKast" && ($0[kCGWindowLayer as String] as? Int) == 0 }?[kCGWindowNumber as String] as? Int
 }
 /// Fraction of pixels in the region that differ clearly from its dominant color.
 func ink(_ rep: NSBitmapImageRep, _ r: CGRect) -> Double {
@@ -52,12 +52,12 @@ func scrollBarVisible(_ rep: NSBitmapImageRep) -> Bool {
 /// `mayScroll`: pages allowed to need a scroll bar at the minimum window size (Share grows with one row per network
 /// interface this Mac has, so it fits on some Macs and scrolls on others).
 struct Case { let name: String; let args: [String]; var mayScroll = false }
-var cases = [Case(name: "server / network", args: ["--server-tab", "network"]),
-             Case(name: "server / access", args: ["--server-tab", "access"]),
-             Case(name: "server / alerts", args: ["--server-tab", "alerts"]),
-             Case(name: "server / app", args: ["--server-tab", "app"])]
+var cases = [Case(name: "server / network", args: ["--skip-legacy", "--server-tab", "network"]),
+             Case(name: "server / access", args: ["--skip-legacy", "--server-tab", "access"]),
+             Case(name: "server / alerts", args: ["--skip-legacy", "--server-tab", "alerts"]),
+             Case(name: "server / app", args: ["--skip-legacy", "--server-tab", "app"])]
 for t in ["connect", "share", "listeners", "streamInfo", "backup", "advanced"] {
-    cases.append(Case(name: "mount / \(t)", args: ["--show-mount", "--mount-tab", t], mayScroll: t == "share"))
+    cases.append(Case(name: "mount / \(t)", args: ["--skip-legacy", "--show-mount", "--mount-tab", t], mayScroll: t == "share"))
 }
 
 var failures = 0
@@ -65,8 +65,8 @@ for c in cases {
     // The window can take a while to appear (it varies run to run), so poll for it; relaunch if it never does.
     var found: Int?
     for _ in 1...2 {
-        run("/usr/bin/pkill", ["-x", "iceKast"]); Thread.sleep(forTimeInterval: 1.5)
-        run("/usr/bin/open", ["-g", "-n", appPath, "--args"] + c.args)   // -g: do not take focus (your typing must never land in iceKast)
+        run("/usr/bin/pkill", ["-x", "LogiKast"]); Thread.sleep(forTimeInterval: 1.5)
+        run("/usr/bin/open", ["-g", "-n", appPath, "--args"] + c.args)   // -g: do not take focus (your typing must never land in LogiKast)
         let deadline = Date().addingTimeInterval(20)
         var reopened = false
         while found == nil, Date() < deadline {
@@ -94,6 +94,6 @@ for c in cases {
     if !ok { failures += 1 }
     try? FileManager.default.removeItem(atPath: out)
 }
-run("/usr/bin/pkill", ["-x", "iceKast"])
+run("/usr/bin/pkill", ["-x", "LogiKast"])
 print(failures == 0 ? "smoke test PASSED" : "smoke test FAILED (\(failures))")
 exit(failures == 0 ? 0 : 1)

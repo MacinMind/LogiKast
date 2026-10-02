@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the iceKast app icon from the Radiologik icon: adds a blue/white icicle ceiling
+"""Builds the LogiKast app icon from the Radiologik icon: adds a blue/white icicle ceiling
 across the top third and two blue sine waves across the center, clipped to the icon's
 rounded square.
 Usage: make-icon.py [out.png]    (needs: pip install pillow numpy)"""
@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "Design" / "radiologik-icon-source.webp"
-OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "Design" / "icekast-icon-1024.png"
+OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "Design" / "logikast-icon-1024.png"
 
 S = 2                       # supersampling factor
 N = 1024 * S
