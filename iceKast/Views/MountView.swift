@@ -349,7 +349,7 @@ struct MountView: View {
                 stat("Listeners", "\(s.listeners)", width: 56)
                 stat("Peak", "\(s.peak)", width: 38)
                 VStack(alignment: .trailing) {
-                    Text("On air since").font(.caption).foregroundStyle(.secondary)
+                    Text("On air for").font(.caption).foregroundStyle(.secondary)
                     if let since = s.streamStart { Text(since, style: .relative).monospacedDigit() } else { Text("–") }
                 }
                 .frame(width: 100, alignment: .trailing)
