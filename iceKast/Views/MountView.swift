@@ -72,7 +72,6 @@ struct MountView: View {
             }
             Text("The mount name identifies this stream, like /live or /jazz. Listeners and your encoder both use it, so each stream on your server needs its own. You can run several streams on one server: add another with the + button above the mount list.")
                 .font(.caption).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)

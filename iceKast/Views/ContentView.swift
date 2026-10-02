@@ -7,7 +7,11 @@ enum SidebarSelection: Hashable {
 
 struct ContentView: View {
     @EnvironmentObject var model: AppModel
-    @State private var selection: SidebarSelection? = .server
+    @State private var selection: SidebarSelection?
+
+    init(initialSelection: SidebarSelection? = .server) {
+        _selection = State(initialValue: initialSelection)
+    }
 
     var body: some View {
         NavigationSplitView {

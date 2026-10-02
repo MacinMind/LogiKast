@@ -36,6 +36,12 @@ options later: mbedTLS (Apache-2.0 / GPLv2+ dual) or a reverse proxy.
 6. UI: stream/mount sidebar, status dashboard, settings editors, setup wizard,
    "connect your encoder" panel (host/port/mount/password), dock badge for chosen mount.
 
+## Testing
+- `xcodebuild test`: unit tests plus offscreen renders of every page (set ICEKAST_SNAPSHOT_DIR to save PNGs).
+- Offscreen renders cannot catch layout bugs that only appear in a window that is actually on screen
+  (one blanked the whole window). Run `scripts/smoke-window.sh` after UI changes: it launches the built
+  app, captures its real window for the Server page and every mount tab, and fails if any is blank.
+
 ## Milestones
 1. [done] Icecast static build proven on arm64 (MP3 source + listener verified).
 2. [done] Universal build (arm64 + x86_64, min macOS 13), iconv enabled; links only macOS system libs.

@@ -35,6 +35,9 @@ final class AppModel: ObservableObject {
         config = Self.load() ?? AppConfig.makeDefault()
         save()
         AppPaths.syncShare()
+        let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "--mount-tab"), i + 1 < args.count, let t = MountTab(rawValue: args[i + 1]) { mountTab = t }
+        if let i = args.firstIndex(of: "--server-tab"), i + 1 < args.count, let t = ServerTab(rawValue: args[i + 1]) { serverTab = t }
         showSetup = !config.setupCompleted || CommandLine.arguments.contains("--show-setup")
         setupIsRerun = config.setupCompleted
 
