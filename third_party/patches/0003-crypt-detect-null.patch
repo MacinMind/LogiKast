@@ -1,0 +1,16 @@
+Icecast 2.5.0's admin dashboard (/admin/dashboard.xsl) asks util_crypt_is_new_secure() whether the C library
+supports a secure password hash. macOS's crypt() supports none of the hashes Icecast looks for ($6$, $5$, $1$),
+so the detected algorithm stays NULL and Icecast dereferences it: the whole server crashes (SIGSEGV) as soon as
+someone opens the dashboard. Treat "no algorithm found" as "not secure" instead.
+
+--- a/src/util_crypt.c
++++ b/src/util_crypt.c
+@@ -243,7 +243,7 @@
+     if (pthread_once(&crypt_detect, crypt_detect_run) != 0)
+         return NULL;
+ 
+-    return new_algo->secure;
++    return new_algo && new_algo->secure;
+ #else
+     return false;
+ #endif

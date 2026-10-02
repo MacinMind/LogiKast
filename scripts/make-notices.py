@@ -33,7 +33,7 @@ lines = ["LogiKast third-party notices", "=" * 28, "",
          "Source code: https://github.com/MacinMind/LogiKast",
          "",
          "LogiKast bundles Icecast and the libraries listed here. Each is used under its own license.",
-         "Icecast's source, the exact versions bundled, and the two small patches LogiKast applies (third_party/patches in the",
+         "Icecast's source, the exact versions bundled, and the three small patches LogiKast applies (third_party/patches in the",
          "repository, with scripts/build-icecast.sh) are available from https://icecast.org and from the LogiKast repository.",
          "", ""]
 for name, prefix, files, home, what, lic in PARTS:
