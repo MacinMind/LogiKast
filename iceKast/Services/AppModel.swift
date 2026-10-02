@@ -261,7 +261,7 @@ final class AppModel: ObservableObject {
     // MARK: Dock badge
 
     private func updateBadge(config: AppConfig, status: ServerStatus?) {
-        NSApp?.dockTile.badgeLabel = Self.badgeLabel(config: config, status: status)
+        DockBadge.set(Self.badgeLabel(config: config, status: status))
     }
 
     /// Text for the dock badge, or nil for no badge. Only shown while the server is reachable.
