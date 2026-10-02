@@ -2,7 +2,7 @@
 
 # iceKast
 
-**Version 1.0b1 (beta)**
+**Version 1.0b2 (beta)**
 
 A free macOS app that makes running an [Icecast](https://icecast.org) streaming server easy.
 Built for Radiologik users, but works with any Icecast-compatible encoder, such as [Audio Hijack](https://rogueamoeba.com/audiohijack/), [LadioCast](https://apps.apple.com/us/app/ladiocast/id411213048), [BUTT](https://danielnoethen.de/butt/) and [BUTTM](https://buttm.app).
@@ -27,8 +27,8 @@ xcodebuild -project iceKast.xcodeproj -scheme iceKast -derivedDataPath build/xco
 
 ## Versioning
 
-The public version is `1.0b1` (`CFBundleShortVersionString`). The internal build number is
-`1.0.0.2.1` (`CFBundleVersion`). Both are set in `project.yml`.
+The public version is `1.0b2` (`CFBundleShortVersionString`). The internal build number is
+`1.0.0.3.2` (`CFBundleVersion`). Both are set in `project.yml`.
 
 ## License
 
