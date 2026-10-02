@@ -2,7 +2,7 @@
 
 # LogiKast
 
-**Version 1.0b3 (beta)**
+**Version 1.0b4 (beta)**
 
 *LogiKast was called iceKast in its first beta.*
 
