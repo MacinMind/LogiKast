@@ -221,11 +221,16 @@ final class AppModel: ObservableObject {
         return await admin.kick(id: listener.id, mount: path)
     }
 
-    /// Opens Icecast's own admin pages in the browser, already signed in with the admin login.
+    private let adminProxy = AdminProxy()
+
+    /// Opens Icecast's own admin pages in the browser, already signed in. Safari and other browsers ignore a
+    /// login written into the address, so the browser goes through a small local helper that adds it.
     func openWebAdmin() {
         let s = config.server
-        if let url = WebAdmin.url(port: s.port, bindAddress: s.bindAddress, user: s.adminUser, password: s.adminPassword) {
-            NSWorkspace.shared.open(url)
+        let host = (s.bindAddress.isEmpty || s.bindAddress == "0.0.0.0") ? "127.0.0.1" : s.bindAddress
+        let target = AdminProxy.Target(host: host, port: s.port, user: s.adminUser, password: s.adminPassword)
+        Task {
+            if let url = await adminProxy.start(target: target) { NSWorkspace.shared.open(url) }
         }
     }
 

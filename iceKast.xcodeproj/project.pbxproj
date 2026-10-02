@@ -28,6 +28,7 @@
 		6A39611D570A637AACF55509 /* WindowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E53248C7E8EC4C1126FCC0 /* WindowTests.swift */; };
 		6B1AE6AED0D7F0A62D8598C8 /* AudioFrames.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB763DDA678582E82A30F3C /* AudioFrames.swift */; };
 		70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */; };
+		7912B15181F69DEA1B7087B5 /* AdminProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 023652CD2B43B1BA49489297 /* AdminProxy.swift */; };
 		7CC092555193173F6B3CEDE5 /* Listeners.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDBEAF8B06C6DEDE742703EC /* Listeners.swift */; };
 		829FF7336B623E5E2A77DEDF /* BackupFeeds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5B42F95BF7D4E82567D7CE /* BackupFeeds.swift */; };
 		86C35CCCD314E286FA4310C1 /* StatusParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31535E4E7D3D40A948F266E3 /* StatusParser.swift */; };
@@ -41,6 +42,7 @@
 		A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79FC1BC9BE4F429C9A957680 /* ContentView.swift */; };
 		AAC00DFD6C2D7E2DE2FEDD53 /* SnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAD932A8C31C8D974532BC57 /* SnapshotTests.swift */; };
 		AD5EA5C61B6D72D55EAD5B0D /* Validator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB853C43E6424077C91F3D3A /* Validator.swift */; };
+		C3666524A5C9A8D11571A801 /* AdminProxyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A1A0A4BD58DF5B4410A453 /* AdminProxyTests.swift */; };
 		C4667516C71D1F93E004A086 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 86A786A69B79DBD00861CE27 /* Assets.xcassets */; };
 		C7D8842CAD1689E021423BA7 /* Bandwidth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE60A48FE06FAB5AA3A6E2C /* Bandwidth.swift */; };
 		C8DDFE3FB2D624AC0E479C05 /* LoginItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82908C60BA35860B7437BCAF /* LoginItem.swift */; };
@@ -64,6 +66,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		023652CD2B43B1BA49489297 /* AdminProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminProxy.swift; sourceTree = "<group>"; };
 		062DF1A19BF879457EFD9C55 /* AlertTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertTracker.swift; sourceTree = "<group>"; };
 		0ED34A64450AEDB617D039B4 /* AlertTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertTests.swift; sourceTree = "<group>"; };
 		20EF2235C90CE09B789490F6 /* FeederTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeederTests.swift; sourceTree = "<group>"; };
@@ -93,6 +96,7 @@
 		8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInfo.swift; sourceTree = "<group>"; };
 		86A786A69B79DBD00861CE27 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigWriter.swift; sourceTree = "<group>"; };
+		93A1A0A4BD58DF5B4410A453 /* AdminProxyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminProxyTests.swift; sourceTree = "<group>"; };
 		99884DE231B60532FBAA60E4 /* SetupLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupLogic.swift; sourceTree = "<group>"; };
 		9B5B42F95BF7D4E82567D7CE /* BackupFeeds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupFeeds.swift; sourceTree = "<group>"; };
 		AC2E5DE04E8C8B115D5F42CE /* iceKast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iceKast.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -118,6 +122,7 @@
 		02C50238D71CB5ACAAC8B804 /* iceKastTests */ = {
 			isa = PBXGroup;
 			children = (
+				93A1A0A4BD58DF5B4410A453 /* AdminProxyTests.swift */,
 				0ED34A64450AEDB617D039B4 /* AlertTests.swift */,
 				FAD270E1E2E92B7B9B6FA539 /* BandwidthTests.swift */,
 				610A6376565CA78C4E42A758 /* ConfigTests.swift */,
@@ -148,6 +153,7 @@
 			isa = PBXGroup;
 			children = (
 				D4225C242A90D8D4EA725AB6 /* AdminClient.swift */,
+				023652CD2B43B1BA49489297 /* AdminProxy.swift */,
 				B73ED26928D799F4A29B7C20 /* AppModel.swift */,
 				C676164C4C310CCEE9148E6F /* AppPaths.swift */,
 				E6906846722D45268D324AE0 /* BackupAudio.swift */,
@@ -351,6 +357,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D3EC5BE4283F1F6E8C2690AD /* AdminClient.swift in Sources */,
+				7912B15181F69DEA1B7087B5 /* AdminProxy.swift in Sources */,
 				E4361044E9F2B41EC5FD1A9E /* AlertTracker.swift in Sources */,
 				9197E600CD085B542496E3FE /* AppModel.swift in Sources */,
 				3C5022967D33ABAA0CCA0F22 /* AppPaths.swift in Sources */,
@@ -391,6 +398,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3666524A5C9A8D11571A801 /* AdminProxyTests.swift in Sources */,
 				EFC55D331D561913CEE386DD /* AlertTests.swift in Sources */,
 				6B1AE6AED0D7F0A62D8598C8 /* AudioFrames.swift in Sources */,
 				0827F6C7F0752600A13E89EC /* BandwidthTests.swift in Sources */,
