@@ -21,7 +21,7 @@ Icecast is bundled; nothing else needs to be installed. MP3, AAC and HE-AAC stre
 
 ## Building
 
-Requires Xcode, and `xcodegen` (`brew install xcodegen`) to generate the project.
+Requires Xcode, and `xcodegen` (`brew install xcodegen`) to generate the Xcode project (it is generated from `project.yml` and not checked in).
 
 ```bash
 scripts/build-icecast.sh     # builds the universal static Icecast into build/icecast
