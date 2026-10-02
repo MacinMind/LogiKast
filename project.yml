@@ -28,6 +28,7 @@ targets:
     platform: macOS
     sources:
       - iceKast
+      - Feeder/FeedModels.swift
     info:
       path: iceKast/Info.plist
       properties:
@@ -74,12 +75,26 @@ targets:
           rsync -a --delete "$SRC/share/" "$APP/Resources/icecast-share/"
           # Launcher run by launchd; universal, built here so it matches the app's deployment target.
           LSTAMP_FILE="$TARGET_TEMP_DIR/launcher.stamp"
-          LSTAMP="$(shasum -a 256 "$SRCROOT/Launcher/icekast-launch.c" | cut -d' ' -f1)"
+          LSTAMP="$(cat "$SRCROOT/Launcher/icekast-launch.c" | shasum -a 256 | cut -d' ' -f1)"
           if [ ! -x "$APP/Helpers/icekast-launch" ] || [ "$(cat "$LSTAMP_FILE" 2>/dev/null)" != "$LSTAMP" ]; then
             clang -O2 -arch arm64 -arch x86_64 -mmacosx-version-min=13.0 \
               "$SRCROOT/Launcher/icekast-launch.c" -o "$APP/Helpers/icekast-launch"
             codesign --force --options runtime $TS --sign "$ID" "$APP/Helpers/icekast-launch"
             echo "$LSTAMP" > "$LSTAMP_FILE"
+          fi
+          # Backup-audio feeder (Swift), universal, rebuilt only when its sources change.
+          FSTAMP_FILE="$TARGET_TEMP_DIR/feeder.stamp"
+          FSTAMP="$(cat "$SRCROOT"/Feeder/*.swift | shasum -a 256 | cut -d' ' -f1)"
+          if [ ! -x "$APP/Helpers/icekast-feeder" ] || [ "$(cat "$FSTAMP_FILE" 2>/dev/null)" != "$FSTAMP" ]; then
+            FT="$TARGET_TEMP_DIR/feeder-build"; mkdir -p "$FT"
+            for arch in arm64 x86_64; do
+              swiftc -O -swift-version 5 -target "$arch-apple-macos13.0" \
+                "$SRCROOT/Feeder/main.swift" "$SRCROOT/Feeder/AudioFrames.swift" "$SRCROOT/Feeder/FeedModels.swift" \
+                -o "$FT/feeder-$arch"
+            done
+            lipo -create "$FT/feeder-arm64" "$FT/feeder-x86_64" -output "$APP/Helpers/icekast-feeder"
+            codesign --force --options runtime $TS --sign "$ID" "$APP/Helpers/icekast-feeder"
+            echo "$FSTAMP" > "$FSTAMP_FILE"
           fi
           cp "$SRCROOT/Launcher/com.macinmind.icekast.server.plist" "$APP/Library/LaunchAgents/"
   iceKastTests:
@@ -87,6 +102,7 @@ targets:
     platform: macOS
     sources:
       - iceKastTests
+      - Feeder/AudioFrames.swift
     dependencies:
       - target: iceKast
     settings:

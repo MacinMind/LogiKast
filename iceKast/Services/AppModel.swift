@@ -35,6 +35,7 @@ final class AppModel: ObservableObject {
         config = Self.load() ?? AppConfig.makeDefault()
         save()
         AppPaths.syncShare()
+        AppPaths.migrateBackupFiles()
         let args = CommandLine.arguments
         if let i = args.firstIndex(of: "--mount-tab"), i + 1 < args.count, let t = MountTab(rawValue: args[i + 1]) { mountTab = t }
         if let i = args.firstIndex(of: "--server-tab"), i + 1 < args.count, let t = ServerTab(rawValue: args[i + 1]) { serverTab = t }
@@ -48,6 +49,11 @@ final class AppModel: ObservableObject {
             .store(in: &cancellables)
 
         // Forward nested objects' changes so views observing AppModel refresh.
+        poller.adminLogin = { [weak self] in
+            guard let c = self?.config, c.mounts.contains(where: { !$0.backupFile.isEmpty }) else { return nil }
+            return (c.server.adminUser, c.server.adminPassword)
+        }
+
         server.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
         poller.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
 
@@ -132,8 +138,22 @@ final class AppModel: ObservableObject {
 
     func stopServer() { server.stop() }
 
+    func backupState(for mount: Mount) -> BackupState {
+        BackupState.of(mount: mount, serverOn: server.isEnabled, status: server.backupStatus)
+    }
+
+    /// True if a mount has backup audio but the helper that streams it isn't running (it only starts
+    /// with the server, so a server started before backup audio existed needs one restart).
+    var backupHelperMissing: Bool {
+        config.mounts.contains { backupState(for: $0) == .notRunning }
+    }
+
     func applyChanges() {
         guard canStart else { return }
+        if backupHelperMissing {
+            promptForRestart(reason: "Backup audio needs the server restarted once so its helper can start.")
+            return
+        }
         if server.requiresRestart(for: config) {
             promptForRestart(reason: "Changing the port or network interface needs the server to restart.")
         } else {

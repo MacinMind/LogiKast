@@ -9,17 +9,21 @@
 /* Begin PBXBuildFile section */
 		0625E6E12BF8933D99D18513 /* SetupLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99884DE231B60532FBAA60E4 /* SetupLogic.swift */; };
 		0CD2D013DC0E6431D00D05EA /* PortCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEADF34A869370614DE3E80 /* PortCheck.swift */; };
+		0F061F0C6C0D6459C2EF023D /* FeedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DB0EF919EDF6D6CD5F1393A /* FeedModels.swift */; };
 		26AF116D56104A92424E28A5 /* ConfigWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */; };
 		27463D24CF71CB1DF37052E4 /* ConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610A6376565CA78C4E42A758 /* ConfigTests.swift */; };
 		2E30914DCBECCE3C7657A8C0 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5644FE7F55B159FCA87C51DC /* Components.swift */; };
 		328C0A54CF8FBEE00A1EEE16 /* IcecastService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531E5028415A84690E541BEC /* IcecastService.swift */; };
 		3C5022967D33ABAA0CCA0F22 /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = C676164C4C310CCEE9148E6F /* AppPaths.swift */; };
 		4D3FAAC2346F469C51FF1BC9 /* ShareViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73863A5A273666FD146C34BF /* ShareViews.swift */; };
+		5650ADE9A398251404815B0E /* FeederTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20EF2235C90CE09B789490F6 /* FeederTests.swift */; };
 		58E83162EBEE0AC7C56F244F /* ServerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57F0C5D22C5427ED56B258CC /* ServerView.swift */; };
 		62EBA6428906A1DEF6195603 /* Tabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27C3D343CC4A4D1DB098CDD4 /* Tabs.swift */; };
 		6836B71669609FF48B76ED58 /* iceKastApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAFCBBA30FAD9516949B899 /* iceKastApp.swift */; };
 		6A39611D570A637AACF55509 /* WindowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E53248C7E8EC4C1126FCC0 /* WindowTests.swift */; };
+		6B1AE6AED0D7F0A62D8598C8 /* AudioFrames.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB763DDA678582E82A30F3C /* AudioFrames.swift */; };
 		70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */; };
+		829FF7336B623E5E2A77DEDF /* BackupFeeds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5B42F95BF7D4E82567D7CE /* BackupFeeds.swift */; };
 		86C35CCCD314E286FA4310C1 /* StatusParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31535E4E7D3D40A948F266E3 /* StatusParser.swift */; };
 		8C31F7686A91EF615565D4A4 /* DirectoryListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3DBED1D2ACB1F8185BE6B1 /* DirectoryListing.swift */; };
 		9197E600CD085B542496E3FE /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73ED26928D799F4A29B7C20 /* AppModel.swift */; };
@@ -54,6 +58,7 @@
 /* Begin PBXFileReference section */
 		062DF1A19BF879457EFD9C55 /* AlertTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertTracker.swift; sourceTree = "<group>"; };
 		0ED34A64450AEDB617D039B4 /* AlertTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertTests.swift; sourceTree = "<group>"; };
+		20EF2235C90CE09B789490F6 /* FeederTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeederTests.swift; sourceTree = "<group>"; };
 		27C3D343CC4A4D1DB098CDD4 /* Tabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tabs.swift; sourceTree = "<group>"; };
 		31124CD52E82DBF1E0AD3469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		31535E4E7D3D40A948F266E3 /* StatusParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusParser.swift; sourceTree = "<group>"; };
@@ -68,6 +73,7 @@
 		70583F6B38B1B26398529029 /* Notifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Notifier.swift; sourceTree = "<group>"; };
 		73863A5A273666FD146C34BF /* ShareViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViews.swift; sourceTree = "<group>"; };
 		79FC1BC9BE4F429C9A957680 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		7DB0EF919EDF6D6CD5F1393A /* FeedModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedModels.swift; sourceTree = "<group>"; };
 		7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusPoller.swift; sourceTree = "<group>"; };
 		7DEADF34A869370614DE3E80 /* PortCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortCheck.swift; sourceTree = "<group>"; };
 		80E53248C7E8EC4C1126FCC0 /* WindowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowTests.swift; sourceTree = "<group>"; };
@@ -77,8 +83,10 @@
 		86A786A69B79DBD00861CE27 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigWriter.swift; sourceTree = "<group>"; };
 		99884DE231B60532FBAA60E4 /* SetupLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupLogic.swift; sourceTree = "<group>"; };
+		9B5B42F95BF7D4E82567D7CE /* BackupFeeds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupFeeds.swift; sourceTree = "<group>"; };
 		AC2E5DE04E8C8B115D5F42CE /* iceKast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iceKast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACAFCBBA30FAD9516949B899 /* iceKastApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iceKastApp.swift; sourceTree = "<group>"; };
+		ADB763DDA678582E82A30F3C /* AudioFrames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFrames.swift; sourceTree = "<group>"; };
 		B73ED26928D799F4A29B7C20 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		BAD932A8C31C8D974532BC57 /* SnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotTests.swift; sourceTree = "<group>"; };
 		BF81CF1BC5A8D32216E95419 /* iceKast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iceKast.entitlements; sourceTree = "<group>"; };
@@ -96,6 +104,7 @@
 			children = (
 				0ED34A64450AEDB617D039B4 /* AlertTests.swift */,
 				610A6376565CA78C4E42A758 /* ConfigTests.swift */,
+				20EF2235C90CE09B789490F6 /* FeederTests.swift */,
 				BAD932A8C31C8D974532BC57 /* SnapshotTests.swift */,
 				80E53248C7E8EC4C1126FCC0 /* WindowTests.swift */,
 			);
@@ -144,6 +153,7 @@
 			isa = PBXGroup;
 			children = (
 				062DF1A19BF879457EFD9C55 /* AlertTracker.swift */,
+				9B5B42F95BF7D4E82567D7CE /* BackupFeeds.swift */,
 				5FF5C092EAC8C690C680366E /* Config.swift */,
 				92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */,
 				EE3DBED1D2ACB1F8185BE6B1 /* DirectoryListing.swift */,
@@ -160,6 +170,7 @@
 		ABC2754F1102E4F8CDB12FB6 = {
 			isa = PBXGroup;
 			children = (
+				D75BFFB2843EC135FD55C6DB /* Feeder */,
 				0359EDB9D6814CB2BC93C074 /* iceKast */,
 				02C50238D71CB5ACAAC8B804 /* iceKastTests */,
 				B608ED05D17B3978849F42D3 /* Products */,
@@ -173,6 +184,15 @@
 				81326921DC024F3508FF803E /* iceKastTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		D75BFFB2843EC135FD55C6DB /* Feeder */ = {
+			isa = PBXGroup;
+			children = (
+				ADB763DDA678582E82A30F3C /* AudioFrames.swift */,
+				7DB0EF919EDF6D6CD5F1393A /* FeedModels.swift */,
+			);
+			path = Feeder;
 			sourceTree = "<group>";
 		};
 		DA31F67415290C1B8A8711D6 /* Views */ = {
@@ -297,7 +317,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\nSRC=\"$SRCROOT/build/icecast\"\nif [ ! -x \"$SRC/icecast\" ]; then\n  echo \"error: build/icecast/icecast missing. Run scripts/build-icecast.sh first.\"\n  exit 1\nfi\nAPP=\"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH\"\nmkdir -p \"$APP/Helpers\" \"$APP/Resources/icecast-share\" \"$APP/Library/LaunchAgents\"\nID=\"${EXPANDED_CODE_SIGN_IDENTITY:--}\"\n[ -z \"$ID\" ] && ID=\"-\"\n# Release builds get Apple's secure timestamp (needed for Developer ID / notarization).\nTS=\"--timestamp=none\"; [ \"${CONFIGURATION:-}\" = \"Release\" ] && TS=\"--timestamp\"\n# Only replace the bundled icecast when it changed. In a dev\n# build the running background server executes this very file, and rewriting or\n# re-signing it would make macOS kill the server and drop live streams.\nSTAMP_FILE=\"$TARGET_TEMP_DIR/icecast.stamp\"\nSTAMP=\"$(shasum -a 256 \"$SRC/icecast\" | cut -d' ' -f1)\"\nif [ ! -x \"$APP/Helpers/icecast\" ] || [ \"$(cat \"$STAMP_FILE\" 2>/dev/null)\" != \"$STAMP\" ]; then\n  cp \"$SRC/icecast\" \"$APP/Helpers/icecast\"\n  codesign --force --options runtime $TS --sign \"$ID\" \"$APP/Helpers/icecast\"\n  echo \"$STAMP\" > \"$STAMP_FILE\"\nfi\nrsync -a --delete \"$SRC/share/\" \"$APP/Resources/icecast-share/\"\n# Launcher run by launchd; universal, built here so it matches the app's deployment target.\nLSTAMP_FILE=\"$TARGET_TEMP_DIR/launcher.stamp\"\nLSTAMP=\"$(shasum -a 256 \"$SRCROOT/Launcher/icekast-launch.c\" | cut -d' ' -f1)\"\nif [ ! -x \"$APP/Helpers/icekast-launch\" ] || [ \"$(cat \"$LSTAMP_FILE\" 2>/dev/null)\" != \"$LSTAMP\" ]; then\n  clang -O2 -arch arm64 -arch x86_64 -mmacosx-version-min=13.0 \\\n    \"$SRCROOT/Launcher/icekast-launch.c\" -o \"$APP/Helpers/icekast-launch\"\n  codesign --force --options runtime $TS --sign \"$ID\" \"$APP/Helpers/icekast-launch\"\n  echo \"$LSTAMP\" > \"$LSTAMP_FILE\"\nfi\ncp \"$SRCROOT/Launcher/com.macinmind.icekast.server.plist\" \"$APP/Library/LaunchAgents/\"\n";
+			shellScript = "set -euo pipefail\nSRC=\"$SRCROOT/build/icecast\"\nif [ ! -x \"$SRC/icecast\" ]; then\n  echo \"error: build/icecast/icecast missing. Run scripts/build-icecast.sh first.\"\n  exit 1\nfi\nAPP=\"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH\"\nmkdir -p \"$APP/Helpers\" \"$APP/Resources/icecast-share\" \"$APP/Library/LaunchAgents\"\nID=\"${EXPANDED_CODE_SIGN_IDENTITY:--}\"\n[ -z \"$ID\" ] && ID=\"-\"\n# Release builds get Apple's secure timestamp (needed for Developer ID / notarization).\nTS=\"--timestamp=none\"; [ \"${CONFIGURATION:-}\" = \"Release\" ] && TS=\"--timestamp\"\n# Only replace the bundled icecast when it changed. In a dev\n# build the running background server executes this very file, and rewriting or\n# re-signing it would make macOS kill the server and drop live streams.\nSTAMP_FILE=\"$TARGET_TEMP_DIR/icecast.stamp\"\nSTAMP=\"$(shasum -a 256 \"$SRC/icecast\" | cut -d' ' -f1)\"\nif [ ! -x \"$APP/Helpers/icecast\" ] || [ \"$(cat \"$STAMP_FILE\" 2>/dev/null)\" != \"$STAMP\" ]; then\n  cp \"$SRC/icecast\" \"$APP/Helpers/icecast\"\n  codesign --force --options runtime $TS --sign \"$ID\" \"$APP/Helpers/icecast\"\n  echo \"$STAMP\" > \"$STAMP_FILE\"\nfi\nrsync -a --delete \"$SRC/share/\" \"$APP/Resources/icecast-share/\"\n# Launcher run by launchd; universal, built here so it matches the app's deployment target.\nLSTAMP_FILE=\"$TARGET_TEMP_DIR/launcher.stamp\"\nLSTAMP=\"$(cat \"$SRCROOT/Launcher/icekast-launch.c\" | shasum -a 256 | cut -d' ' -f1)\"\nif [ ! -x \"$APP/Helpers/icekast-launch\" ] || [ \"$(cat \"$LSTAMP_FILE\" 2>/dev/null)\" != \"$LSTAMP\" ]; then\n  clang -O2 -arch arm64 -arch x86_64 -mmacosx-version-min=13.0 \\\n    \"$SRCROOT/Launcher/icekast-launch.c\" -o \"$APP/Helpers/icekast-launch\"\n  codesign --force --options runtime $TS --sign \"$ID\" \"$APP/Helpers/icekast-launch\"\n  echo \"$LSTAMP\" > \"$LSTAMP_FILE\"\nfi\n# Backup-audio feeder (Swift), universal, rebuilt only when its sources change.\nFSTAMP_FILE=\"$TARGET_TEMP_DIR/feeder.stamp\"\nFSTAMP=\"$(cat \"$SRCROOT\"/Feeder/*.swift | shasum -a 256 | cut -d' ' -f1)\"\nif [ ! -x \"$APP/Helpers/icekast-feeder\" ] || [ \"$(cat \"$FSTAMP_FILE\" 2>/dev/null)\" != \"$FSTAMP\" ]; then\n  FT=\"$TARGET_TEMP_DIR/feeder-build\"; mkdir -p \"$FT\"\n  for arch in arm64 x86_64; do\n    swiftc -O -swift-version 5 -target \"$arch-apple-macos13.0\" \\\n      \"$SRCROOT/Feeder/main.swift\" \"$SRCROOT/Feeder/AudioFrames.swift\" \"$SRCROOT/Feeder/FeedModels.swift\" \\\n      -o \"$FT/feeder-$arch\"\n  done\n  lipo -create \"$FT/feeder-arm64\" \"$FT/feeder-x86_64\" -output \"$APP/Helpers/icekast-feeder\"\n  codesign --force --options runtime $TS --sign \"$ID\" \"$APP/Helpers/icekast-feeder\"\n  echo \"$FSTAMP\" > \"$FSTAMP_FILE\"\nfi\ncp \"$SRCROOT/Launcher/com.macinmind.icekast.server.plist\" \"$APP/Library/LaunchAgents/\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -310,12 +330,14 @@
 				9197E600CD085B542496E3FE /* AppModel.swift in Sources */,
 				3C5022967D33ABAA0CCA0F22 /* AppPaths.swift in Sources */,
 				A12124D008146C5ED9D1E874 /* BackupAudio.swift in Sources */,
+				829FF7336B623E5E2A77DEDF /* BackupFeeds.swift in Sources */,
 				2E30914DCBECCE3C7657A8C0 /* Components.swift in Sources */,
 				E1C899DA158C9994A5C958CC /* Config.swift in Sources */,
 				26AF116D56104A92424E28A5 /* ConfigWriter.swift in Sources */,
 				A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */,
 				8C31F7686A91EF615565D4A4 /* DirectoryListing.swift in Sources */,
 				97917B74A15552A6C141652F /* Encoders.swift in Sources */,
+				0F061F0C6C0D6459C2EF023D /* FeedModels.swift in Sources */,
 				328C0A54CF8FBEE00A1EEE16 /* IcecastService.swift in Sources */,
 				C8DDFE3FB2D624AC0E479C05 /* LoginItem.swift in Sources */,
 				A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */,
@@ -341,7 +363,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				EFC55D331D561913CEE386DD /* AlertTests.swift in Sources */,
+				6B1AE6AED0D7F0A62D8598C8 /* AudioFrames.swift in Sources */,
 				27463D24CF71CB1DF37052E4 /* ConfigTests.swift in Sources */,
+				5650ADE9A398251404815B0E /* FeederTests.swift in Sources */,
 				AAC00DFD6C2D7E2DE2FEDD53 /* SnapshotTests.swift in Sources */,
 				6A39611D570A637AACF55509 /* WindowTests.swift in Sources */,
 			);

@@ -110,7 +110,7 @@ final class StatusParserTests: XCTestCase {
     }
 
     func testMultipleSourcesArray() throws {
-        let json = #"{"icestats":{"source":[{"listeners":1,"listenurl":"http://h:8000/b"},{"listeners":2,"listenurl":"http://h:8000/a"}]}}"#
+        let json = #"{"icestats":{"source":[{"listeners":1,"listenurl":"http://h:8000/b","server_type":"audio/mpeg"},{"listeners":2,"listenurl":"http://h:8000/a","server_type":"audio/mpeg"}]}}"#
         let s = try XCTUnwrap(StatusParser.parse(Data(json.utf8)))
         XCTAssertEqual(s.mounts.map(\.path), ["/a", "/b"])
         XCTAssertEqual(s.totalListeners, 3)

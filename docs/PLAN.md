@@ -32,6 +32,10 @@ options later: mbedTLS (Apache-2.0 / GPLv2+ dual) or a reverse proxy.
    config in Application Support). It survives app quit/crash, restarts if it dies, starts at login.
    Start = register, Stop = unregister, Apply = SIGHUP (port change = kickstart -k).
 4. Status poller: /status-json.xsl, per-mount listeners, source connected, title, peak.
+   Backup audio: Icecast's own fallback-file feature sends the file far faster than real time, so players
+   buffer a huge backlog and never return to live promptly. Instead `icekast-feeder` (Feeder/, runs next to
+   Icecast under the same launchd job, supervised by `icekast-launch`) streams the file to a hidden internal
+   mount (/_backup/<mount>) at normal speed, and the mount's fallback points at that mount.
 5. Menu bar item (listener count, start/stop, open window); Dock badge; the app only attaches to the service.
 6. UI: stream/mount sidebar, status dashboard, settings editors, setup wizard,
    "connect your encoder" panel (host/port/mount/password), dock badge for chosen mount.

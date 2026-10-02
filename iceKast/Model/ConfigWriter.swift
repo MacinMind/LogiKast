@@ -57,8 +57,9 @@ enum ConfigWriter {
             }
             if m.maxListeners > 0 { x.line("max-listeners", m.maxListeners) }
             x.line("burst-size", m.burstSize)
-            // Backup audio file (served from the web root) takes precedence over a fallback mount.
-            let fallback = m.backupFile.isEmpty ? m.fallbackMount : "/backup/\(m.backupFile)"
+            // Backup audio (streamed in real time by the feeder to an internal mount) takes precedence
+            // over a fallback mount.
+            let fallback = m.backupFile.isEmpty ? m.fallbackMount : BackupAudio.internalMount(forMount: m.name)
             if !fallback.isEmpty {
                 x.line("fallback-mount", fallback)
                 x.line("fallback-override", (m.backupFile.isEmpty ? m.fallbackOverride : true) ? 1 : 0)
@@ -70,6 +71,15 @@ enum ConfigWriter {
             if !m.genre.isEmpty { x.line("genre", StreamInfoText.clean(m.genre)) }
             if !m.streamURL.isEmpty { x.line("stream-url", m.streamURL) }
             x.close("mount")
+
+            if !m.backupFile.isEmpty {
+                x.open("mount", attributes: [("type", "normal")])
+                x.line("mount-name", BackupAudio.internalMount(forMount: m.name))
+                x.line("hidden", 1)
+                x.line("public", 0)
+                x.line("burst-size", 8192)          // small: listeners moved here should be near real time
+                x.close("mount")
+            }
         }
 
         x.open("paths")

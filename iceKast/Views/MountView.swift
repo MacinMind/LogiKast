@@ -258,8 +258,39 @@ struct MountView: View {
         if let backupError {
             Label(backupError, systemImage: "xmark.octagon.fill").foregroundStyle(.red).font(.callout)
         }
-        Text("The file loops until your encoder returns. For the smoothest switch, use the same format, sample rate and bitrate as your live stream. After the live stream returns, listeners may hear a few more seconds of backup while their player's buffer empties.")
+        backupStatusRows
+        Text("The file plays in a loop at normal speed whenever your encoder is away, and listeners switch back to the live stream within a few seconds of it returning. For the smoothest switch, use the same format, sample rate and bitrate as your live stream.")
             .font(.callout).foregroundStyle(.secondary)
+    }
+
+    /// Whether the helper that plays the backup is ready, and who is hearing it right now.
+    @ViewBuilder private var backupStatusRows: some View {
+        let listening = model.poller.status?.backupListeners(forMount: mount.name) ?? 0
+        switch model.backupState(for: mount) {
+        case .notSet:
+            EmptyView()
+        case .serverOff:
+            Label("The backup starts working when the server is on.", systemImage: "moon.zzz").foregroundStyle(.secondary).font(.callout)
+        case .notRunning:
+            HStack {
+                Label("The backup audio helper isn't running yet. The server needs one restart to start it.", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange).font(.callout)
+                Spacer()
+                Button("Restart Server…") { model.promptForRestart(reason: "Backup audio needs the server restarted once so its helper can start.") }
+            }
+        case .notApplied:
+            Label("Apply your changes to start the backup.", systemImage: "arrow.triangle.2.circlepath").foregroundStyle(.orange).font(.callout)
+        case .starting:
+            HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Starting the backup…").foregroundStyle(.secondary).font(.callout) }
+        case .ready:
+            Label("Ready. It plays automatically if your encoder drops off.", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout)
+        case .problem(let message):
+            Label(message, systemImage: "xmark.octagon.fill").foregroundStyle(.red).font(.callout)
+        }
+        if listening > 0 {
+            Label("\(listening) listener\(listening == 1 ? " is" : "s are") hearing your backup right now.", systemImage: "headphones")
+                .font(.callout)
+        }
     }
 
     private func chooseBackup() {

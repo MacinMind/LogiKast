@@ -23,6 +23,8 @@ final class IcecastService: ObservableObject {
     @Published private(set) var logLines: [String] = []
     /// The icecast.xml the running server was last given.
     @Published private(set) var appliedXML: String?
+    /// What the backup-audio helper last reported (nil if it never ran or the file is unreadable).
+    @Published private(set) var backupStatus: BackupFeederStatus?
 
     private let log = Logger(subsystem: "com.macinmind.icekast", category: "service")
     private let service = SMAppService.agent(plistName: IcecastService.plistName)
@@ -155,6 +157,8 @@ final class IcecastService: ObservableObject {
 
         if isEnabled {
             readLog()
+            let bs = BackupFeeds.readStatus()
+            if bs != backupStatus { backupStatus = bs }
             if reachable {
                 state = .running
             } else if Date().timeIntervalSince(enabledSince ?? Date()) > startupGrace {
@@ -179,6 +183,7 @@ final class IcecastService: ObservableObject {
             try xml.write(to: AppPaths.icecastXML, atomically: true, encoding: .utf8)
             // The config holds passwords: owner-only.
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: AppPaths.icecastXML.path)
+            try BackupFeeds.write(BackupFeeds.make(for: config))
             appliedXML = xml
             return true
         } catch {

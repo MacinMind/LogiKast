@@ -6,11 +6,14 @@ final class StatusPoller: ObservableObject {
     @Published private(set) var reachable = false
 
     private var task: Task<Void, Never>?
+    /// Admin login to read the hidden backup mounts' listeners; return nil when nothing needs it.
+    var adminLogin: (() -> (user: String, password: String)?)?
 
     func start(port: Int, bindAddress: String, interval: TimeInterval = 2) {
         stop()
         let host = (bindAddress.isEmpty || bindAddress == "0.0.0.0") ? "127.0.0.1" : bindAddress
-        guard let url = URL(string: "http://\(host):\(port)/status-json.xsl") else { return }
+        guard let url = URL(string: "http://\(host):\(port)/status-json.xsl"),
+              let adminURL = URL(string: "http://\(host):\(port)/admin/stats.xml") else { return }
         task = Task { [weak self] in
             let session = URLSession(configuration: {
                 let c = URLSessionConfiguration.ephemeral
@@ -25,6 +28,14 @@ final class StatusPoller: ObservableObject {
                     parsed = StatusParser.parse(data)
                 }
                 if Task.isCancelled { break }
+                if parsed != nil, let login = self?.adminLogin?() {
+                    var req = URLRequest(url: adminURL)
+                    let token = Data("\(login.user):\(login.password)".utf8).base64EncodedString()
+                    req.setValue("Basic \(token)", forHTTPHeaderField: "Authorization")
+                    if let (data, resp) = try? await session.data(for: req), (resp as? HTTPURLResponse)?.statusCode == 200 {
+                        parsed?.backupMounts = AdminStats.backupMounts(from: data)
+                    }
+                }
                 self?.status = parsed
                 self?.reachable = parsed != nil
                 try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))

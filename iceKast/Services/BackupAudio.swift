@@ -28,6 +28,11 @@ enum BackupAudio {
 
     static let maxBytes = 200 * 1024 * 1024
 
+    /// Internal mount the feeder streams a mount's backup audio to. Hidden from listings.
+    static let internalPrefix = "/_backup/"
+    static func internalMount(forMount name: String) -> String { internalPrefix + slug(name) }
+    static func isInternalMount(_ path: String) -> Bool { path.hasPrefix(internalPrefix)}
+
     /// Identify MP3 vs raw AAC (ADTS) from the first bytes. Nil if neither.
     static func sniff(_ head: Data) -> Kind? {
         let b = [UInt8](head.prefix(16))

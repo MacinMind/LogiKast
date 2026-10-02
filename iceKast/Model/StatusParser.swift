@@ -19,8 +19,17 @@ struct ServerStatus: Equatable {
     var serverID: String?
     var serverStart: Date?
     var mounts: [MountStatus]
+    /// Internal backup-audio mounts (hidden from the mount list). Listeners on them are real
+    /// listeners who are hearing the backup while the encoder is away.
+    var backupMounts: [MountStatus] = []
 
-    var totalListeners: Int { mounts.reduce(0) { $0 + $1.listeners } }
+    var totalListeners: Int { mounts.reduce(0) { $0 + $1.listeners } + backupMounts.reduce(0) { $0 + $1.listeners } }
+
+    /// How many listeners are hearing the backup audio of the mount called `name` right now.
+    func backupListeners(forMount name: String) -> Int {
+        let internal_ = BackupAudio.internalMount(forMount: name)
+        return backupMounts.first { $0.path == internal_ }?.listeners ?? 0
+    }
 
     func mount(_ path: String) -> MountStatus? { mounts.first { $0.path == path } }
 }
@@ -40,6 +49,9 @@ enum StatusParser {
         }
 
         let mounts: [MountStatus] = sources.compactMap { src in
+            // When a mount has a fallback configured, Icecast keeps listing it after its encoder is gone,
+            // as a bare entry with just a listener count. A connected source always has stream details.
+            guard src["stream_start_iso8601"] != nil || src["server_type"] != nil || src["content-type"] != nil else { return nil }
             guard let listenURL = src["listenurl"] as? String,
                   let path = URL(string: listenURL)?.path, !path.isEmpty else { return nil }
             return MountStatus(
@@ -59,7 +71,8 @@ enum StatusParser {
         return ServerStatus(
             serverID: stats["server_id"] as? String,
             serverStart: (stats["server_start_iso8601"] as? String).flatMap(date),
-            mounts: mounts.sorted { $0.path < $1.path })
+            mounts: mounts.filter { !BackupAudio.isInternalMount($0.path) }.sorted { $0.path < $1.path },
+            backupMounts: mounts.filter { BackupAudio.isInternalMount($0.path) }.sorted { $0.path < $1.path })
     }
 
     /// Trimmed string value, or nil if empty or one of Icecast's placeholder defaults.
@@ -83,5 +96,21 @@ enum StatusParser {
         if let d = f.date(from: s) { return d }
         f.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
         return f.date(from: s)
+    }
+}
+
+
+/// Icecast's authenticated /admin/stats.xml lists every source, including hidden ones such as the
+/// internal backup-audio mounts, which the public status leaves out.
+enum AdminStats {
+    static func backupMounts(from data: Data) -> [MountStatus] {
+        guard let doc = try? XMLDocument(data: data),
+              let nodes = try? doc.nodes(forXPath: "/icestats/source") else { return [] }
+        return nodes.compactMap { node -> MountStatus? in
+            guard let el = node as? XMLElement, let mount = el.attribute(forName: "mount")?.stringValue,
+                  BackupAudio.isInternalMount(mount) else { return nil }
+            let listeners = Int((try? el.nodes(forXPath: "listeners").first?.stringValue) ?? "") ?? 0
+            return MountStatus(path: mount, listeners: listeners, peak: listeners)
+        }.sorted { $0.path < $1.path }
     }
 }

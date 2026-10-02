@@ -186,7 +186,12 @@ final class BackupAudioTests: XCTestCase {
         c.mounts[0].backupFile = "live-backup.mp3"
         let xml = ConfigWriter.xml(for: c, paths: IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b"))
         let doc = try XMLDocument(xmlString: xml)
-        XCTAssertEqual(try doc.nodes(forXPath: "//mount/fallback-mount").first?.stringValue, "/backup/live-backup.mp3")
+        XCTAssertEqual(try doc.nodes(forXPath: "//mount/fallback-mount").first?.stringValue, "/_backup/live")
+        // the internal mount the feeder streams to is hidden, unlisted and has a small burst
+        let internalMount = try XCTUnwrap(doc.nodes(forXPath: "//mount[mount-name='/_backup/live']").first)
+        XCTAssertEqual(try internalMount.nodes(forXPath: "hidden").first?.stringValue, "1")
+        XCTAssertEqual(try internalMount.nodes(forXPath: "public").first?.stringValue, "0")
+        XCTAssertEqual(try internalMount.nodes(forXPath: "burst-size").first?.stringValue, "8192")
         XCTAssertEqual(try doc.nodes(forXPath: "//mount/fallback-override").first?.stringValue, "1")
 
         c.mounts[0].backupFile = ""
@@ -223,5 +228,117 @@ final class BackupAudioTests: XCTestCase {
         let p = IcecastPaths(logDir: dir + "/log", webRoot: web, adminRoot: share + "/admin", baseDir: dir)
         try ConfigWriter.xml(for: c, paths: p).write(toFile: dir + "/icecast.xml", atomically: true, encoding: .utf8)
         try c.server.sourcePassword.write(toFile: dir + "/pw", atomically: true, encoding: .utf8)
+        let feeds = BackupFeeds.make(for: c, backupDir: URL(fileURLWithPath: dir), fileExists: { _ in true })
+        try BackupFeeds.write(feeds, to: URL(fileURLWithPath: dir + "/backup-feeds.json"))
+    }
+}
+
+
+final class BackupFeedsTests: XCTestCase {
+    private func config() -> AppConfig {
+        var c = AppConfig.makeDefault()
+        c.server.port = 8123
+        c.server.sourcePassword = "secret"
+        c.mounts = [Mount(), Mount()]
+        c.mounts[0].name = "/live"; c.mounts[0].backupFile = "live-backup.mp3"
+        c.mounts[1].name = "/Jazz Radio"; c.mounts[1].backupFile = "x.aac"
+        return c
+    }
+
+    func testFeedsFileFromConfig() {
+        let dir = URL(fileURLWithPath: "/tmp/b")
+        let f = BackupFeeds.make(for: config(), backupDir: dir, fileExists: { _ in true })
+        XCTAssertEqual(f.host, "127.0.0.1")
+        XCTAssertEqual(f.port, 8123)
+        XCTAssertEqual(f.password, "secret")
+        XCTAssertEqual(f.feeds.map(\.mount), ["/_backup/live", "/_backup/jazz-radio"])
+        XCTAssertEqual(f.feeds[0].file, "/tmp/b/live-backup.mp3")
+        XCTAssertEqual(f.feeds.map(\.contentType), ["audio/mpeg", "audio/aac"])
+    }
+
+    func testMissingFilesAndNoBackupAreSkippedAndBindAddressIsUsed() {
+        var c = config()
+        c.mounts[1].backupFile = ""
+        c.server.bindAddress = "192.168.1.5"
+        let f = BackupFeeds.make(for: c, fileExists: { $0 == "live-backup.mp3" })
+        XCTAssertEqual(f.feeds.count, 1)
+        XCTAssertEqual(f.host, "192.168.1.5")
+        XCTAssertTrue(BackupFeeds.make(for: c, fileExists: { _ in false }).feeds.isEmpty)
+    }
+
+    func testWritingIsOwnerOnlyAndSkipsIdenticalContent() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("feeds-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let f = BackupFeeds.make(for: config(), fileExists: { _ in true })
+        try BackupFeeds.write(f, to: url)
+        let perms = try FileManager.default.attributesOfItem(atPath: url.path)[.posixPermissions] as? Int
+        XCTAssertEqual(perms, 0o600)
+        let first = try FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
+        Thread.sleep(forTimeInterval: 1.1)
+        try BackupFeeds.write(f, to: url)                                  // unchanged: the feeder must not reconnect
+        XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date, first)
+        XCTAssertEqual(try JSONDecoder().decode(BackupFeedsFile.self, from: Data(contentsOf: url)), f)
+    }
+
+    func testBackupState() {
+        var m = Mount(); m.name = "/live"
+        let now = Date()
+        func st(_ feed: String, _ state: String, age: TimeInterval = 0, detail: String = "") -> BackupFeederStatus {
+            .init(updated: now.timeIntervalSince1970 - age, pid: 1, feeds: [.init(mount: feed, state: state, detail: detail)])
+        }
+        XCTAssertEqual(BackupState.of(mount: m, serverOn: true, status: nil, now: now), .notSet)
+        m.backupFile = "live-backup.mp3"
+        XCTAssertEqual(BackupState.of(mount: m, serverOn: false, status: nil, now: now), .serverOff)
+        XCTAssertEqual(BackupState.of(mount: m, serverOn: true, status: nil, now: now), .notRunning)
+        XCTAssertEqual(BackupState.of(mount: m, serverOn: true, status: st("/_backup/live", "streaming", age: 30), now: now), .notRunning, "stale heartbeat")
+        XCTAssertEqual(BackupState.of(mount: m, serverOn: true, status: st("/_backup/other", "streaming"), now: now), .notApplied)
+        XCTAssertEqual(BackupState.of(mount: m, serverOn: true, status: st("/_backup/live", "connecting"), now: now), .starting)
+        XCTAssertEqual(BackupState.of(mount: m, serverOn: true, status: st("/_backup/live", "streaming"), now: now), .ready)
+        XCTAssertEqual(BackupState.of(mount: m, serverOn: true, status: st("/_backup/live", "error", detail: "Can't reach the server."), now: now), .problem("Can't reach the server."))
+    }
+
+    func testInternalMountsAreHiddenFromTheMountListButCounted() throws {
+        let json = #"{"icestats":{"source":[{"listeners":2,"listenurl":"http://h:8000/live","server_type":"audio/mpeg"},{"listeners":3,"listenurl":"http://h:8000/_backup/live","server_type":"audio/mpeg"}]}}"#
+        let s = try XCTUnwrap(StatusParser.parse(Data(json.utf8)))
+        XCTAssertEqual(s.mounts.map(\.path), ["/live"])
+        XCTAssertEqual(s.backupMounts.map(\.path), ["/_backup/live"])
+        XCTAssertEqual(s.totalListeners, 5, "listeners hearing the backup are still listeners")
+        XCTAssertEqual(s.backupListeners(forMount: "/live"), 3)
+        XCTAssertEqual(s.backupListeners(forMount: "/other"), 0)
+        // The alert tracker only sees real mounts, so the backup connecting is never "an encoder connecting".
+        XCTAssertFalse(s.mounts.contains { BackupAudio.isInternalMount($0.path) })
+    }
+
+    func testLeftoverFallbackPlaceholderIsNotAnOnAirMount() throws {
+        // Real Icecast output after the encoder dropped: the mount lingers with only a listener count.
+        let json = #"{"icestats":{"source":{"listeners":0,"listenurl":"http://h:8000/live"}}}"#
+        let s = try XCTUnwrap(StatusParser.parse(Data(json.utf8)))
+        XCTAssertTrue(s.mounts.isEmpty, "no encoder, so the mount is not on the air")
+        // ...while a connected source carries stream details.
+        let live = #"{"icestats":{"source":{"listeners":1,"listenurl":"http://h:8000/live","server_type":"audio/mpeg","stream_start_iso8601":"2026-10-02T00:09:46-0500"}}}"#
+        XCTAssertEqual(try XCTUnwrap(StatusParser.parse(Data(live.utf8))).mounts.map(\.path), ["/live"])
+    }
+
+    func testAdminStatsListHiddenBackupMounts() {
+        let xml = """
+        <?xml version="1.0"?><icestats><clients>2</clients><listeners>1</listeners>
+        <source mount="/_backup/live"><listeners>1</listeners><server_name>iceKast backup for /live</server_name></source>
+        <source mount="/live"><listeners>0</listeners></source>
+        <source mount="/_backup/jazz"><listeners>4</listeners></source></icestats>
+        """
+        let m = AdminStats.backupMounts(from: Data(xml.utf8))
+        XCTAssertEqual(m.map(\.path), ["/_backup/jazz", "/_backup/live"])
+        XCTAssertEqual(m.map(\.listeners), [4, 1])
+        XCTAssertTrue(AdminStats.backupMounts(from: Data("nope".utf8)).isEmpty)
+    }
+
+    func testOldFileLocationIsMigrated() throws {
+        let fm = FileManager.default
+        try fm.createDirectory(at: AppPaths.legacyBackupDir, withIntermediateDirectories: true)
+        try Data([1, 2, 3]).write(to: AppPaths.legacyBackupDir.appendingPathComponent("live-backup.mp3"))
+        AppPaths.migrateBackupFiles()
+        XCTAssertTrue(BackupAudio.exists("live-backup.mp3"))
+        XCTAssertFalse(fm.fileExists(atPath: AppPaths.legacyBackupDir.path))
+        BackupAudio.remove("live-backup.mp3")
     }
 }
