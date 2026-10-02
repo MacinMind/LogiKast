@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds the iceKast app icon from the Radiologik icon: adds a blue/white icicle ceiling
-across the top third and two thin red sine waves across the centre, clipped to the icon's
+across the top third and two blue sine waves across the centre, clipped to the icon's
 rounded square.
 Usage: make-icon.py [out.png]    (needs: pip install pillow numpy)"""
 import math, random, sys
@@ -116,7 +116,7 @@ ice_a = (m * 0.95 * a_big)[..., None]
 rgb = rgb * (1 - ice_a) + col * ice_a
 rgb = rgb + (255 - rgb) * (glints * a_big[..., None])
 
-# two thin red sine waves across the centre: a strong one and a lighter one, apexes offset
+# two blue sine waves across the centre: a strong one and a lighter one, apexes offset
 def wave(amp, cycles, phase, width, colour, opacity, cy=(T + B) / 2):
     layer = Image.new("L", (N, N), 0)
     ld = ImageDraw.Draw(layer)
@@ -133,8 +133,11 @@ def wave(amp, cycles, phase, width, colour, opacity, cy=(T + B) / 2):
     a = np.array(layer.filter(ImageFilter.GaussianBlur(S * 0.7))).astype(np.float32)[..., None] / 255.0
     return a * opacity * a_big[..., None], np.array(colour, np.float32)
 
-for amp, cyc, ph, wd, colr, op in [(120, 1.3, 0.5, 26, (214, 24, 32), 0.95),
-                                   (96, 1.3, 1.9, 18, (255, 120, 118), 0.75)]:
+# each wave gets a contrasting halo so it reads on both the dark headphones and the grey ground
+for amp, cyc, ph, wd, colr, op, halo in [(96, 1.3, 1.9, 18, (120, 214, 255), 0.85, (8, 40, 110)),
+                                         (120, 1.3, 0.5, 26, (20, 110, 255), 1.0, (255, 255, 255))]:
+    ha, hc = wave(amp, cyc, ph, wd + 12, halo, 0.9)
+    rgb = rgb * (1 - ha) + hc * ha
     wa, wc = wave(amp, cyc, ph, wd, colr, op)
     rgb = rgb * (1 - wa) + wc * wa
 
