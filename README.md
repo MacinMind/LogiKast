@@ -31,7 +31,7 @@ xcodebuild -project iceKast.xcodeproj -scheme iceKast -derivedDataPath build/xco
 ## Versioning
 
 The public version is `1.0b2` (`CFBundleShortVersionString`). The internal build number is
-`1.0.0.3.2` (`CFBundleVersion`). Both are set in `project.yml`.
+`1.0.0.4.2` (`CFBundleVersion`). Both are set in `project.yml`.
 
 ## License
 
