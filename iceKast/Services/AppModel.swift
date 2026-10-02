@@ -186,6 +186,37 @@ final class AppModel: ObservableObject {
 
     func status(for mount: Mount) -> MountStatus? { poller.status?.mount(mount.name) }
 
+    // MARK: Listeners and web admin
+
+    private var admin: AdminClient {
+        AdminClient(port: config.server.port, bindAddress: config.server.bindAddress,
+                    user: config.server.adminUser, password: config.server.adminPassword)
+    }
+
+    /// Everyone connected to a mount, including people hearing its backup audio. nil if the server can't be asked.
+    func listeners(of mount: Mount) async -> [Listener]? {
+        let client = admin
+        guard let live = await client.listeners(mount: mount.name) else { return nil }
+        var all = live
+        if !mount.backupFile.isEmpty,
+           let backup = await client.listeners(mount: BackupAudio.internalMount(forMount: mount.name), onBackup: true) {
+            all += backup
+        }
+        return all
+    }
+
+    func kick(_ listener: Listener, from mount: Mount) async -> Bool {
+        let path = listener.onBackup ? BackupAudio.internalMount(forMount: mount.name) : mount.name
+        return await admin.kick(id: listener.id, mount: path)
+    }
+
+    /// Opens Icecast's own admin pages in the browser, which asks for the admin user and password.
+    func openWebAdmin() {
+        if let url = WebAdmin.url(port: config.server.port, bindAddress: config.server.bindAddress) {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     func addMount() -> Mount {
         var m = Mount()
         var n = config.mounts.count + 1

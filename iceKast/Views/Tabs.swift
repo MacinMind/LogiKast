@@ -24,11 +24,12 @@ struct SegmentedTabs<T: TabItem>: View where T.AllCases: RandomAccessCollection 
 }
 
 enum MountTab: String, TabItem {
-    case connect, share, streamInfo, backup, advanced
+    case connect, share, listeners, streamInfo, backup, advanced
     var title: String {
         switch self {
         case .connect: "Connect"
         case .share: "Share"
+        case .listeners: "Listeners"
         case .streamInfo: "Stream Info"
         case .backup: "Backup"
         case .advanced: "Advanced"

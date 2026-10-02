@@ -85,6 +85,7 @@ struct MountView: View {
         switch model.mountTab {
         case .connect: connectSection
         case .share: shareSection
+        case .listeners: ListenersSection(mount: mount)
         case .streamInfo: streamInfoSection
         case .backup: backupSection
         case .advanced: advancedSections
