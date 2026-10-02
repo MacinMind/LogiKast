@@ -18,16 +18,33 @@ struct LogiKastApp: App {
                 Button("Check for Updates…") { model.updater.checkForUpdates() }
                     .disabled(!model.updater.canCheck)
             }
-            CommandGroup(after: .help) {
-                Button("Setup Assistant…") { model.requestSetup() }
-                Menu("Encoder Apps") { EncoderLinkButtons() }
-            }
+            HelpCommands(model: model)
         }
+
+        Window("Version Notes", id: "notes") {
+            VersionNotesView(updater: model.updater)
+        }
+        .defaultSize(width: 520, height: 420)
 
         MenuBarExtra {
             MenuBarContent().environmentObject(model)
         } label: {
             MenuBarLabel().environmentObject(model)
+        }
+    }
+}
+
+/// The Help menu additions.
+struct HelpCommands: Commands {
+    @ObservedObject var model: AppModel
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some Commands {
+        CommandGroup(after: .help) {
+            Button(VersionNotes.menuTitle(includeBetas: model.updater.includeBetas)) { openWindow(id: "notes") }
+            Divider()
+            Button("Setup Assistant…") { model.requestSetup() }
+            Menu("Encoder Apps") { EncoderLinkButtons() }
         }
     }
 }
