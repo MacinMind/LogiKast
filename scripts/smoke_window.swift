@@ -34,25 +34,57 @@ func ink(_ rep: NSBitmapImageRep, _ r: CGRect) -> Double {
     return Double(px.filter { d($0, dom) > 40 }.count) / Double(px.count)
 }
 
-struct Case { let name: String; let args: [String] }
-var cases = [Case(name: "server / network", args: ["--server-tab", "network"])]
-for t in ["connect", "share", "streamInfo", "backup", "advanced"] { cases.append(Case(name: "mount / \(t)", args: ["--show-mount", "--mount-tab", t])) }
+/// True if a scroll bar thumb is visible along the window's right edge (a long dark vertical run).
+/// macOS flashes the scroll bars when a window first appears, so content that overflows shows one.
+func scrollBarVisible(_ rep: NSBitmapImageRep) -> Bool {
+    let w = rep.pixelsWide, h = rep.pixelsHigh
+    var run = 0, best = 0
+    for y in 70..<(h - 4) {
+        var dark = 0
+        for x in (w - 16)..<(w - 2) {
+            if let c = rep.colorAt(x: x, y: y)?.usingColorSpace(.sRGB), c.redComponent < 0.80 { dark += 1 }
+        }
+        if dark >= 3 { run += 1; best = max(best, run) } else { run = 0 }
+    }
+    return best >= 30
+}
+
+/// `scrolls`: pages that are expected to need a scroll bar at the minimum window size.
+struct Case { let name: String; let args: [String]; var scrolls = false }
+var cases = [Case(name: "server / network", args: ["--server-tab", "network"]),
+             Case(name: "server / access", args: ["--server-tab", "access"]),
+             Case(name: "server / alerts", args: ["--server-tab", "alerts"]),
+             Case(name: "server / app", args: ["--server-tab", "app"])]
+for t in ["connect", "share", "streamInfo", "backup", "advanced"] {
+    cases.append(Case(name: "mount / \(t)", args: ["--show-mount", "--mount-tab", t], scrolls: t == "share"))
+}
 
 var failures = 0
 for c in cases {
-    run("/usr/bin/pkill", ["-x", "iceKast"]); Thread.sleep(forTimeInterval: 1)
-    run("/usr/bin/open", ["-n", appPath, "--args"] + c.args)
-    Thread.sleep(forTimeInterval: 5)
-    run("/usr/bin/osascript", ["-e", "tell application \"iceKast\" to activate"]); Thread.sleep(forTimeInterval: 1.5)
-    guard let id = windowID() else { print("FAIL  \(c.name): no window"); failures += 1; continue }
+    // The window can take a while to appear (it varies run to run), so poll for it; relaunch if it never does.
+    var found: Int?
+    for _ in 1...2 {
+        run("/usr/bin/pkill", ["-x", "iceKast"]); Thread.sleep(forTimeInterval: 1.5)
+        run("/usr/bin/open", ["-g", "-n", appPath, "--args"] + c.args)   // -g: do not take focus (your typing must never land in iceKast)
+        let deadline = Date().addingTimeInterval(20)
+        while found == nil, Date() < deadline { Thread.sleep(forTimeInterval: 0.5); found = windowID() }
+        if found != nil { break }
+    }
+    if found != nil {
+        Thread.sleep(forTimeInterval: 3)                       // let the page finish laying out (no activation: never steal focus)
+        found = windowID() ?? found
+    }
+    guard let id = found else { print("FAIL  \(c.name): no window after 2 launches (40 s)"); failures += 1; continue }
     let out = NSTemporaryDirectory() + "smoke-\(id).png"
     run("/usr/sbin/screencapture", ["-x", "-o", "-l", String(id), out])
     guard let data = FileManager.default.contents(atPath: out), let rep = NSBitmapImageRep(data: data) else { print("FAIL  \(c.name): no capture"); failures += 1; continue }
     let w = CGFloat(rep.pixelsWide), h = CGFloat(rep.pixelsHigh)
     let sidebar = ink(rep, CGRect(x: 0, y: 70, width: w * 0.22, height: h * 0.4))
     let detail = ink(rep, CGRect(x: w * 0.30, y: 70, width: w * 0.65, height: h * 0.6))
-    let ok = sidebar > 0.002 && detail > 0.02
-    print("\(ok ? "ok  " : "FAIL")  \(c.name): sidebar ink \(String(format: "%.3f", sidebar)), page ink \(String(format: "%.3f", detail))")
+    let bar = scrollBarVisible(rep)
+    let ok = sidebar > 0.002 && detail > 0.02 && bar == c.scrolls
+    let barNote = bar ? "SCROLL BAR" : "no scroll bar"
+    print("\(ok ? "ok  " : "FAIL")  \(c.name): sidebar ink \(String(format: "%.3f", sidebar)), page ink \(String(format: "%.3f", detail)), \(barNote)\(bar != c.scrolls ? (c.scrolls ? " (expected one)" : " (not expected)") : "")")
     if !ok { failures += 1 }
     try? FileManager.default.removeItem(atPath: out)
 }

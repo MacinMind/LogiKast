@@ -32,6 +32,12 @@ final class StatusPoller: ObservableObject {
         }
     }
 
+    /// For tests and previews: show a given status without a running server.
+    func injectForTesting(status: ServerStatus?) {
+        self.status = status
+        self.reachable = status != nil
+    }
+
     func stop() {
         task?.cancel()
         task = nil

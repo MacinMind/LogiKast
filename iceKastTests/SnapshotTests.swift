@@ -69,4 +69,42 @@ final class SnapshotTests: XCTestCase {
         host.cacheDisplay(in: host.bounds, to: rep)
         try rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: dir).appendingPathComponent(name))
     }
+
+    /// Renders each page tall, at the real detail-pane width, so its natural content height can be
+    /// measured (only when ICEKAST_MEASURE_DIR is set).
+    func testRenderPagesForHeightMeasurement() throws {
+        guard let dir = ProcessInfo.processInfo.environment["ICEKAST_MEASURE_DIR"] else { throw XCTSkip("not requested") }
+        try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        let model = AppModel()
+        var m = model.config.mounts[0]
+        m.streamName = "Radiologik Trance"
+        model.config.mounts[0] = m
+        // The on-air header (title + format line) is taller than the "off" one, so measure that.
+        let live = MountStatus(path: m.name, listeners: 3, peak: 5, title: "Alexander Popov - Elegia (Original Mix Edit)",
+                               streamName: "Radiologik Trance", genre: "Trance", streamURL: "https://www.radiologik.com/trance",
+                               streamDescription: "A classy and melodic selection of tracks", contentType: "audio/aacp", bitrate: 64,
+                               streamStart: Date().addingTimeInterval(-600))
+        model.poller.injectForTesting(status: ServerStatus(mounts: [live]))
+        struct Host: View {
+            @EnvironmentObject var model: AppModel
+            @State var mount: Mount
+            var body: some View { MountView(mount: $mount, onDelete: {}) }
+        }
+        let width: CGFloat = 590   // 820 minimum window width minus the 230 ideal sidebar
+        for tab in MountTab.allCases {
+            model.mountTab = tab
+            try snapshot(Host(mount: m).environmentObject(model), size: NSSize(width: width, height: 1700), to: "m-\(tab.rawValue).png", in: dir)
+        }
+        for tab in ServerTab.allCases {
+            model.serverTab = tab
+            try snapshot(ServerView().environmentObject(model), size: NSSize(width: width, height: 1700), to: "s-\(tab.rawValue).png", in: dir)
+        }
+        // states that make a page taller
+        var pub = m; pub.isPublic = true
+        model.mountTab = .streamInfo
+        try snapshot(Host(mount: pub).environmentObject(model), size: NSSize(width: width, height: 1700), to: "m-streamInfo-public.png", in: dir)
+        var bk = m; bk.backupFile = "live-backup.mp3"; bk.backupName = "Be Right Back.mp3"
+        model.mountTab = .backup
+        try snapshot(Host(mount: bk).environmentObject(model), size: NSSize(width: width, height: 1700), to: "m-backup-file.png", in: dir)
+    }
 }
