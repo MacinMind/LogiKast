@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ServerView: View {
     @EnvironmentObject var model: AppModel
-    @State private var showLog = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -15,8 +14,17 @@ struct ServerView: View {
                 if model.hasPendingChanges { pendingBanner }
             }
             SegmentedTabs(selection: $model.serverTab)
-            Form { tabContent }
-                .formStyle(.grouped)
+            if model.serverTab == .app {
+                // Settings stay their natural size; the log takes all the remaining height, so a taller window shows more of it.
+                Form { appTab }
+                    .formStyle(.grouped)
+                    .scrollDisabled(true)
+                    .frame(height: 175)
+                logView
+            } else {
+                Form { tabContent }
+                    .formStyle(.grouped)
+            }
         }
         .navigationTitle("Server")
     }
@@ -122,19 +130,31 @@ struct ServerView: View {
                 }
             }
 
-            Section {
-                DisclosureGroup("Server log", isExpanded: $showLog) {
-                    ScrollView {
-                        Text(model.server.logLines.joined(separator: "\n"))
-                            .font(.system(size: 11, design: .monospaced))
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(height: 180)
-                }
-            }
     }
 
+    private var logView: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Server log").font(.headline)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    Text(model.server.logLines.joined(separator: "\n"))
+                        .font(.system(size: 11, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(8)
+                    Color.clear.frame(height: 1).id("logEnd")
+                }
+                // Newest lines are at the bottom: open there and stay with them as new lines arrive.
+                .onAppear { proxy.scrollTo("logEnd", anchor: .bottom) }
+                .onChange(of: model.server.logLines.count) { _ in proxy.scrollTo("logEnd", anchor: .bottom) }
+            }
+            .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.2)))
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 16)
+        .frame(maxHeight: .infinity)
+    }
 
     private var header: some View {
         HStack(spacing: 12) {

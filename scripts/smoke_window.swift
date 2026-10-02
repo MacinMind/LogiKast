@@ -55,8 +55,8 @@ var cases = [Case(name: "server / network", args: ["--server-tab", "network"]),
              Case(name: "server / access", args: ["--server-tab", "access"]),
              Case(name: "server / alerts", args: ["--server-tab", "alerts"]),
              Case(name: "server / app", args: ["--server-tab", "app"])]
-for t in ["connect", "share", "streamInfo", "backup", "advanced"] {
-    cases.append(Case(name: "mount / \(t)", args: ["--show-mount", "--mount-tab", t], scrolls: t == "share"))
+for t in ["connect", "share", "listeners", "streamInfo", "backup", "advanced"] {
+    cases.append(Case(name: "mount / \(t)", args: ["--show-mount", "--mount-tab", t]))
 }
 
 var failures = 0
