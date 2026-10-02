@@ -3,7 +3,10 @@ import AppKit
 
 @main
 struct LogiKastApp: App {
-    @StateObject private var model = AppModel()
+    // Not @StateObject: the app itself must not watch the model. The server status changes every couple of seconds,
+    // and every change would rebuild the whole menu bar, even while a menu is open (the Window menu lost most of its items).
+    // Views that show model data observe it themselves through the environment.
+    @State private var model = AppModel()
 
     var body: some Scene {
         Window("LogiKast", id: "main") {
@@ -12,13 +15,7 @@ struct LogiKastApp: App {
                 .frame(minWidth: 820, minHeight: 730)
         }
         .commands {
-            CommandGroup(replacing: .newItem) {}
-            CommandGroup(replacing: .appInfo) {
-                Button("About LogiKast") { AboutPanel.show() }
-                Button("Check for Updates…") { model.updater.checkForUpdates() }
-                    .disabled(!model.updater.canCheck)
-            }
-            HelpCommands(model: model)
+            AppCommands(model: model, updater: model.updater)
         }
 
         Window("Version Notes", id: "notes") {
@@ -34,14 +31,21 @@ struct LogiKastApp: App {
     }
 }
 
-/// The Help menu additions.
-struct HelpCommands: Commands {
-    @ObservedObject var model: AppModel
+/// The menu bar commands. Watches only the updater (which changes rarely), never the whole model.
+struct AppCommands: Commands {
+    let model: AppModel
+    @ObservedObject var updater: Updater
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
+        CommandGroup(replacing: .newItem) {}
+        CommandGroup(replacing: .appInfo) {
+            Button("About LogiKast") { AboutPanel.show() }
+            Button("Check for Updates…") { updater.checkForUpdates() }
+                .disabled(!updater.canCheck)
+        }
         CommandGroup(after: .help) {
-            Button(VersionNotes.menuTitle(includeBetas: model.updater.includeBetas)) { openWindow(id: "notes") }
+            Button(VersionNotes.menuTitle(includeBetas: updater.includeBetas)) { openWindow(id: "notes") }
             Divider()
             Button("Setup Assistant…") { model.requestSetup() }
             Menu("Encoder Apps") { EncoderLinkButtons() }
