@@ -130,8 +130,8 @@ def wave(amp, cycles, phase, width, colour, opacity, cy=(T + B) / 2):
     a = np.array(layer.filter(ImageFilter.GaussianBlur(S * 0.7))).astype(np.float32)[..., None] / 255.0
     return a * opacity * a_big[..., None], np.array(colour, np.float32)
 
-for amp, cyc, ph, wd, colr, op in [(80, 1.5, 0.0, 6, (214, 24, 32), 0.95),
-                                   (62, 1.5, 1.1, 5, (255, 120, 118), 0.75)]:
+for amp, cyc, ph, wd, colr, op in [(80, 1.5, 0.0, 16, (214, 24, 32), 0.95),
+                                   (62, 1.5, 1.1, 11, (255, 120, 118), 0.75)]:
     wa, wc = wave(amp, cyc, ph, wd, colr, op)
     rgb = rgb * (1 - wa) + wc * wa
 
