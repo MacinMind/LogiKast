@@ -116,6 +116,7 @@ final class AdminProxy: @unchecked Sendable {
         if !req.body.isEmpty { out.httpBody = req.body }
         if let type = req.headers["content-type"] { out.setValue(type, forHTTPHeaderField: "Content-Type") }
         out.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
+        out.setValue("close", forHTTPHeaderField: "Connection")      // no idle keep-alive connection left on Icecast
         out.setValue("Basic " + Data("\(t.user):\(t.password)".utf8).base64EncodedString(), forHTTPHeaderField: "Authorization")
         session.dataTask(with: out) { [weak self] data, resp, error in
             guard let self else { return }

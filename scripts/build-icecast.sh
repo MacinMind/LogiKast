@@ -61,7 +61,7 @@ build_arch() {
   echo "== [$arch] libigloo";  unpack libigloo "$W/igloo";   (cd "$W/igloo"  && ./configure "${common[@]}" >/dev/null && make -j"$JOBS" >/dev/null && make install >/dev/null)
   echo "== [$arch] curl";      unpack curl "$W/curl";        (cd "$W/curl"   && ./configure "${common[@]}" --without-ssl --without-libpsl --without-zlib --without-brotli --without-zstd --without-nghttp2 --without-libidn2 --disable-ldap --disable-ipv6 --disable-manual --disable-docs >/dev/null && make -j"$JOBS" >/dev/null && make install >/dev/null)
   echo "== [$arch] icecast";   unpack icecast "$W/icecast"
-  (cd "$W/icecast" && patch -p1 < "$ROOT/third_party/patches/0001-macos-pthread.patch")
+  for p in "$ROOT"/third_party/patches/*.patch; do (cd "$W/icecast" && patch -p1 < "$p"); done
   # Static link: force the .a archives; macOS system libs (libz, libresolv, libc++) stay dynamic.
   (cd "$W/icecast" && ./configure "${common[@]}" --without-openssl --without-theora --without-speex --without-maxminddb \
       --sysconfdir="$P/etc" --localstatedir="$P/var" >/dev/null && make -j"$JOBS" >/dev/null && make install >/dev/null)

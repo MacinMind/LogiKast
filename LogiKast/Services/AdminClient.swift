@@ -19,6 +19,9 @@ struct AdminClient {
         var req = URLRequest(url: url, timeoutInterval: 3)
         req.setValue("Basic " + Data("\(user):\(password)".utf8).base64EncodedString(), forHTTPHeaderField: "Authorization")
         req.cachePolicy = .reloadIgnoringLocalCacheData
+        // Icecast 2.5.0 spins at 100% CPU while an idle keep-alive connection stays open (fixed in our bundled build,
+        // but older running servers have it), so never leave one behind.
+        req.setValue("close", forHTTPHeaderField: "Connection")
         return req
     }
 

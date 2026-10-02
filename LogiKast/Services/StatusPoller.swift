@@ -27,7 +27,9 @@ final class StatusPoller: ObservableObject {
             }())
             while !Task.isCancelled {
                 var parsed: ServerStatus?
-                if let (data, resp) = try? await session.data(from: url),
+                var statusRequest = URLRequest(url: url)
+                statusRequest.setValue("close", forHTTPHeaderField: "Connection")      // see AdminClient: no idle connections left open
+                if let (data, resp) = try? await session.data(for: statusRequest),
                    (resp as? HTTPURLResponse)?.statusCode == 200 {
                     parsed = StatusParser.parse(data)
                 }
@@ -37,6 +39,7 @@ final class StatusPoller: ObservableObject {
                     var req = URLRequest(url: adminURL)
                     let token = Data("\(login.user):\(login.password)".utf8).base64EncodedString()
                     req.setValue("Basic \(token)", forHTTPHeaderField: "Authorization")
+                    req.setValue("close", forHTTPHeaderField: "Connection")
                     if let (data, resp) = try? await session.data(for: req), (resp as? HTTPURLResponse)?.statusCode == 200 {
                         parsed?.backupMounts = AdminStats.backupMounts(from: data)
                         if meterLogin != nil {

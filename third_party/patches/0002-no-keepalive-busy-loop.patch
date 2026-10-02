@@ -1,0 +1,25 @@
+Icecast 2.5.0 keeps an idle HTTP keep-alive connection in its request queue and then spins
+(100% of a CPU core) in process_request_queue until the client goes away. A browser tab or any HTTP
+library that reuses connections is enough to trigger it. Answer every request with "Connection: close"
+instead, which is what Icecast 2.4 did.
+
+--- a/src/client.c
++++ b/src/client.c
+@@ -523,7 +523,7 @@
+     client->respcode = 426;
+     client->refbuf->len = strlen(client->refbuf->data);
+ 
+-    client->reuse = ICECAST_REUSE_KEEPALIVE;
++    client->reuse = ICECAST_REUSE_CLOSE;
+ 
+     fastevent_emit(FASTEVENT_TYPE_CLIENT_SEND_RESPONSE, FASTEVENT_FLAG_MODIFICATION_ALLOWED, FASTEVENT_DATATYPE_CLIENT, client);
+ 
+@@ -591,7 +591,7 @@
+ 
+     client_set_queue(client, NULL);
+     client->refbuf = refbuf_new(buf_len);
+-    client->reuse = ICECAST_REUSE_KEEPALIVE;
++    client->reuse = ICECAST_REUSE_CLOSE;
+ 
+     avl_tree_rlock(global.source_tree);
+     source = source_find_mount_raw(client->uri);
