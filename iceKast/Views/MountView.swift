@@ -324,7 +324,7 @@ struct MountView: View {
     }
 
     private var statusCard: some View {
-        HStack(alignment: .top, spacing: 24) {
+        HStack(alignment: .top, spacing: 8) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     StatusDot(color: status != nil ? .green : .gray)
@@ -335,23 +335,24 @@ struct MountView: View {
                     Text(title).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail).help(title)   // one line: the card keeps the same height whatever is playing
                 }
                 if let s = status, let line = encoderLine(s) {
-                    Text(line).font(.caption).foregroundStyle(.secondary)
+                    Text(line).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail)
                 }
             }
-            Spacer()
+            .layoutPriority(1)       // the stream details get their room first; the number columns are compact
+            Spacer(minLength: 8)
             if let s = status {
                 // Fixed-width columns, so changing digits never move their neighbours. Out comes first: it
                 // changes width most often (kb/s to Mb/s), and nothing to its right depends on it.
                 let rate = model.poller.bandwidth?.outgoing(mount: mount.name).map(BandwidthRates.format)
-                stat("Out \(rate?.unit ?? "kb/s")", rate?.value ?? "–", width: 76)
+                stat("Out \(rate?.unit ?? "kb/s")", rate?.value ?? "–", width: 58)
                     .help("Audio going out to listeners right now" + (model.poller.bandwidth?.into[mount.name].map { ". Encoder sending: \(BandwidthRates.format($0).value) \(BandwidthRates.format($0).unit)" } ?? ""))
-                stat("Listeners", "\(s.listeners)", width: 70)
-                stat("Peak", "\(s.peak)", width: 46)
+                stat("Listeners", "\(s.listeners)", width: 56)
+                stat("Peak", "\(s.peak)", width: 38)
                 VStack(alignment: .trailing) {
                     Text("On air since").font(.caption).foregroundStyle(.secondary)
                     if let since = s.streamStart { Text(since, style: .relative).monospacedDigit() } else { Text("–") }
                 }
-                .frame(width: 104, alignment: .trailing)
+                .frame(width: 100, alignment: .trailing)
             }
         }
     }
@@ -359,7 +360,7 @@ struct MountView: View {
     private func stat(_ title: String, _ value: String, width: CGFloat) -> some View {
         VStack(alignment: .trailing) {
             Text(title).font(.caption).foregroundStyle(.secondary)
-            Text(value).font(.system(size: 28, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+            Text(value).font(.system(size: 20, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
         }
         .frame(width: width, alignment: .trailing)
     }
