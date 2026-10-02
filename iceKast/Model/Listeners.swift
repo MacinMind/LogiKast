@@ -9,7 +9,7 @@ struct Listener: Identifiable, Equatable {
     /// True when this listener is hearing the backup audio rather than the live stream.
     var onBackup = false
 
-    /// "iTunes/12.1" style user agents are shown as-is; empty ones are labelled.
+    /// "iTunes/12.1" style user agents are shown as-is; empty ones are labeled.
     var player: String { userAgent.isEmpty ? "Unknown player" : userAgent }
 
     var connectedText: String {

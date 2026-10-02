@@ -1,6 +1,6 @@
 import Foundation
 
-/// Audio formats iceKast can recognise in a live stream. The encoder decides the format;
+/// Audio formats iceKast can recognize in a live stream. The encoder decides the format;
 /// Icecast just passes it through, so this is only used to display what was detected.
 enum StreamFormat: String, CaseIterable {
     case mp3, aac, aacPlus

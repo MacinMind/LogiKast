@@ -64,7 +64,7 @@ func readStatusLine(_ fd: Int32, timeout: Int32 = 5000) -> String? {
 final class Worker {
     let feed: BackupFeedsFile.Feed, host: String, port: Int, password: String
     private let lock = NSLock()
-    private var _state = "connecting", _detail = "", _cancelled = false
+    private var _state = "connecting", _detail = "", _canceled = false
 
     init(feed: BackupFeedsFile.Feed, host: String, port: Int, password: String) {
         self.feed = feed; self.host = host; self.port = port; self.password = password
@@ -75,21 +75,21 @@ final class Worker {
         return .init(mount: feed.mount, state: _state, detail: _detail)
     }
     private func set(_ s: String, _ d: String = "") { lock.lock(); _state = s; _detail = d; lock.unlock() }
-    private var cancelled: Bool { lock.lock(); defer { lock.unlock() }; return _cancelled }
-    func cancel() { lock.lock(); _cancelled = true; lock.unlock() }
+    private var canceled: Bool { lock.lock(); defer { lock.unlock() }; return _canceled }
+    func cancel() { lock.lock(); _canceled = true; lock.unlock() }
     func start() { Thread.detachNewThread { [self] in run() } }
 
     private func run() {
-        while !cancelled {
+        while !canceled {
             stream()
             var waited = 0.0
-            while !cancelled, waited < 2 { Thread.sleep(forTimeInterval: 0.1); waited += 0.1 }
+            while !canceled, waited < 2 { Thread.sleep(forTimeInterval: 0.1); waited += 0.1 }
         }
     }
 
     private func sleepCancellable(_ seconds: Double) {
         var left = seconds
-        while left > 0, !cancelled { let s = min(left, 0.2); Thread.sleep(forTimeInterval: s); left -= s }
+        while left > 0, !canceled { let s = min(left, 0.2); Thread.sleep(forTimeInterval: s); left -= s }
     }
 
     private func stream() {
@@ -115,12 +115,12 @@ final class Worker {
         var pacer = Pacer()
         let start = monotonic()
         data.withUnsafeBytes { raw in
-            while !cancelled {
+            while !canceled {
                 for f in frames {
-                    if cancelled { return }
+                    if canceled { return }
                     let wait = pacer.delay(forFrameDuration: f.duration, elapsed: monotonic() - start)
                     if wait > 0 { sleepCancellable(wait) }
-                    if cancelled { return }
+                    if canceled { return }
                     if !writeAll(fd, UnsafeRawBufferPointer(rebasing: raw[f.offset..<(f.offset + f.length)])) {
                         set("error", "Lost the connection to the server.")
                         return

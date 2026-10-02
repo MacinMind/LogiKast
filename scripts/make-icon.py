@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds the iceKast app icon from the Radiologik icon: adds a blue/white icicle ceiling
-across the top third and two blue sine waves across the centre, clipped to the icon's
+across the top third and two blue sine waves across the center, clipped to the icon's
 rounded square.
 Usage: make-icon.py [out.png]    (needs: pip install pillow numpy)"""
 import math, random, sys
@@ -36,7 +36,7 @@ count = 9
 xs = [L + W * (i + 0.5) / count for i in range(count)]
 icicles = []
 for i, x in enumerate(xs):
-    u = abs((i + 0.5) / count - 0.5) * 2          # 0 centre .. 1 edge
+    u = abs((i + 0.5) / count - 0.5) * 2          # 0 center .. 1 edge
     length = 75 + 150 * (u ** 1.2) + rng.uniform(-10, 14)
     length = min(length, THIRD - (T + BAND) + 14)
     icicles.append((x + rng.uniform(-5, 5), length, W / count * rng.uniform(1.0, 1.15), rng.uniform(-5, 5)))
@@ -116,8 +116,8 @@ ice_a = (m * 0.95 * a_big)[..., None]
 rgb = rgb * (1 - ice_a) + col * ice_a
 rgb = rgb + (255 - rgb) * (glints * a_big[..., None])
 
-# two blue sine waves across the centre: a strong one and a lighter one, apexes offset
-def wave(amp, cycles, phase, width, colour, opacity, cy=(T + B) / 2):
+# two blue sine waves across the center: a strong one and a lighter one, apexes offset
+def wave(amp, cycles, phase, width, color, opacity, cy=(T + B) / 2):
     layer = Image.new("L", (N, N), 0)
     ld = ImageDraw.Draw(layer)
     pts = []
@@ -131,9 +131,9 @@ def wave(amp, cycles, phase, width, colour, opacity, cy=(T + B) / 2):
     for px, py in pts:                       # round dabs along the path: smooth edges at any slope
         ld.ellipse([px - r, py - r, px + r, py + r], fill=255)
     a = np.array(layer.filter(ImageFilter.GaussianBlur(S * 0.7))).astype(np.float32)[..., None] / 255.0
-    return a * opacity * a_big[..., None], np.array(colour, np.float32)
+    return a * opacity * a_big[..., None], np.array(color, np.float32)
 
-# each wave gets a white halo so it reads on both the dark headphones and the grey ground
+# each wave gets a white halo so it reads on both the dark headphones and the gray ground
 for amp, cyc, ph, wd, colr, op, halo in [(96, 1.3, 1.9, 24, (120, 200, 255), 0.9, (255, 255, 255)),
                                          (120, 1.3, 0.5, 34, (55, 140, 255), 1.0, (255, 255, 255))]:
     ha, hc = wave(amp, cyc, ph, wd + 12, halo, 0.9)

@@ -41,7 +41,7 @@ struct ShareLinks {
 }
 
 enum QRCode {
-    /// A crisp QR code for `text`, `size` points square (nearest-neighbour scaling, with quiet zone).
+    /// A crisp QR code for `text`, `size` points square (nearest-neighbor scaling, with quiet zone).
     static func image(for text: String, size: CGFloat = 220) -> NSImage? {
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
         filter.setValue(Data(text.utf8), forKey: "inputMessage")

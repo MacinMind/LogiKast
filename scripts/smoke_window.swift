@@ -17,7 +17,7 @@ func windowID() -> Int? {
     let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
     return list.first { ($0[kCGWindowOwnerName as String] as? String) == "iceKast" && ($0[kCGWindowLayer as String] as? Int) == 0 }?[kCGWindowNumber as String] as? Int
 }
-/// Fraction of pixels in the region that differ clearly from its dominant colour.
+/// Fraction of pixels in the region that differ clearly from its dominant color.
 func ink(_ rep: NSBitmapImageRep, _ r: CGRect) -> Double {
     var counts: [UInt32: Int] = [:], px: [UInt32] = []
     for y in stride(from: Int(r.minY), to: min(Int(r.maxY), rep.pixelsHigh), by: 2) {

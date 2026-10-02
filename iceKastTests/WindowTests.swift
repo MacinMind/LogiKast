@@ -8,7 +8,7 @@ import SwiftUI
 /// scripts/smoke-window.sh, which launches the real app and inspects its real window.
 @MainActor
 final class MainWindowTests: XCTestCase {
-    /// Fraction of pixels in `rect` that differ noticeably from the region's dominant colour.
+    /// Fraction of pixels in `rect` that differ noticeably from the region's dominant color.
     private func ink(_ rep: NSBitmapImageRep, in rect: CGRect) -> Double {
         var counts: [UInt32: Int] = [:]
         var samples: [UInt32] = []

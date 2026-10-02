@@ -194,7 +194,7 @@ final class AppModel: ObservableObject {
 
     // MARK: Listeners and web admin
 
-    /// True when a window is open, on screen and not hidden behind others or minimised.
+    /// True when a window is open, on screen and not hidden behind others or minimized.
     static func windowIsShowing() -> Bool {
         NSApp.windows.contains { $0.isVisible && !$0.isMiniaturized && $0.occlusionState.contains(.visible) && $0.canBecomeMain }
     }

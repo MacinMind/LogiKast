@@ -194,7 +194,7 @@ struct MountView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(status != nil
-                         ? "Grey text is what your encoder is sending right now, and listeners see it. Type here only to override it."
+                         ? "Gray text is what your encoder is sending right now, and listeners see it. Type here only to override it."
                          : "What listeners and directories see about this stream. Anything you enter here replaces the encoder's value.")
                     markdownText(Encoders.streamInfoNote)
                 }
@@ -341,7 +341,7 @@ struct MountView: View {
             .layoutPriority(1)       // the stream details get their room first; the number columns are compact
             Spacer(minLength: 8)
             if let s = status {
-                // Fixed-width columns, so changing digits never move their neighbours. Out comes first: it
+                // Fixed-width columns, so changing digits never move their neighbors. Out comes first: it
                 // changes width most often (kb/s to Mb/s), and nothing to its right depends on it.
                 let rate = model.poller.bandwidth?.outgoing(mount: mount.name).map(BandwidthRates.format)
                 stat("Out \(rate?.unit ?? "kb/s")", rate?.value ?? "–", width: 58)
