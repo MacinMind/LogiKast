@@ -193,9 +193,14 @@ struct MountView: View {
                 Text("Stream info")
             } footer: {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(status != nil
-                         ? "Gray text is what your encoder is sending right now, and listeners see it. Type here only to override it."
-                         : "What listeners and directories see about this stream. Anything you enter here replaces the encoder's value.")
+                    // Each sentence on its own line, so a wrap never splits one oddly.
+                    if status != nil {
+                        Text("Gray text is what your encoder is sending right now, and listeners see it.")
+                        Text("Type here only to override it.")
+                    } else {
+                        Text("What listeners and directories see about this stream.")
+                        Text("Anything you enter here replaces the encoder's value.")
+                    }
                     markdownText(Encoders.streamInfoNote)
                 }
             }
