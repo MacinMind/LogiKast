@@ -15,11 +15,12 @@ final class UpdaterTests: XCTestCase {
         XCTAssertFalse(UpdateFeed.isBeta(version: ""))
     }
 
-    /// Sparkle compares CFBundleVersion, so every later release (beta or final) must sort higher.
-    func testInternalBuildNumbersSortInReleaseOrder() {
-        let order = ["1.0.0.7.2", "1.0.0.8.3", "1.0.0.9.3", "1.0.0.10.0", "1.0.1.11.0", "1.1.0.12.1"]
-        for (a, b) in zip(order, order.dropFirst()) {
-            XCTAssertEqual(a.compare(b, options: .numeric), .orderedAscending, "\(a) should be older than \(b)")
+    /// Sparkle compares CFBundleVersion (a plain build number), so each later release must have a higher one.
+    func testBuildNumbersAreWholeNumbersThatSortInReleaseOrder() {
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+        XCTAssertNotNil(Int(build), "CFBundleVersion must be a whole number, got \(build)")
+        for (a, b) in [("8", "9"), ("9", "10"), ("99", "100")] {
+            XCTAssertEqual(a.compare(b, options: .numeric), .orderedAscending)
         }
     }
 }

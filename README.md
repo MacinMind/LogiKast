@@ -44,8 +44,8 @@ That signs the DMG, records it in `appcast/releases.json`, and rewrites `appcast
 
 ## Versioning
 
-The public version is `1.0b3` (`CFBundleShortVersionString`), the one people see: `1.0b3`, `1.0b4`, then `1.0`, `1.1b1`, and so on.
-The build number is a single whole number, `7` (`CFBundleVersion`), that goes up by 1 for every build that is handed out
+The public version (`CFBundleShortVersionString`) is the one people see: `1.0b3`, `1.0b4`, then `1.0`, `1.1b1`, and so on.
+The build number (`CFBundleVersion`) is a single whole number that goes up by 1 for every build that is handed out
 (including a re-notarized rebuild of the same public version) and never repeats. Sparkle compares the build number, not
 the public version. Both are set in `project.yml`.
 
