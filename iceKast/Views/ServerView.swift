@@ -57,6 +57,37 @@ struct ServerView: View {
                 }
             }
 
+            Section {
+                Toggle("Send notifications", isOn: $model.config.notifications.enabled)
+                if model.config.notifications.enabled {
+                    Toggle("Encoder connects or drops off", isOn: $model.config.notifications.encoderEvents)
+                    Toggle("Server stops responding or recovers", isOn: $model.config.notifications.serverProblems)
+                    Toggle("Listener limit reached", isOn: $model.config.notifications.listenerLimit)
+                }
+                HStack {
+                    Button("Send Test Notification") { model.notifier.sendTest() }
+                    if model.notifier.permission == .denied {
+                        Button("Open Notification Settings…") { model.notifier.openSystemSettings() }
+                    }
+                    Spacer()
+                }
+                if model.notifier.permission == .denied {
+                    Label("Notifications are turned off for iceKast in System Settings, so no alerts can appear.", systemImage: "bell.slash")
+                        .foregroundStyle(.orange).font(.callout)
+                }
+                Toggle("Open iceKast when I log in", isOn: Binding(get: { model.loginItem.isEnabled }, set: { model.loginItem.set($0) }))
+                if model.loginItem.needsApproval {
+                    Button("Allow in Login Items Settings…") { model.loginItem.openSettings() }
+                }
+                if let err = model.loginItem.lastError {
+                    Label(err, systemImage: "exclamationmark.triangle").foregroundStyle(.orange).font(.callout)
+                }
+            } header: {
+                Text("Alerts")
+            } footer: {
+                Text("Alerts need iceKast to be running; it sits in the menu bar, and \"Open iceKast when I log in\" keeps it there. The server itself keeps running without the app, but nobody is told if it has a problem.")
+            }
+
             Section("App") {
                 Text("The server runs in the background: it keeps running when you close or quit iceKast, restarts if it stops unexpectedly, and starts when you log in. Use Stop Server to turn it off.")
                     .font(.callout).foregroundStyle(.secondary)

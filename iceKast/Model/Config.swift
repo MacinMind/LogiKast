@@ -112,10 +112,37 @@ struct ServerSettings: Codable, Equatable {
     }
 }
 
+struct NotificationSettings: Codable, Equatable {
+    var enabled = true
+    var encoderEvents = true
+    var serverProblems = true
+    var listenerLimit = true
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
+        encoderEvents = try c.decodeIfPresent(Bool.self, forKey: .encoderEvents) ?? true
+        serverProblems = try c.decodeIfPresent(Bool.self, forKey: .serverProblems) ?? true
+        listenerLimit = try c.decodeIfPresent(Bool.self, forKey: .listenerLimit) ?? true
+    }
+
+    func allows(_ event: AlertEvent) -> Bool {
+        guard enabled else { return false }
+        switch event.category {
+        case .encoder: return encoderEvents
+        case .serverProblem: return serverProblems
+        case .listenerLimit: return listenerLimit
+        }
+    }
+}
+
 struct AppConfig: Codable, Equatable {
     var server = ServerSettings()
     var mounts: [Mount] = [Mount()]
     var badge = BadgeTarget.total
+    var notifications = NotificationSettings()
     /// False on a brand-new install until the setup assistant is finished or skipped.
     var setupCompleted = true
 
@@ -126,6 +153,7 @@ struct AppConfig: Codable, Equatable {
         server = try c.decodeIfPresent(ServerSettings.self, forKey: .server) ?? ServerSettings()
         mounts = try c.decodeIfPresent([Mount].self, forKey: .mounts) ?? [Mount()]
         badge = try c.decodeIfPresent(BadgeTarget.self, forKey: .badge) ?? .total
+        notifications = try c.decodeIfPresent(NotificationSettings.self, forKey: .notifications) ?? NotificationSettings()
         setupCompleted = try c.decodeIfPresent(Bool.self, forKey: .setupCompleted) ?? true   // configs from before the wizard existed
     }
 

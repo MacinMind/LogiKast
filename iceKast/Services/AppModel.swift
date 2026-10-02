@@ -6,6 +6,9 @@ final class AppModel: ObservableObject {
     @Published var config: AppConfig
     let server = IcecastService()
     let poller = StatusPoller()
+    let notifier = Notifier()
+    let loginItem = LoginItem()
+    private var alerts = AlertTracker()
 
     /// Set when a change needs a server restart; the UI shows a confirmation dialog.
     @Published var restartPrompt: RestartPrompt?
@@ -57,6 +60,18 @@ final class AppModel: ObservableObject {
         poller.$reachable
             .removeDuplicates()
             .sink { [weak self] r in self?.server.reachabilityChanged(r) }
+            .store(in: &cancellables)
+
+        notifier.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
+        loginItem.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
+
+        // Alerts: encoder connects/drops, server problems, listener limits. The tracker is time-based,
+        // so it is also evaluated on a steady timer (a stalled poller must still raise "not responding").
+        Publishers.CombineLatest(poller.$status, server.$isEnabled)
+            .sink { [weak self] _, _ in self?.evaluateAlerts() }
+            .store(in: &cancellables)
+        Timer.publish(every: 2, on: .main, in: .common).autoconnect()
+            .sink { [weak self] _ in self?.evaluateAlerts() }
             .store(in: &cancellables)
 
         Publishers.CombineLatest($config, poller.$status)
@@ -157,6 +172,15 @@ final class AppModel: ObservableObject {
     func deleteMount(_ id: UUID) {
         config.mounts.removeAll { $0.id == id }
         if case .mount(id) = config.badge { config.badge = .total }
+    }
+
+    // MARK: Alerts
+
+    private func evaluateAlerts() {
+        let limits = Dictionary(uniqueKeysWithValues: config.mounts.map { ($0.name, $0.maxListeners) })
+        let events = alerts.update(now: Date(), enabled: server.isEnabled, status: poller.status,
+                                   serverLimit: config.server.maxClients, mountLimits: limits)
+        for e in events where config.notifications.allows(e) { notifier.post(e) }
     }
 
     // MARK: Dock badge
