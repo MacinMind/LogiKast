@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Builds the iceKast app icon from the Radiologik icon: adds a blue/white icicle ceiling
-across the top third, clipped to the icon's rounded square.
+across the top third and two thin red sine waves across the centre, clipped to the icon's
+rounded square.
 Usage: make-icon.py [out.png]    (needs: pip install pillow numpy)"""
 import math, random, sys
 from pathlib import Path
@@ -114,6 +115,25 @@ rgb = rgb * (1 - shadow[..., None] * a_big[..., None] * 0.9)            # shadow
 ice_a = (m * 0.95 * a_big)[..., None]
 rgb = rgb * (1 - ice_a) + col * ice_a
 rgb = rgb + (255 - rgb) * (glints * a_big[..., None])
+
+# two thin red sine waves across the centre: a strong one and a lighter one, apexes offset
+def wave(amp, cycles, phase, width, colour, opacity, cy=(T + B) / 2):
+    layer = Image.new("L", (N, N), 0)
+    ld = ImageDraw.Draw(layer)
+    pts = []
+    x0, x1 = L - 4, R + 4
+    for k in range(1201):
+        x = x0 + (x1 - x0) * k / 1200
+        y = cy + amp * math.sin(2 * math.pi * cycles * (x - L) / W + phase)
+        pts.append((sc(x), sc(y)))
+    ld.line(pts, fill=255, width=int(sc(width)), joint="curve")
+    a = np.array(layer.filter(ImageFilter.GaussianBlur(S * 0.7))).astype(np.float32)[..., None] / 255.0
+    return a * opacity * a_big[..., None], np.array(colour, np.float32)
+
+for amp, cyc, ph, wd, colr, op in [(80, 1.5, 0.0, 6, (214, 24, 32), 0.95),
+                                   (62, 1.5, 1.1, 5, (255, 120, 118), 0.75)]:
+    wa, wc = wave(amp, cyc, ph, wd, colr, op)
+    rgb = rgb * (1 - wa) + wc * wa
 
 out = np.dstack([np.clip(rgb, 0, 255), a_big * 255]).astype(np.uint8)
 Image.fromarray(out, "RGBA").resize((1024, 1024), Image.LANCZOS).save(OUT)
