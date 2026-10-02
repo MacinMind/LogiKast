@@ -35,6 +35,10 @@ xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -derivedDataPath build/x
 The public version is `1.0b2` (`CFBundleShortVersionString`). The internal build number is
 `1.0.0.7.2` (`CFBundleVersion`). Both are set in `project.yml`.
 
+## Credits
+
+LogiKast runs [Icecast](https://icecast.org), the open source streaming server from the Xiph.Org Foundation and its contributors (GPLv2). It also bundles libxml2, libxslt, libogg, libvorbis, libigloo, curl and RHash, each under its own license. The licenses and notices are in [LogiKast/Resources/ThirdPartyNotices.txt](LogiKast/Resources/ThirdPartyNotices.txt) and in the app's About window. The exact versions, the one patch applied, and the build recipe are in `third_party/` and `scripts/build-icecast.sh`.
+
 ## License
 
 The source code is GPLv2, same as Icecast. See [LICENSE](LICENSE).
