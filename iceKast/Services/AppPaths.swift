@@ -24,6 +24,8 @@ enum AppPaths {
     /// Working copy of the assets. The background server reads these, so they must live at a
     /// path that doesn't change when the app is moved or updated.
     static var icecastShare: URL { supportDir.appendingPathComponent("share", isDirectory: true) }
+    /// Backup audio served by Icecast (inside the web root). Preserved when the assets are re-synced.
+    static var backupDir: URL { icecastShare.appendingPathComponent("web/backup", isDirectory: true) }
     static var errorLog: URL { logDir.appendingPathComponent("error.log") }
 
     /// Copies the bundled assets into Application Support if the app build changed.
@@ -34,9 +36,16 @@ enum AppPaths {
         let stamp = "\((attrs?[.size] as? Int) ?? 0)-\((attrs?[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0)"
         if (try? String(contentsOf: stampFile, encoding: .utf8)) == stamp,
            fm.fileExists(atPath: icecastShare.appendingPathComponent("web").path) { return }
+        // The user's backup audio lives inside share/web; keep it across the refresh.
+        let keep = fm.temporaryDirectory.appendingPathComponent("iceKast-backup-\(UUID().uuidString)")
+        let hadBackup = (try? fm.moveItem(at: backupDir, to: keep)) != nil
         try? fm.removeItem(at: icecastShare)
         try? fm.createDirectory(at: supportDir, withIntermediateDirectories: true)
         try? fm.copyItem(at: bundledShare, to: icecastShare)
+        if hadBackup {
+            try? fm.removeItem(at: backupDir)
+            try? fm.moveItem(at: keep, to: backupDir)
+        }
         try? stamp.write(to: stampFile, atomically: true, encoding: .utf8)
     }
 

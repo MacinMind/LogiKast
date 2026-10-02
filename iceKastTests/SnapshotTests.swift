@@ -22,6 +22,13 @@ final class SnapshotTests: XCTestCase {
         try snapshot(SetupWizard(initialStep: .welcome, isRerun: true).environmentObject(model),
                      size: NSSize(width: 640, height: 650), to: "wizard-rerun-welcome.png", in: dir)
 
+        struct BackupHost: View {
+            @State var mount: Mount = {
+                var m = Mount(); m.backupFile = "live-backup.mp3"; m.backupName = "Be Right Back.mp3"; return m
+            }()
+            var body: some View { MountView(mount: $mount, onDelete: {}) }
+        }
+        try snapshot(BackupHost().environmentObject(model), size: NSSize(width: 640, height: 1900), to: "mount-backup.png", in: dir)
         try snapshot(ServerView().environmentObject(model), size: NSSize(width: 640, height: 1700), to: "server.png", in: dir)
 
         for step in WizardStep.allCases {

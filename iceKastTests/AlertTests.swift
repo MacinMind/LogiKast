@@ -107,3 +107,121 @@ final class AlertTrackerTests: XCTestCase {
         XCTAssertTrue(c.notifications.encoderEvents)
     }
 }
+
+final class BackupAudioTests: XCTestCase {
+    private let mp3Frame: [UInt8] = [0xFF, 0xFB, 0x90, 0x00]          // MPEG-1 Layer III frame header
+    private let aacADTS: [UInt8] = [0xFF, 0xF1, 0x50, 0x80]           // ADTS, MPEG-4 AAC-LC
+    private let m4a: [UInt8] = [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41, 0x20]
+
+    private func tempDir() throws -> URL {
+        let d = FileManager.default.temporaryDirectory.appendingPathComponent("backup-tests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+        return d
+    }
+    private func file(_ bytes: [UInt8], named name: String, in dir: URL, padTo size: Int = 4096) throws -> URL {
+        let url = dir.appendingPathComponent(name)
+        try Data(bytes + [UInt8](repeating: 0, count: max(0, size - bytes.count))).write(to: url)
+        return url
+    }
+
+    func testSniffing() {
+        XCTAssertEqual(BackupAudio.sniff(Data(mp3Frame)), .mp3)
+        XCTAssertEqual(BackupAudio.sniff(Data([0x49, 0x44, 0x33, 0x04, 0x00])), .mp3, "ID3 tag first")
+        XCTAssertEqual(BackupAudio.sniff(Data(aacADTS)), .aac)
+        XCTAssertNil(BackupAudio.sniff(Data([0x52, 0x49, 0x46, 0x46, 0x00, 0x00])), "WAV is not streamable")
+        XCTAssertNil(BackupAudio.sniff(Data([0xFF])))
+        XCTAssertTrue(BackupAudio.isMP4(Data(m4a)))
+        XCTAssertFalse(BackupAudio.isMP4(Data(mp3Frame)))
+    }
+
+    func testSlugAndStoredName() {
+        XCTAssertEqual(BackupAudio.slug("/live"), "live")
+        XCTAssertEqual(BackupAudio.slug("/My Radio_2"), "my-radio-2")
+        XCTAssertEqual(BackupAudio.slug("/"), "mount")
+        XCTAssertEqual(BackupAudio.storedName(forMount: "/live", kind: .aac), "live-backup.aac")
+    }
+
+    func testInstallCopiesAndReplaces() throws {
+        let dir = try tempDir(), dest = dir.appendingPathComponent("web-backup")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let a = try file(mp3Frame, named: "My Loop.mp3", in: dir)
+        let first = try BackupAudio.install(from: a, mountName: "/live", into: dest)
+        XCTAssertEqual(first.storedName, "live-backup.mp3")
+        XCTAssertEqual(first.displayName, "My Loop.mp3")
+        XCTAssertEqual(first.kind, .mp3)
+        XCTAssertTrue(BackupAudio.exists(first.storedName, in: dest))
+
+        // Replacing with an AAC file removes the old MP3 for that mount.
+        let b = try file(aacADTS, named: "loop.aac", in: dir)
+        let second = try BackupAudio.install(from: b, mountName: "/live", into: dest)
+        XCTAssertEqual(second.storedName, "live-backup.aac")
+        XCTAssertFalse(BackupAudio.exists("live-backup.mp3", in: dest))
+        XCTAssertTrue(BackupAudio.exists("live-backup.aac", in: dest))
+
+        BackupAudio.remove("live-backup.aac", from: dest)
+        XCTAssertFalse(BackupAudio.exists("live-backup.aac", in: dest))
+        BackupAudio.remove("../escape", from: dest)       // never leaves the backup folder
+    }
+
+    func testRejections() throws {
+        let dir = try tempDir(); defer { try? FileManager.default.removeItem(at: dir) }
+        let dest = dir.appendingPathComponent("b")
+        XCTAssertThrowsError(try BackupAudio.install(from: try file(m4a, named: "x.m4a", in: dir), mountName: "/a", into: dest)) {
+            XCTAssertEqual($0 as? BackupAudio.BackupError, .mp4Container)
+        }
+        XCTAssertThrowsError(try BackupAudio.install(from: try file([0x52, 0x49, 0x46, 0x46], named: "x.wav", in: dir), mountName: "/a", into: dest)) {
+            XCTAssertEqual($0 as? BackupAudio.BackupError, .unsupported)
+        }
+        XCTAssertThrowsError(try BackupAudio.install(from: dir.appendingPathComponent("missing.mp3"), mountName: "/a", into: dest)) {
+            XCTAssertEqual($0 as? BackupAudio.BackupError, .unreadable)
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dest.appendingPathComponent("a-backup.mp3").path))
+    }
+
+    func testWriterUsesTheBackupFileAndAlwaysReturnsListenersToLive() throws {
+        var c = AppConfig.makeDefault()
+        c.mounts[0].name = "/live"
+        c.mounts[0].fallbackMount = "/other"
+        c.mounts[0].fallbackOverride = false
+        c.mounts[0].backupFile = "live-backup.mp3"
+        let xml = ConfigWriter.xml(for: c, paths: IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b"))
+        let doc = try XMLDocument(xmlString: xml)
+        XCTAssertEqual(try doc.nodes(forXPath: "//mount/fallback-mount").first?.stringValue, "/backup/live-backup.mp3")
+        XCTAssertEqual(try doc.nodes(forXPath: "//mount/fallback-override").first?.stringValue, "1")
+
+        c.mounts[0].backupFile = ""
+        let plain = try XMLDocument(xmlString: ConfigWriter.xml(for: c, paths: IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b")))
+        XCTAssertEqual(try plain.nodes(forXPath: "//mount/fallback-mount").first?.stringValue, "/other")
+        XCTAssertEqual(try plain.nodes(forXPath: "//mount/fallback-override").first?.stringValue, "0")
+    }
+
+    func testMissingBackupFileIsAWarning() {
+        var c = AppConfig.makeDefault()
+        c.mounts[0].backupFile = "live-backup.mp3"
+        let missing = ConfigValidator.issues(for: c, backupExists: { _ in false })
+        XCTAssertTrue(missing.contains { $0.severity == .warning && $0.message.contains("backup audio file") })
+        XCTAssertFalse(ConfigValidator.hasErrors(c))
+        XCTAssertFalse(ConfigValidator.issues(for: c, backupExists: { _ in true }).contains { $0.message.contains("backup audio file") })
+    }
+
+    func testOldConfigHasNoBackup() throws {
+        let m = try JSONDecoder().decode(Mount.self, from: Data(#"{"name":"/x"}"#.utf8))
+        XCTAssertEqual(m.backupFile, "")
+        XCTAssertEqual(m.backupName, "")
+    }
+
+    /// Writes a sample config (real writer output) for a manual end-to-end check with Icecast.
+    func testWriteBackupSampleConfig() throws {
+        guard let dir = ProcessInfo.processInfo.environment["ICEKAST_BACKUP_SAMPLE_DIR"] else { throw XCTSkip("not requested") }
+        var c = AppConfig.makeDefault()
+        c.server.port = 18095
+        c.server.bindAddress = "127.0.0.1"
+        c.mounts[0].name = "/live"
+        c.mounts[0].backupFile = "live-backup.mp3"
+        let share = ProcessInfo.processInfo.environment["ICEKAST_SHARE"] ?? "/tmp"
+        let web = ProcessInfo.processInfo.environment["ICEKAST_WEB"] ?? share + "/web"
+        let p = IcecastPaths(logDir: dir + "/log", webRoot: web, adminRoot: share + "/admin", baseDir: dir)
+        try ConfigWriter.xml(for: c, paths: p).write(toFile: dir + "/icecast.xml", atomically: true, encoding: .utf8)
+        try c.server.sourcePassword.write(toFile: dir + "/pw", atomically: true, encoding: .utf8)
+    }
+}

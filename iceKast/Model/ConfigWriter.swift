@@ -57,9 +57,11 @@ enum ConfigWriter {
             }
             if m.maxListeners > 0 { x.line("max-listeners", m.maxListeners) }
             x.line("burst-size", m.burstSize)
-            if !m.fallbackMount.isEmpty {
-                x.line("fallback-mount", m.fallbackMount)
-                x.line("fallback-override", m.fallbackOverride ? 1 : 0)
+            // Backup audio file (served from the web root) takes precedence over a fallback mount.
+            let fallback = m.backupFile.isEmpty ? m.fallbackMount : "/backup/\(m.backupFile)"
+            if !fallback.isEmpty {
+                x.line("fallback-mount", fallback)
+                x.line("fallback-override", (m.backupFile.isEmpty ? m.fallbackOverride : true) ? 1 : 0)
             }
             x.line("charset", "UTF-8")
             x.line("public", m.isPublic ? 1 : 0)

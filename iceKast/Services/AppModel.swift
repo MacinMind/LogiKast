@@ -170,6 +170,7 @@ final class AppModel: ObservableObject {
     }
 
     func deleteMount(_ id: UUID) {
+        if let m = config.mounts.first(where: { $0.id == id }) { BackupAudio.remove(m.backupFile) }
         config.mounts.removeAll { $0.id == id }
         if case .mount(id) = config.badge { config.badge = .total }
     }

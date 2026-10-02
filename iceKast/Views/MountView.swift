@@ -1,10 +1,15 @@
 import SwiftUI
+import AppKit
+import UniformTypeIdentifiers
 
 struct MountView: View {
     @EnvironmentObject var model: AppModel
     @Binding var mount: Mount
     var onDelete: () -> Void
     @State private var confirmDelete = false
+    @State private var dropMode = DropMode.nothing
+    @State private var backupError: String?
+    enum DropMode: Hashable { case nothing, file, mount }
 
     private var status: MountStatus? { model.status(for: mount) }
     private var host: String { model.config.server.hostname.isEmpty ? "localhost" : model.config.server.hostname }
@@ -51,18 +56,38 @@ struct MountView: View {
                 Text("Listeners open the link or playlist in any player. The website player code works on any web page. " + ShareLinks.httpsNote)
             }
 
+            Section {
+                Picker("", selection: $dropMode) {
+                    Text("Nothing — listeners hear silence").tag(DropMode.nothing)
+                    Text("Play a backup audio file").tag(DropMode.file)
+                    Text("Switch listeners to another stream").tag(DropMode.mount)
+                }
+                .pickerStyle(.radioGroup)
+                .labelsHidden()
+
+                switch dropMode {
+                case .nothing:
+                    EmptyView()
+                case .file:
+                    backupFileRows
+                case .mount:
+                    LabeledContent("Other stream's mount") {
+                        TextField("", text: $mount.fallbackMount, prompt: Text("e.g. /backup")).multilineTextAlignment(.trailing)
+                    }
+                    Toggle("Return listeners when this stream comes back", isOn: $mount.fallbackOverride)
+                }
+            } header: {
+                Text("When the encoder drops off")
+            } footer: {
+                Text("Listeners keep hearing something instead of silence, and move back to the live stream automatically when your encoder reconnects.")
+            }
+
             Section("Mount") {
                 LabeledContent("Mount name") {
                     TextField("", text: $mount.name, prompt: Text("/live")).multilineTextAlignment(.trailing)
                 }
                 IntField(title: "Max listeners (0 = no limit)", value: $mount.maxListeners)
                 IntField(title: "Burst size", value: $mount.burstSize, suffix: "bytes")
-                LabeledContent("Fallback mount") {
-                    TextField("", text: $mount.fallbackMount, prompt: Text("None")).multilineTextAlignment(.trailing)
-                }
-                if !mount.fallbackMount.isEmpty {
-                    Toggle("Return listeners when this stream comes back", isOn: $mount.fallbackOverride)
-                }
                 LabeledContent("Own encoder password") {
                     TextField("", text: $mount.customPassword, prompt: Text("Use server password")).multilineTextAlignment(.trailing)
                 }
@@ -113,6 +138,14 @@ struct MountView: View {
             }
         }
         .formStyle(.grouped)
+        .onAppear {
+            dropMode = !mount.backupFile.isEmpty ? .file : (!mount.fallbackMount.isEmpty ? .mount : .nothing)
+        }
+        .onChange(of: dropMode) { newMode in
+            // Switching away from a choice clears it, so the saved settings match what is shown.
+            if newMode != .file, !mount.backupFile.isEmpty { removeBackup() }
+            if newMode != .mount, !mount.fallbackMount.isEmpty { mount.fallbackMount = "" }
+        }
         .navigationTitle(mount.name)
         .confirmationDialog("Delete \(mount.name)?", isPresented: $confirmDelete) {
             Button("Delete", role: .destructive, action: onDelete)
@@ -137,6 +170,64 @@ struct MountView: View {
         if let v = s.genre { mount.genre = v }
         if let v = s.streamURL { mount.streamURL = v }
         if let v = s.streamDescription { mount.streamDescription = v }
+    }
+
+    @ViewBuilder private var backupFileRows: some View {
+        if mount.backupFile.isEmpty {
+            HStack {
+                Button("Choose Audio File…", action: chooseBackup)
+                Text("MP3 or AAC").foregroundStyle(.secondary).font(.callout)
+                Spacer()
+            }
+        } else {
+            HStack {
+                Image(systemName: "waveform").foregroundStyle(Color.accentColor)
+                VStack(alignment: .leading) {
+                    Text(mount.backupName.isEmpty ? mount.backupFile : mount.backupName)
+                    Text(BackupAudio.kind(ofStored: mount.backupFile)?.label ?? "Audio")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Replace…", action: chooseBackup)
+                Button("Remove") { removeBackup() }
+            }
+        }
+        if let live = status?.contentType.flatMap(StreamFormat.init(contentType:)),
+           let kind = BackupAudio.kind(ofStored: mount.backupFile),
+           (kind == .aac) != live.isAAC {
+            Label("Your live stream is \(live.label) but this backup is \(kind.label). Players may stop when the stream switches. Use a backup in the same format.",
+                  systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
+        }
+        if let backupError {
+            Label(backupError, systemImage: "xmark.octagon.fill").foregroundStyle(.red).font(.callout)
+        }
+        Text("The file loops until your encoder returns. For the smoothest switch, use the same format, sample rate and bitrate as your live stream. After the live stream returns, listeners may hear a few more seconds of backup while their player's buffer empties.")
+            .font(.callout).foregroundStyle(.secondary)
+    }
+
+    private func chooseBackup() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.mp3, .audio]
+        panel.message = "Choose an MP3 or AAC audio file to play when your encoder drops off."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let installed = try BackupAudio.install(from: url, mountName: mount.name)
+            mount.backupFile = installed.storedName
+            mount.backupName = installed.displayName
+            mount.fallbackMount = ""
+            backupError = nil
+        } catch {
+            backupError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+
+    private func removeBackup() {
+        BackupAudio.remove(mount.backupFile)
+        mount.backupFile = ""
+        mount.backupName = ""
+        backupError = nil
     }
 
     private var statusCard: some View {

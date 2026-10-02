@@ -13,7 +13,7 @@ struct ConfigIssue: Identifiable, Equatable {
 }
 
 enum ConfigValidator {
-    static func issues(for config: AppConfig) -> [ConfigIssue] {
+    static func issues(for config: AppConfig, backupExists: (String) -> Bool = { BackupAudio.exists($0) }) -> [ConfigIssue] {
         var out: [ConfigIssue] = []
         let s = config.server
 
@@ -50,7 +50,10 @@ enum ConfigValidator {
             }
             if m.maxListeners < 0 { out.append(.init(severity: .error, message: "Max listeners can't be negative for \(m.name).", mountID: m.id)) }
             if m.burstSize < 0 { out.append(.init(severity: .error, message: "Burst size can't be negative for \(m.name).", mountID: m.id)) }
-            if !m.fallbackMount.isEmpty {
+            if !m.backupFile.isEmpty, !backupExists(m.backupFile) {
+                out.append(.init(severity: .warning, message: "The backup audio file for \(m.name) is missing. Choose it again so listeners hear something when the encoder drops off.", mountID: m.id))
+            }
+            if m.backupFile.isEmpty, !m.fallbackMount.isEmpty {
                 if m.fallbackMount == m.name {
                     out.append(.init(severity: .error, message: "\(m.name) can't fall back to itself.", mountID: m.id))
                 } else if !config.mounts.contains(where: { $0.name == m.fallbackMount }) {

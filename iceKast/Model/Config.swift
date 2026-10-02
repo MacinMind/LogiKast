@@ -21,6 +21,9 @@ enum StreamFormat: String, CaseIterable {
         }
     }
 
+    /// MP3 or AAC family (HE-AAC counts as AAC): a backup file should match the live stream's family.
+    var isAAC: Bool { self != .mp3 }
+
     init?(contentType: String) {
         guard let f = Self.allCases.first(where: { $0.contentType == contentType.lowercased() }) else { return nil }
         self = f
@@ -50,6 +53,10 @@ struct Mount: Codable, Identifiable, Equatable {
     var isPublic = false
     /// Empty = use the server's source password.
     var customPassword = ""
+    /// Backup audio played in a loop when the encoder drops off (file name inside the backup folder).
+    var backupFile = ""
+    /// The name of the file the user picked, for display.
+    var backupName = ""
 
     init() {}
 
@@ -67,6 +74,8 @@ struct Mount: Codable, Identifiable, Equatable {
         fallbackOverride = try c.decodeIfPresent(Bool.self, forKey: .fallbackOverride) ?? true
         isPublic = try c.decodeIfPresent(Bool.self, forKey: .isPublic) ?? false
         customPassword = try c.decodeIfPresent(String.self, forKey: .customPassword) ?? ""
+        backupFile = try c.decodeIfPresent(String.self, forKey: .backupFile) ?? ""
+        backupName = try c.decodeIfPresent(String.self, forKey: .backupName) ?? ""
     }
 }
 
