@@ -8,6 +8,7 @@ final class AppModel: ObservableObject {
     let poller = StatusPoller()
     let notifier = Notifier()
     let loginItem = LoginItem()
+    let updater = Updater()
     private var alerts = AlertTracker()
 
     /// Set when a change needs a server restart; the UI shows a confirmation dialog.
@@ -86,6 +87,7 @@ final class AppModel: ObservableObject {
 
         notifier.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
         loginItem.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
+        updater.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
 
         // Alerts: encoder connects/drops, server problems, listener limits. The tracker is time-based,
         // so it is also evaluated on a steady timer (a stalled poller must still raise "not responding").

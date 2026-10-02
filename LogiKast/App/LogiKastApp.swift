@@ -13,7 +13,11 @@ struct LogiKastApp: App {
         }
         .commands {
             CommandGroup(replacing: .newItem) {}
-            CommandGroup(replacing: .appInfo) { Button("About LogiKast") { AboutPanel.show() } }
+            CommandGroup(replacing: .appInfo) {
+                Button("About LogiKast") { AboutPanel.show() }
+                Button("Check for Updates…") { model.updater.checkForUpdates() }
+                    .disabled(!model.updater.canCheck)
+            }
             CommandGroup(after: .help) {
                 Button("Setup Assistant…") { model.requestSetup() }
                 Menu("Encoder Apps") { EncoderLinkButtons() }

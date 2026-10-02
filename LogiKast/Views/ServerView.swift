@@ -19,7 +19,7 @@ struct ServerView: View {
                 Form { appTab }
                     .formStyle(.grouped)
                     .scrollDisabled(true)
-                    .frame(height: 175)
+                    .frame(height: 400)
                 logView
             } else {
                 Form { tabContent }
@@ -130,6 +130,8 @@ struct ServerView: View {
                 }
             }
 
+            UpdateSettings(updater: model.updater)
+
     }
 
     private var logView: some View {
@@ -226,6 +228,29 @@ struct PasswordRow: View {
                 Button { value = Password.random() } label: { Image(systemName: "dice") }
                     .buttonStyle(.borderless).help("Generate a new random password")
             }
+        }
+    }
+}
+
+/// Updates section of App & Log: automatic checks, the beta switch, and a manual check.
+struct UpdateSettings: View {
+    @ObservedObject var updater: Updater
+
+    var body: some View {
+        Section {
+            Toggle("Check for updates automatically", isOn: $updater.automaticChecks)
+            Toggle("Include beta versions", isOn: $updater.includeBetas)
+            HStack {
+                Button("Check for Updates…") { updater.checkForUpdates() }.disabled(!updater.canCheck)
+                Spacer()
+                if let last = updater.lastCheck {
+                    Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        } header: {
+            Text("Updates")
+        } footer: {
+            Text("Beta versions arrive earlier and may have rough edges. Turn this off to receive final releases only.")
         }
     }
 }

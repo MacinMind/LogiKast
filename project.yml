@@ -22,6 +22,10 @@ settings:
       OTHER_CODE_SIGN_FLAGS: "--timestamp"
       # Xcode otherwise adds the debugging entitlement get-task-allow, which Apple refuses to notarize.
       CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.0
 targets:
   LogiKast:
     type: application
@@ -29,9 +33,16 @@ targets:
     sources:
       - LogiKast
       - Feeder/FeedModels.swift
+    dependencies:
+      - package: Sparkle
     info:
       path: LogiKast/Info.plist
       properties:
+        # Software updates (Sparkle). The app picks the beta or final feed itself; see Updater.swift.
+        SUFeedURL: https://macinmind.com/pads/LogiKast.xml
+        SUPublicEDKey: 1UNbC7RO2UALjMyVLYSojtT6UV95hVzDtn0tVGUebpk=
+        SUEnableAutomaticChecks: true
+        SUScheduledCheckInterval: 86400
         CFBundleDisplayName: LogiKast
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
@@ -97,6 +108,16 @@ targets:
             echo "$FSTAMP" > "$FSTAMP_FILE"
           fi
           cp "$SRCROOT/Launcher/com.macinmind.logikast.server.plist" "$APP/Library/LaunchAgents/"
+          # Sparkle ships its updater helpers signed by its own team. Apple only notarizes an app whose nested code is
+          # signed with our Developer ID, hardened runtime and a secure timestamp: re-sign inside-out (helpers, then the framework).
+          if [ "${CONFIGURATION:-}" = "Release" ] && [ -d "$APP/Frameworks/Sparkle.framework/Versions/B" ]; then
+            SPK="$APP/Frameworks/Sparkle.framework"
+            for item in "$SPK/Versions/B/XPCServices/Installer.xpc" "$SPK/Versions/B/XPCServices/Downloader.xpc" \
+                        "$SPK/Versions/B/Updater.app" "$SPK/Versions/B/Autoupdate"; do
+              [ -e "$item" ] && codesign --force --options runtime $TS --sign "$ID" --preserve-metadata=entitlements "$item"
+            done
+            codesign --force --options runtime $TS --sign "$ID" "$SPK"
+          fi
   LogiKastTests:
     type: bundle.unit-test
     platform: macOS

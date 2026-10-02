@@ -26,5 +26,13 @@
 	<string>13.0</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© MacinMind Software, Inc. Free software (GPLv2).</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://macinmind.com/pads/LogiKast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>1UNbC7RO2UALjMyVLYSojtT6UV95hVzDtn0tVGUebpk=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>

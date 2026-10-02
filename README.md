@@ -30,6 +30,18 @@ xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -derivedDataPath build/x
 xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -derivedDataPath build/xcode test
 ```
 
+## Updates (Sparkle)
+
+LogiKast updates itself with [Sparkle](https://sparkle-project.org) 2.10.0: automatic checks, **Check for Updates…** in the LogiKast menu, and a switch for beta versions under Server › App & Log. Final releases come from `https://macinmind.com/pads/LogiKast.xml`; the beta feed, `https://macinmind.com/pads/LogiKastbeta.xml`, lists betas and finals. Update files are signed with an EdDSA key (the public half is `SUPublicEDKey` in `project.yml`; the private half is in the release manager's keychain).
+
+To publish an update, after `scripts/package.sh --notarize` and creating the GitHub release:
+
+```bash
+scripts/make-appcast.py add build/release/LogiKast-<version>.dmg --channel beta --notes "What's new" --notes "Another change"
+```
+
+That signs the DMG, records it in `appcast/releases.json`, and rewrites `appcast/LogiKast.xml` and `appcast/LogiKastbeta.xml`. Upload both files to `https://macinmind.com/pads/`.
+
 ## Versioning
 
 The public version is `1.0b2` (`CFBundleShortVersionString`). The internal build number is
