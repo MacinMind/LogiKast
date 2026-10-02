@@ -328,3 +328,73 @@ final class SetupChangesTests: XCTestCase {
         XCTAssertEqual(changes.filter(\.disruptive).count, 2)
     }
 }
+
+final class DirectoryListingTests: XCTestCase {
+    private let paths = IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b")
+
+    func testEmailRules() {
+        XCTAssertFalse(DirectoryListing.isUsableEmail(""))
+        XCTAssertFalse(DirectoryListing.isUsableEmail("icemaster@localhost"))
+        XCTAssertFalse(DirectoryListing.isUsableEmail("nobody"))
+        XCTAssertFalse(DirectoryListing.isUsableEmail("a@b"))
+        XCTAssertFalse(DirectoryListing.isUsableEmail("a b@c.com"))
+        XCTAssertTrue(DirectoryListing.isUsableEmail("dj@mystation.com"))
+    }
+
+    func testPrivateHosts() {
+        for h in ["", "localhost", "192.168.1.5", "10.0.0.2", "172.20.1.1", "127.0.0.1", "mac.local"] {
+            XCTAssertTrue(DirectoryListing.isPrivateHost(h), h)
+        }
+        for h in ["203.0.113.9", "mystation.com", "172.32.0.1", "8.8.8.8"] {
+            XCTAssertFalse(DirectoryListing.isPrivateHost(h), h)
+        }
+    }
+
+    func testDirectoryBlockOnlyWhenListedAndEmailPresent() throws {
+        var c = AppConfig.makeDefault()
+        c.mounts[0].isPublic = true
+        XCTAssertFalse(ConfigWriter.xml(for: c, paths: paths).contains("yp-directory"), "no email: Icecast would disable listing")
+
+        c.server.adminEmail = "dj@mystation.com"
+        let xml = ConfigWriter.xml(for: c, paths: paths)
+        let doc = try XMLDocument(xmlString: xml)
+        XCTAssertEqual(try doc.nodes(forXPath: "//yp-directory/@url").first?.stringValue, DirectoryListing.ypURL)
+        XCTAssertFalse(xml.contains("<directory>"), "the deprecated block must not be used")
+        XCTAssertEqual(try doc.nodes(forXPath: "//mount/public").first?.stringValue, "1")
+
+        c.mounts[0].isPublic = false
+        XCTAssertFalse(ConfigWriter.xml(for: c, paths: paths).contains("yp-directory"))
+    }
+
+    func testProblemsAreReportedAsWarningsNotErrors() {
+        var c = AppConfig.makeDefault()
+        c.mounts[0].isPublic = true
+        XCTAssertEqual(DirectoryListing.problems(for: c).count, 2)           // no email + localhost
+        c.server.bindAddress = "127.0.0.1"
+        XCTAssertEqual(DirectoryListing.problems(for: c).count, 3, "loopback-only can't be reached by anyone")
+        c.server.bindAddress = ""
+        XCTAssertFalse(ConfigValidator.hasErrors(c))
+        XCTAssertTrue(ConfigValidator.issues(for: c).contains { $0.severity == .warning && $0.message.contains("contact email") })
+        c.server.adminEmail = "dj@mystation.com"
+        c.server.hostname = "mystation.com"
+        XCTAssertTrue(DirectoryListing.problems(for: c).isEmpty)
+    }
+
+    /// Writes a sample config for the manual mock-directory check (only when asked to).
+    func testWriteSampleConfigForMockDirectory() throws {
+        guard let dir = ProcessInfo.processInfo.environment["ICEKAST_SAMPLE_XML_DIR"] else { throw XCTSkip("not requested") }
+        var c = AppConfig.makeDefault()
+        c.server.port = 18070
+        c.server.bindAddress = "127.0.0.1"
+        c.server.hostname = "radio.example.com"
+        c.server.adminEmail = "dj@example.com"
+        c.mounts[0].name = "/live"
+        c.mounts[0].isPublic = true
+        c.mounts[0].streamName = "Example Radio"
+        c.mounts[0].genre = "Trance"
+        let share = ProcessInfo.processInfo.environment["ICEKAST_SHARE"] ?? "/tmp"
+        let p = IcecastPaths(logDir: dir + "/log", webRoot: share + "/web", adminRoot: share + "/admin", baseDir: dir)
+        try ConfigWriter.xml(for: c, paths: p).write(toFile: dir + "/icecast.xml", atomically: true, encoding: .utf8)
+        try c.server.sourcePassword.write(toFile: dir + "/pw", atomically: true, encoding: .utf8)
+    }
+}

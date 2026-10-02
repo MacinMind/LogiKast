@@ -61,6 +61,11 @@ enum ConfigValidator {
                 out.append(.init(severity: .warning, message: "\(m.name): max listeners is higher than the server-wide limit (\(s.maxClients)), so the server limit applies.", mountID: m.id))
             }
         }
+        for m in config.mounts where m.isPublic {
+            for problem in DirectoryListing.problems(for: config) {
+                out.append(.init(severity: .warning, message: "\(m.name): \(problem)", mountID: m.id))
+            }
+        }
         return out
     }
 

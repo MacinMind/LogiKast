@@ -18,6 +18,7 @@
 		6836B71669609FF48B76ED58 /* iceKastApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAFCBBA30FAD9516949B899 /* iceKastApp.swift */; };
 		70F318065183E3EECE5879CB /* StatusPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD2AC35357BF77A1D3AAE74 /* StatusPoller.swift */; };
 		86C35CCCD314E286FA4310C1 /* StatusParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31535E4E7D3D40A948F266E3 /* StatusParser.swift */; };
+		8C31F7686A91EF615565D4A4 /* DirectoryListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3DBED1D2ACB1F8185BE6B1 /* DirectoryListing.swift */; };
 		9197E600CD085B542496E3FE /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73ED26928D799F4A29B7C20 /* AppModel.swift */; };
 		97917B74A15552A6C141652F /* Encoders.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6340ADCFC2C60345328F66AE /* Encoders.swift */; };
 		9ED733F0CE23A69C8280F1BC /* NetworkInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8379F8D7BD0E6BD4842B0891 /* NetworkInfo.swift */; };
@@ -67,6 +68,7 @@
 		BF81CF1BC5A8D32216E95419 /* iceKast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iceKast.entitlements; sourceTree = "<group>"; };
 		C676164C4C310CCEE9148E6F /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
 		D45F394AA924C7161E3255AF /* StreamInfoText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamInfoText.swift; sourceTree = "<group>"; };
+		EE3DBED1D2ACB1F8185BE6B1 /* DirectoryListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectoryListing.swift; sourceTree = "<group>"; };
 		FB853C43E6424077C91F3D3A /* Validator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -120,6 +122,7 @@
 			children = (
 				5FF5C092EAC8C690C680366E /* Config.swift */,
 				92FA94CC1977C708C9D67CDD /* ConfigWriter.swift */,
+				EE3DBED1D2ACB1F8185BE6B1 /* DirectoryListing.swift */,
 				6340ADCFC2C60345328F66AE /* Encoders.swift */,
 				99884DE231B60532FBAA60E4 /* SetupLogic.swift */,
 				31535E4E7D3D40A948F266E3 /* StatusParser.swift */,
@@ -282,6 +285,7 @@
 				E1C899DA158C9994A5C958CC /* Config.swift in Sources */,
 				26AF116D56104A92424E28A5 /* ConfigWriter.swift in Sources */,
 				A3C1C56E92FD40D1B05275C9 /* ContentView.swift in Sources */,
+				8C31F7686A91EF615565D4A4 /* DirectoryListing.swift in Sources */,
 				97917B74A15552A6C141652F /* Encoders.swift in Sources */,
 				328C0A54CF8FBEE00A1EEE16 /* IcecastService.swift in Sources */,
 				A10916E93C379042D8E3ABF0 /* MountView.swift in Sources */,

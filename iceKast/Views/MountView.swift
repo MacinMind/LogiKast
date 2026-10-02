@@ -64,6 +64,25 @@ struct MountView: View {
                         .help("Saves what your encoder is sending here, so it stays even if the encoder stops sending it")
                 }
                 Toggle("List in public directory", isOn: $mount.isPublic)
+                if mount.isPublic {
+                    LabeledContent("Contact email") {
+                        TextField("", text: $model.config.server.adminEmail, prompt: Text("you@example.com")).multilineTextAlignment(.trailing)
+                    }
+                    LabeledContent("Station address") {
+                        TextField("", text: $model.config.server.hostname, prompt: Text("e.g. mystation.example.com")).multilineTextAlignment(.trailing)
+                    }
+                    ForEach(DirectoryListing.problems(for: model.config), id: \.self) { p in
+                        Label(p, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
+                    }
+                    if mount.streamDescription.isEmpty && status?.streamDescription == nil {
+                        Label("Tip: add a description above. Directories show \"Unspecified description\" otherwise.", systemImage: "lightbulb")
+                            .foregroundStyle(.secondary).font(.callout)
+                    }
+                    if DirectoryListing.problems(for: model.config).isEmpty {
+                        Label("Ready: this stream will be listed in the Xiph directory about a minute after it goes on the air. Your router must forward port \(String(model.config.server.port)) to this Mac for listeners to reach it.",
+                              systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout)
+                    }
+                }
             } header: {
                 Text("Stream info")
             } footer: {

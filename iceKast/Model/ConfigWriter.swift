@@ -39,6 +39,15 @@ enum ConfigWriter {
 
         x.line("fileserve", 1)
 
+        // Public directory: only when a mount is listed AND there's a real contact email
+        // (Icecast disables listing otherwise).
+        if DirectoryListing.isActive(config) {
+            // Icecast 2.5 format; the older <directory> block is deprecated.
+            x.open("yp-directory", attributes: [("url", DirectoryListing.ypURL)])
+            x.empty("option", attributes: [("name", "timeout"), ("value", String(DirectoryListing.timeoutSeconds))])
+            x.close("yp-directory")
+        }
+
         for m in config.mounts {
             x.open("mount", attributes: [("type", "normal")])
             x.line("mount-name", m.name)
