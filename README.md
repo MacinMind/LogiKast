@@ -11,7 +11,10 @@ Icecast is bundled; nothing else needs to be installed. MP3, AAC and HE-AAC stre
 - One Icecast server with any number of mounts; per-mount max listeners, burst size, fallback and stream info
 - Live status per mount, with listener counts in the Dock badge and the menu bar
 - The server runs in the background: it keeps running when iceKast is closed, restarts if it stops, and starts at login
-- Copy-and-paste connection details for your encoder
+- Copy-and-paste connection details for your encoder, and a setup assistant for new stations
+- Listener list with search and a Disconnect button, per-stream and total bandwidth, and a button for Icecast's web admin
+- Backup audio file that plays when the encoder drops and hands back to live when it returns
+- Share links, QR code and website player code; optional public directory listing
 - macOS 13 or later, Apple silicon and Intel
 
 ## Building
