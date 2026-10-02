@@ -55,7 +55,8 @@ struct Case { let name: String; let args: [String]; var mayScroll = false }
 var cases = [Case(name: "server / network", args: ["--skip-legacy", "--server-tab", "network"]),
              Case(name: "server / access", args: ["--skip-legacy", "--server-tab", "access"]),
              Case(name: "server / alerts", args: ["--skip-legacy", "--server-tab", "alerts"]),
-             Case(name: "server / app", args: ["--skip-legacy", "--server-tab", "app"])]
+             Case(name: "server / app", args: ["--skip-legacy", "--server-tab", "app"]),
+             Case(name: "server / updates", args: ["--skip-legacy", "--server-tab", "updates"])]
 for t in ["connect", "share", "listeners", "streamInfo", "backup", "advanced"] {
     cases.append(Case(name: "mount / \(t)", args: ["--skip-legacy", "--show-mount", "--mount-tab", t], mayScroll: t == "share"))
 }

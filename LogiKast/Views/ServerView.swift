@@ -19,7 +19,7 @@ struct ServerView: View {
                 Form { appTab }
                     .formStyle(.grouped)
                     .scrollDisabled(true)
-                    .frame(height: 400)
+                    .frame(height: 175)
                 logView
             } else {
                 Form { tabContent }
@@ -35,6 +35,7 @@ struct ServerView: View {
         case .access: accessTab
         case .alerts: alertsTab
         case .app: appTab
+        case .updates: UpdateSettings(updater: model.updater)
         }
     }
 
@@ -130,7 +131,6 @@ struct ServerView: View {
                 }
             }
 
-            UpdateSettings(updater: model.updater)
 
     }
 
