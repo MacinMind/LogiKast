@@ -17,8 +17,9 @@ enum ConfigWriter {
         x.line("admin", s.adminEmail.isEmpty ? "icemaster@localhost" : s.adminEmail)
 
         x.open("limits")
-        x.line("clients", s.maxClients)
-        x.line("sources", s.maxSources)
+        let limits = s.effectiveLimits
+        x.line("clients", limits.clients)
+        x.line("sources", limits.sources)
         x.line("queue-size", s.queueSize)
         x.line("client-timeout", s.clientTimeout)
         x.line("header-timeout", s.headerTimeout)

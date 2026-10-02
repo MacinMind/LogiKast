@@ -58,6 +58,55 @@ final class ConfigWriterTests: XCTestCase {
     }
 }
 
+final class ServerLimitsTests: XCTestCase {
+    /// Icecast refuses to start unless clients > 2 * sources (see cfgfile.c). A listener limit of 10 with the default
+    /// 10 encoder connections did exactly that on a fresh install.
+    func testEveryListenerLimitProducesAConfigIcecastAccepts() {
+        let wizard = SetupLogic.listenerPresets
+        for clients in wizard + [1, 2, 3, 4, 5, 7, 20, 21, 22] {
+            for sources in [1, 4, 10, 50] {
+                var s = ServerSettings(); s.maxClients = clients; s.maxSources = sources
+                let l = s.effectiveLimits
+                XCTAssertGreaterThan(l.clients, 2 * l.sources, "clients \(clients) sources \(sources) -> \(l)")
+                XCTAssertGreaterThanOrEqual(l.sources, 1)
+                XCTAssertLessThanOrEqual(l.sources, sources)
+                XCTAssertGreaterThanOrEqual(l.clients, clients)
+            }
+        }
+    }
+
+    func testTheReportedCaseWritesSafeNumbersAndWarns() {
+        var c = AppConfig.makeDefault()
+        c.server.maxClients = 10
+        c.server.maxSources = 10
+        let xml = ConfigWriter.xml(for: c, paths: IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b"))
+        XCTAssertTrue(xml.contains("<clients>10</clients>"))
+        XCTAssertTrue(xml.contains("<sources>4</sources>"))
+        XCTAssertFalse(ConfigValidator.hasErrors(c))
+        let msgs = ConfigValidator.issues(for: c).map(\.message).joined(separator: "\n")
+        XCTAssertTrue(msgs.contains("more than twice"))
+        XCTAssertTrue(msgs.contains("21"))
+    }
+
+    func testValuesThatAlreadyWorkAreLeftAlone() {
+        var s = ServerSettings(); s.maxClients = 100; s.maxSources = 10
+        XCTAssertEqual(s.effectiveLimits.clients, 100)
+        XCTAssertEqual(s.effectiveLimits.sources, 10)
+        var c = AppConfig.makeDefault(); c.server = s
+        XCTAssertFalse(ConfigValidator.issues(for: c).map(\.message).joined().contains("more than twice"))
+    }
+
+    func testWarnsWhenTheLimitsCannotCarryEveryStream() {
+        var c = AppConfig.makeDefault()
+        c.server.maxClients = 5                // allows 2 encoder connections
+        var a = Mount(); a.name = "/a"; a.backupFile = "x.mp3"
+        var b = Mount(); b.name = "/b"
+        c.mounts = [a, b]                      // two streams plus one backup = 3 connections
+        let msgs = ConfigValidator.issues(for: c).map(\.message).joined(separator: "\n")
+        XCTAssertTrue(msgs.contains("plus backup audio"), msgs)
+    }
+}
+
 final class ValidatorTests: XCTestCase {
     func testDefaultIsValid() {
         XCTAssertFalse(ConfigValidator.hasErrors(AppConfig.makeDefault()))

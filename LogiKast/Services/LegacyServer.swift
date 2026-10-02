@@ -24,6 +24,20 @@ enum LegacyServer {
     }
 
     /// Stops the old server and unloads its job. (The old app's Login Items entry stays until the old app is deleted.)
+    /// An old server can outlive its job, so anything still running from the old iceKast folder is stopped too:
+    /// two Icecasts on one port is exactly what keeps the new server from answering.
     @discardableResult
-    static func stop() -> Bool { launchctl(["bootout", "\(domain)/\(label)"]) == 0 }
+    static func stop() -> Bool {
+        let ok = launchctl(["bootout", "\(domain)/\(label)"]) == 0
+        for (flag, pattern) in [("-f", "Application Support/iceKast/icecast.xml"), ("-x", "icekast-feeder")] {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+            p.arguments = ["-TERM", flag, pattern]
+            p.standardOutput = FileHandle.nullDevice
+            p.standardError = FileHandle.nullDevice
+            try? p.run()
+            p.waitUntilExit()
+        }
+        return ok
+    }
 }

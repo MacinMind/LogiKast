@@ -89,6 +89,14 @@ struct ServerSettings: Codable, Equatable {
     var bindAddress = ""
     var maxClients = 100
     var maxSources = 10
+
+    /// Icecast refuses to start unless its listener limit is more than twice its encoder-connection limit
+    /// ("Client limit is too small for given source limit"). These are the values actually written to the config:
+    /// the listener limit is at least 3, and the encoder limit is lowered if the listener limit can't support it.
+    var effectiveLimits: (clients: Int, sources: Int) {
+        let clients = max(maxClients, 3)
+        return (clients, max(1, min(maxSources, (clients - 1) / 2)))
+    }
     var burstSize = 65536
     var queueSize = 524288
     var clientTimeout = 30

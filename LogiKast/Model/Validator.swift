@@ -30,6 +30,14 @@ enum ConfigValidator {
         }
         if s.maxClients < 1 { out.append(.init(severity: .error, message: "Max listeners (server) must be at least 1.")) }
         if s.maxSources < 1 { out.append(.init(severity: .error, message: "Max sources must be at least 1.")) }
+        if s.maxClients >= 1, s.maxSources >= 1, s.maxClients <= 2 * s.maxSources {
+            let eff = s.effectiveLimits
+            out.append(.init(severity: .warning, message: "Max listeners (\(s.maxClients)) has to be more than twice Max encoder connections (\(s.maxSources)). The server will use \(eff.sources) encoder connection\(eff.sources == 1 ? "" : "s") instead. Raise max listeners to \(2 * s.maxSources + 1) or more to allow \(s.maxSources)."))
+        }
+        let streamsNeeded = config.mounts.count + config.mounts.filter { !$0.backupFile.isEmpty }.count      // each backup file also connects like an encoder
+        if s.maxClients >= 1, s.maxSources >= 1, s.effectiveLimits.sources < streamsNeeded {
+            out.append(.init(severity: .warning, message: "Your limits allow \(s.effectiveLimits.sources) encoder connection\(s.effectiveLimits.sources == 1 ? "" : "s"), but you have \(config.mounts.count) stream\(config.mounts.count == 1 ? "" : "s")\(streamsNeeded > config.mounts.count ? " plus backup audio" : ""). Raise the listener limit so every stream can connect."))
+        }
         if s.burstSize < 0 || s.queueSize < 1 {
             out.append(.init(severity: .error, message: "Burst and queue sizes must be positive."))
         }

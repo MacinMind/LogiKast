@@ -342,3 +342,66 @@ final class BackupFeedsTests: XCTestCase {
         BackupAudio.remove("live-backup.mp3")
     }
 }
+
+@MainActor
+final class ProblemHintTests: XCTestCase {
+    private func stamp(_ d: Date) -> String {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd  HH:mm:ss"; f.locale = Locale(identifier: "en_US_POSIX")
+        return "[\(f.string(from: d))]"
+    }
+
+    func testIgnoresConfigChecksAndOldErrors() {
+        let start = Date()
+        let lines = [
+            "\(stamp(start.addingTimeInterval(-3600))) EROR source/old An old failure",
+            "\(stamp(start)) EROR CONFIG/config_parse_file Client limit (10) is too small for given source limit (10)",
+        ]
+        XCTAssertNil(IcecastService.problemHint(in: lines, since: start))
+    }
+
+    func testReturnsTheNewestErrorFromThisStart() {
+        let start = Date()
+        let lines = [
+            "\(stamp(start)) EROR CONFIG/config_parse_file Client limit (10) is too small for given source limit (10)",
+            "\(stamp(start.addingTimeInterval(1))) EROR connection/sock_listen Could not create listener socket on port 8000",
+            "\(stamp(start.addingTimeInterval(2))) INFO something unrelated",
+        ]
+        XCTAssertEqual(IcecastService.problemHint(in: lines, since: start)?.contains("Could not create listener socket"), true)
+    }
+}
+
+@MainActor
+final class PortOwnerTests: XCTestCase {
+    func testFindsTheProgramListeningOnAPort() throws {
+        let fd = socket(AF_INET, SOCK_STREAM, 0)
+        defer { close(fd) }
+        var addr = sockaddr_in()
+        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_addr.s_addr = inet_addr("127.0.0.1")
+        addr.sin_port = 0
+        let bound = withUnsafePointer(to: &addr) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) } }
+        XCTAssertEqual(bound, 0)
+        XCTAssertEqual(listen(fd, 1), 0)
+        var out = sockaddr_in(); var len = socklen_t(MemoryLayout<sockaddr_in>.size)
+        _ = withUnsafeMutablePointer(to: &out) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(fd, $0, &len) } }
+        let port = Int(UInt16(bigEndian: out.sin_port))
+
+        let owners = PortCheck.owners(port: port)
+        XCTAssertEqual(owners.first?.pid, getpid())
+        XCTAssertEqual(owners.first?.isOurs, false)          // not started by our supervisor
+        XCTAssertTrue(PortCheck.owners(port: 1).isEmpty)
+    }
+
+    func testOnlyTheSupervisedServerCountsAsOurs() {
+        XCTAssertTrue(PortOwner(pid: 1, name: "icecast", parentName: "/Apps/LogiKast.app/Contents/Helpers/logikast-launch").isOurs)
+        XCTAssertFalse(PortOwner(pid: 1, name: "icecast", parentName: "/sbin/launchd").isOurs)
+    }
+
+    func testMessageNamesTheOtherServer() {
+        let text = IcecastService.portConflictText(port: 8000, owner: PortOwner(pid: 4242, name: "icecast", parentName: "/sbin/launchd"))
+        XCTAssertTrue(text.contains("Port 8000"))
+        XCTAssertTrue(text.contains("4242"))
+        XCTAssertTrue(text.contains("another Icecast"))
+    }
+}

@@ -33,7 +33,7 @@ final class IcecastService: ObservableObject {
     private var reachable = false
     private var port = 0
     private var listenKey = ""
-    private let startupGrace: TimeInterval = 12
+    private let startupGrace: TimeInterval = 25      // the first start on a Mac can be slow while macOS checks the helper programs
 
     init() {
         refresh()
@@ -156,15 +156,18 @@ final class IcecastService: ObservableObject {
         }
 
         if isEnabled {
+            if reachable { portConflict = nil }
             readLog()
             let bs = BackupFeeds.readStatus()
             if bs != backupStatus { backupStatus = bs }
             if reachable {
                 state = .running
             } else if Date().timeIntervalSince(enabledSince ?? Date()) > startupGrace {
-                let hint = logLines.last { $0.contains("EROR") }
-                state = .failed(hint.map { "The server isn't responding: \($0)" }
-                    ?? "The server isn't responding on port \(port). It may have failed to start, or the port is taken by another app.")
+                checkPortOwner()
+                let hint = Self.problemHint(in: logLines, since: enabledSince ?? Date())
+                state = .failed(portConflict
+                    ?? hint.map { "The server isn't responding: \($0)" }
+                    ?? "The server isn't responding on port \(port) yet. It may still be starting, may have failed to start, or the port may be taken by another app.")
             } else {
                 state = .running   // still starting; views show "starting…" until reachable
             }
@@ -174,6 +177,42 @@ final class IcecastService: ObservableObject {
     }
 
     // MARK: Helpers
+
+    /// Set when another program (often a leftover Icecast) is holding the server's port.
+    private var portConflict: String?
+    private var lastPortCheck = Date.distantPast
+
+    /// Looks up, at most every 10 seconds and off the main thread, what is listening on the port.
+    private func checkPortOwner() {
+        guard Date().timeIntervalSince(lastPortCheck) > 10, port > 0 else { return }
+        lastPortCheck = Date()
+        let port = self.port
+        Task.detached {
+            let others = PortCheck.owners(port: port).filter { !$0.isOurs }
+            let note = others.first.map { Self.portConflictText(port: port, owner: $0) }
+            await MainActor.run { [weak self] in self?.portConflict = note }
+        }
+    }
+
+    nonisolated static func portConflictText(port: Int, owner: PortOwner) -> String {
+        let who = owner.name == "icecast" ? "another Icecast server (process \(owner.pid)), probably left over from an older copy of this app," : "\(owner.name) (process \(owner.pid))"
+        return "Port \(port) is already in use by \(who) so the server can't answer. Quit it, or choose a different port under Network. If it's an old Icecast, Restart Server… may clear it."
+    }
+
+    /// The newest error from the log that could explain a server that isn't answering: only errors logged since this
+    /// start, and not the config checks ("Client limit is too small…"), which Icecast reports but runs through.
+    static func problemHint(in lines: [String], since start: Date, calendar: Calendar = .current) -> String? {
+        let parser = DateFormatter()
+        parser.dateFormat = "yyyy-MM-dd  HH:mm:ss"
+        parser.timeZone = calendar.timeZone
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        return lines.last { line in
+            guard line.contains("EROR"), !line.contains("CONFIG/config_parse_file"),
+                  line.hasPrefix("["), let close = line.firstIndex(of: "]"),
+                  let when = parser.date(from: String(line[line.index(after: line.startIndex)..<close])) else { return false }
+            return when >= start.addingTimeInterval(-5)
+        }
+    }
 
     private func writeConfig(_ config: AppConfig) -> Bool {
         do {

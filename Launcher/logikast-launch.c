@@ -6,6 +6,8 @@
  *   speed). If the feeder dies it is restarted; if icecast dies the whole job ends so launchd
  *   restarts everything (KeepAlive).
  * - SIGHUP (config reload) is forwarded to icecast; SIGTERM/SIGINT stop both children.
+ * - Before starting, any icecast or feeder left over from an earlier run (same config) is stopped, because a
+ *   leftover icecast still holds the port and the new one could not listen.
  */
 #include <errno.h>
 #include <limits.h>
@@ -39,6 +41,33 @@ static pid_t spawn(const char *path, char *const argv[]) {
     return pid;
 }
 
+/* Runs /usr/bin/pkill; with full_command_line=0 it matches only orphaned processes by name (never a live server's
+ * own feeder). Returns true if it signalled something. */
+static int pkill_matching(const char *signal_name, const char *pattern, int full_command_line) {
+    pid_t pid = fork();
+    if (pid == 0) {
+        if (full_command_line) execl("/usr/bin/pkill", "pkill", signal_name, "-f", pattern, (char *)NULL);
+        else execl("/usr/bin/pkill", "pkill", signal_name, "-P", "1", "-x", pattern, (char *)NULL);   /* only orphans (parent launchd) */
+        _exit(127);
+    }
+    if (pid < 0) return 0;
+    int st = 0;
+    waitpid(pid, &st, 0);
+    return WIFEXITED(st) && WEXITSTATUS(st) == 0;
+}
+
+static void stop_leftovers(const char *config) {
+    char pattern[PATH_MAX + 32];
+    snprintf(pattern, sizeof(pattern), "icecast -c %s", config);
+    int found = pkill_matching("-TERM", pattern, 1);
+    found |= pkill_matching("-TERM", "logikast-feeder", 0);
+    if (!found) return;
+    usleep(1500000);                                  /* give them time to close their sockets */
+    pkill_matching("-KILL", pattern, 1);
+    pkill_matching("-KILL", "logikast-feeder", 0);
+    usleep(300000);
+}
+
 int main(void) {
     char self[PATH_MAX]; uint32_t size = sizeof(self);
     if (_NSGetExecutablePath(self, &size) != 0) { fputs("logikast-launch: path too long\n", stderr); return 1; }
@@ -58,6 +87,8 @@ int main(void) {
     snprintf(support, sizeof(support), "%s/Library/Application Support/LogiKast", home);
     snprintf(config, sizeof(config), "%s/icecast.xml", support);
     if (chdir(support) != 0) { perror("logikast-launch: chdir"); return 1; }
+
+    stop_leftovers(config);
 
     struct sigaction sa; memset(&sa, 0, sizeof(sa));
     sa.sa_handler = on_signal;
