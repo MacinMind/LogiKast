@@ -8,6 +8,10 @@ final class StatusPoller: ObservableObject {
     private var task: Task<Void, Never>?
     /// Admin login to read the hidden backup mounts' listeners; return nil when nothing needs it.
     var adminLogin: (() -> (user: String, password: String)?)?
+    /// Admin login for the bandwidth meter. Only asked for while the window is showing, so a closed window costs nothing.
+    var meterLogin: (() -> (user: String, password: String)?)?
+    @Published private(set) var bandwidth: BandwidthRates?
+    private var meter = BandwidthMeter()
 
     func start(port: Int, bindAddress: String, interval: TimeInterval = 2) {
         stop()
@@ -28,14 +32,20 @@ final class StatusPoller: ObservableObject {
                     parsed = StatusParser.parse(data)
                 }
                 if Task.isCancelled { break }
-                if parsed != nil, let login = self?.adminLogin?() {
+                let meterLogin = parsed == nil ? nil : self?.meterLogin?()
+                if parsed != nil, let login = meterLogin ?? self?.adminLogin?() {
                     var req = URLRequest(url: adminURL)
                     let token = Data("\(login.user):\(login.password)".utf8).base64EncodedString()
                     req.setValue("Basic \(token)", forHTTPHeaderField: "Authorization")
                     if let (data, resp) = try? await session.data(for: req), (resp as? HTTPURLResponse)?.statusCode == 200 {
                         parsed?.backupMounts = AdminStats.backupMounts(from: data)
+                        if meterLogin != nil {
+                            let rates = self?.meter.update(AdminStats.byteCounters(from: data), at: Date())
+                            if let rates { self?.bandwidth = rates }
+                        }
                     }
                 }
+                if meterLogin == nil { self?.meter.reset(); if self?.bandwidth != nil { self?.bandwidth = nil } }
                 self?.status = parsed
                 self?.reachable = parsed != nil
                 try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
@@ -54,5 +64,7 @@ final class StatusPoller: ObservableObject {
         task = nil
         status = nil
         reachable = false
+        bandwidth = nil
+        meter.reset()
     }
 }

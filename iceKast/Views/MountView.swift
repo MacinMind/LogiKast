@@ -332,7 +332,7 @@ struct MountView: View {
                         .font(.headline)
                 }
                 if let title = status?.title {
-                    Text(title).foregroundStyle(.secondary).lineLimit(2)
+                    Text(title).foregroundStyle(.secondary).lineLimit(1).truncationMode(.tail).help(title)   // one line: the card keeps the same height whatever is playing
                 }
                 if let s = status, let line = encoderLine(s) {
                     Text(line).font(.caption).foregroundStyle(.secondary)
@@ -342,6 +342,11 @@ struct MountView: View {
             if let s = status {
                 stat("Listeners", "\(s.listeners)")
                 stat("Peak", "\(s.peak)")
+                if let out = model.poller.bandwidth?.outgoing(mount: mount.name) {
+                    let f = BandwidthRates.format(out)
+                    stat("Out \(f.unit)", f.value)
+                        .help("Audio going out to listeners right now" + (model.poller.bandwidth?.into[mount.name].map { ". Encoder sending: \(BandwidthRates.format($0).value) \(BandwidthRates.format($0).unit)" } ?? ""))
+                }
                 if let since = s.streamStart {
                     VStack(alignment: .trailing) {
                         Text("On air since").font(.caption).foregroundStyle(.secondary)

@@ -162,7 +162,8 @@ struct ServerView: View {
             VStack(alignment: .leading) {
                 Text(statusText).font(.headline)
                 if let s = model.poller.status {
-                    Text("\(s.mounts.count) mount\(s.mounts.count == 1 ? "" : "s") live · \(s.totalListeners) listener\(s.totalListeners == 1 ? "" : "s")")
+                    Text("\(s.mounts.count) mount\(s.mounts.count == 1 ? "" : "s") live · \(s.totalListeners) listener\(s.totalListeners == 1 ? "" : "s")"
+                         + (model.poller.bandwidth.map { r in let f = BandwidthRates.format(r.totalOut); return " · \(f.value) \(f.unit) out" } ?? ""))
                         .foregroundStyle(.secondary)
                 }
             }

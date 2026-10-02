@@ -113,4 +113,18 @@ enum AdminStats {
             return MountStatus(path: mount, listeners: listeners, peak: listeners)
         }.sorted { $0.path < $1.path }
     }
+
+    /// Byte counters of every mount (hidden backup mounts included), for the bandwidth meter.
+    static func byteCounters(from data: Data) -> [String: ByteCounters] {
+        guard let doc = try? XMLDocument(data: data),
+              let nodes = try? doc.nodes(forXPath: "/icestats/source") else { return [:] }
+        var out: [String: ByteCounters] = [:]
+        for node in nodes {
+            guard let el = node as? XMLElement, let mount = el.attribute(forName: "mount")?.stringValue else { continue }
+            func number(_ name: String) -> UInt64? { el.elements(forName: name).first?.stringValue.flatMap { UInt64($0) } }
+            guard let sent = number("total_bytes_sent") else { continue }
+            out[mount] = ByteCounters(sent: sent, read: number("total_bytes_read") ?? 0)
+        }
+        return out
+    }
 }

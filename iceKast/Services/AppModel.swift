@@ -54,6 +54,12 @@ final class AppModel: ObservableObject {
             return (c.server.adminUser, c.server.adminPassword)
         }
 
+        // The bandwidth meter reads the admin statistics, but only while an iceKast window is actually showing.
+        poller.meterLogin = { [weak self] in
+            guard let self, Self.windowIsShowing() else { return nil }
+            return (self.config.server.adminUser, self.config.server.adminPassword)
+        }
+
         server.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
         poller.objectWillChange.sink { [weak self] in self?.objectWillChange.send() }.store(in: &cancellables)
 
@@ -187,6 +193,11 @@ final class AppModel: ObservableObject {
     func status(for mount: Mount) -> MountStatus? { poller.status?.mount(mount.name) }
 
     // MARK: Listeners and web admin
+
+    /// True when a window is open, on screen and not hidden behind others or minimised.
+    static func windowIsShowing() -> Bool {
+        NSApp.windows.contains { $0.isVisible && !$0.isMiniaturized && $0.occlusionState.contains(.visible) && $0.canBecomeMain }
+    }
 
     private var admin: AdminClient {
         AdminClient(port: config.server.port, bindAddress: config.server.bindAddress,

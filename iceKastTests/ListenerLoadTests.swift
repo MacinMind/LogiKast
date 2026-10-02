@@ -28,6 +28,30 @@ final class ListenerLoadTests: XCTestCase {
         _ = ListenerList.summary(listeners)
         print("LOAD filter+sort+summary ms: \(Int(Date().timeIntervalSince(t) * 1000))")
 
+        // Bandwidth meter against the real admin statistics: 64 kb/s encoder, many listeners.
+        let stats = URL(string: "http://127.0.0.1:\(port)/admin/stats.xml")!
+        func counters() async throws -> ([String: ByteCounters], Int, Double) {
+            var req = URLRequest(url: stats)
+            req.setValue("Basic " + Data("admin:ap".utf8).base64EncodedString(), forHTTPHeaderField: "Authorization")
+            let t = Date()
+            let (data, _) = try await URLSession.shared.data(for: req)
+            let c = AdminStats.byteCounters(from: data)
+            return (c, data.count, Date().timeIntervalSince(t) * 1000)
+        }
+        var meter = BandwidthMeter()
+        let first = try await counters()
+        _ = meter.update(first.0, at: Date())
+        var second = first
+        var latest: BandwidthRates?
+        for _ in 0..<6 {                       // the app polls every 2 s; the meter averages the last ~8 s
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+            second = try await counters()
+            latest = meter.update(second.0, at: Date()) ?? latest
+        }
+        let rates = try XCTUnwrap(latest)
+        let out = BandwidthRates.format(rates.totalOut), inn = BandwidthRates.format(rates.totalIn)
+        print("LOAD bandwidth out=\(out.value) \(out.unit) in=\(inn.value) \(inn.unit); stats.xml \(second.1) bytes, fetch+parse \(Int(second.2)) ms")
+
         // Render the real view with that many listeners and see how long the first draw takes and how a refresh behaves.
         let model = AppModel()
         let counter = Counter()

@@ -49,14 +49,15 @@ func scrollBarVisible(_ rep: NSBitmapImageRep) -> Bool {
     return best >= 30
 }
 
-/// `scrolls`: pages that are expected to need a scroll bar at the minimum window size.
-struct Case { let name: String; let args: [String]; var scrolls = false }
+/// `mayScroll`: pages allowed to need a scroll bar at the minimum window size (Share grows with one row per network
+/// interface this Mac has, so it fits on some Macs and scrolls on others).
+struct Case { let name: String; let args: [String]; var mayScroll = false }
 var cases = [Case(name: "server / network", args: ["--server-tab", "network"]),
              Case(name: "server / access", args: ["--server-tab", "access"]),
              Case(name: "server / alerts", args: ["--server-tab", "alerts"]),
              Case(name: "server / app", args: ["--server-tab", "app"])]
 for t in ["connect", "share", "listeners", "streamInfo", "backup", "advanced"] {
-    cases.append(Case(name: "mount / \(t)", args: ["--show-mount", "--mount-tab", t]))
+    cases.append(Case(name: "mount / \(t)", args: ["--show-mount", "--mount-tab", t], mayScroll: t == "share"))
 }
 
 var failures = 0
@@ -67,7 +68,12 @@ for c in cases {
         run("/usr/bin/pkill", ["-x", "iceKast"]); Thread.sleep(forTimeInterval: 1.5)
         run("/usr/bin/open", ["-g", "-n", appPath, "--args"] + c.args)   // -g: do not take focus (your typing must never land in iceKast)
         let deadline = Date().addingTimeInterval(20)
-        while found == nil, Date() < deadline { Thread.sleep(forTimeInterval: 0.5); found = windowID() }
+        var reopened = false
+        while found == nil, Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.5); found = windowID()
+            // macOS sometimes restores the app with its window closed; a plain reopen (still without focus) brings it up.
+            if found == nil, !reopened, deadline.timeIntervalSinceNow < 14 { reopened = true; run("/usr/bin/open", ["-g", appPath]) }
+        }
         if found != nil { break }
     }
     if found != nil {
@@ -82,9 +88,9 @@ for c in cases {
     let sidebar = ink(rep, CGRect(x: 0, y: 70, width: w * 0.22, height: h * 0.4))
     let detail = ink(rep, CGRect(x: w * 0.30, y: 70, width: w * 0.65, height: h * 0.6))
     let bar = scrollBarVisible(rep)
-    let ok = sidebar > 0.002 && detail > 0.02 && bar == c.scrolls
+    let ok = sidebar > 0.002 && detail > 0.02 && (bar == false || c.mayScroll)
     let barNote = bar ? "SCROLL BAR" : "no scroll bar"
-    print("\(ok ? "ok  " : "FAIL")  \(c.name): sidebar ink \(String(format: "%.3f", sidebar)), page ink \(String(format: "%.3f", detail)), \(barNote)\(bar != c.scrolls ? (c.scrolls ? " (expected one)" : " (not expected)") : "")")
+    print("\(ok ? "ok  " : "FAIL")  \(c.name): sidebar ink \(String(format: "%.3f", sidebar)), page ink \(String(format: "%.3f", detail)), \(barNote)\((bar && !c.mayScroll) ? " (not expected)" : "")")
     if !ok { failures += 1 }
     try? FileManager.default.removeItem(atPath: out)
 }
