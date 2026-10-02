@@ -9,6 +9,7 @@ struct MountView: View {
     @State private var confirmDelete = false
     @State private var dropMode = DropMode.nothing
     @State private var backupError: String?
+    @State private var nameAtOpen = ""
     enum DropMode: Hashable { case nothing, file, mount }
 
     private var status: MountStatus? { model.status(for: mount) }
@@ -25,10 +26,12 @@ struct MountView: View {
                 IssuesView(issues: model.issues.filter { $0.mountID == mount.id })
             }
             SegmentedTabs(selection: $model.mountTab)
+            if model.mountTab == .connect { mountNameCard }
             Form { tabContent }
                 .formStyle(.grouped)
         }
         .onAppear {
+            nameAtOpen = mount.name
             dropMode = !mount.backupFile.isEmpty ? .file : (!mount.fallbackMount.isEmpty ? .mount : .nothing)
         }
         .onChange(of: dropMode) { newMode in
@@ -44,6 +47,41 @@ struct MountView: View {
         }
     }
 
+    /// The one editable thing on the Connect tab. Lives outside the Form so it can span the full width.
+    private var mountNameCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "pencil.circle.fill").foregroundStyle(Color.accentColor)
+                Text("Mount name").font(.headline)
+                Spacer()
+                Text("The one thing to set on this tab").font(.caption).foregroundStyle(Color.accentColor)
+            }
+            TextField("", text: $mount.name, prompt: Text("/live"))
+                .textFieldStyle(.roundedBorder)
+                .font(.system(.title3, design: .monospaced))
+                .autocorrectionDisabled()
+            HStack(spacing: 4) {
+                Text("Your stream's address:").foregroundStyle(.secondary)
+                Text(share.listenURL).font(.system(.callout, design: .monospaced)).textSelection(.enabled)
+            }
+            .font(.callout)
+            if model.server.isEnabled, !nameAtOpen.isEmpty, mount.name != nameAtOpen {
+                Label("Renaming a stream that's on the air disconnects its encoder. After you apply the change, enter the new mount name in your encoder.",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange).font(.callout)
+            }
+            Text("The mount name identifies this stream, like /live or /jazz. Listeners and your encoder both use it, so each stream on your server needs its own. You can run several streams on one server: add another with the + button above the mount list.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.accentColor.opacity(0.55), lineWidth: 1.5))
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+    }
+
     @ViewBuilder private var tabContent: some View {
         switch model.mountTab {
         case .connect: connectSection
@@ -55,18 +93,18 @@ struct MountView: View {
     }
 
     @ViewBuilder private var connectSection: some View {
-            Section {
-                CopyableRow(label: "Server type", value: "Icecast")
-                CopyableRow(label: "Address", value: host)
-                CopyableRow(label: "Port", value: String(port))
-                CopyableRow(label: "Mount", value: mount.name)
-                CopyableRow(label: "Username", value: "source")
-                CopyableRow(label: "Password", value: mount.customPassword.isEmpty ? model.config.server.sourcePassword : mount.customPassword, secret: true)
-            } header: {
-                markdownText("Connect your encoder (\(Encoders.linkedList))")
-            } footer: {
-                Text("The username is always “source” (lowercase) — type it exactly like that in your encoder. The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; iceKast detects them once it connects.")
-            }
+        Section {
+            CopyableRow(label: "Server type", value: "Icecast")
+            CopyableRow(label: "Address", value: host)
+            CopyableRow(label: "Port", value: String(port))
+            CopyableRow(label: "Mount", value: mount.name)
+            CopyableRow(label: "Username", value: "source")
+            CopyableRow(label: "Password", value: mount.customPassword.isEmpty ? model.config.server.sourcePassword : mount.customPassword, secret: true)
+        } header: {
+            markdownText("Connect your encoder (\(Encoders.linkedList))")
+        } footer: {
+            Text("These are filled in for you, so there is nothing to type here: copy them into your encoder. They update as you change the mount name above. The username is always “source” (lowercase). The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; iceKast detects them once it connects.")
+        }
     }
 
     @ViewBuilder private var shareSection: some View {
@@ -160,10 +198,7 @@ struct MountView: View {
     }
 
     @ViewBuilder private var advancedSections: some View {
-            Section("Mount") {
-                LabeledContent("Mount name") {
-                    TextField("", text: $mount.name, prompt: Text("/live")).multilineTextAlignment(.trailing)
-                }
+            Section("Mount settings") {
                 IntField(title: "Max listeners (0 = no limit)", value: $mount.maxListeners)
                 IntField(title: "Burst size", value: $mount.burstSize, suffix: "bytes")
                 LabeledContent("Own encoder password") {
