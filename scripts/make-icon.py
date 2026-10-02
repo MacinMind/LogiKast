@@ -133,9 +133,9 @@ def wave(amp, cycles, phase, width, colour, opacity, cy=(T + B) / 2):
     a = np.array(layer.filter(ImageFilter.GaussianBlur(S * 0.7))).astype(np.float32)[..., None] / 255.0
     return a * opacity * a_big[..., None], np.array(colour, np.float32)
 
-# each wave gets a contrasting halo so it reads on both the dark headphones and the grey ground
-for amp, cyc, ph, wd, colr, op, halo in [(96, 1.3, 1.9, 18, (120, 214, 255), 0.85, (8, 40, 110)),
-                                         (120, 1.3, 0.5, 26, (20, 110, 255), 1.0, (255, 255, 255))]:
+# each wave gets a white halo so it reads on both the dark headphones and the grey ground
+for amp, cyc, ph, wd, colr, op, halo in [(96, 1.3, 1.9, 24, (120, 200, 255), 0.9, (255, 255, 255)),
+                                         (120, 1.3, 0.5, 34, (55, 140, 255), 1.0, (255, 255, 255))]:
     ha, hc = wave(amp, cyc, ph, wd + 12, halo, 0.9)
     rgb = rgb * (1 - ha) + hc * ha
     wa, wc = wave(amp, cyc, ph, wd, colr, op)
