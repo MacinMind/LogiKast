@@ -27,8 +27,12 @@ struct MountView: View {
             }
             SegmentedTabs(selection: $model.mountTab)
             if model.mountTab == .connect { mountNameCard }
-            Form { tabContent }
-                .formStyle(.grouped)
+            if model.mountTab == .listeners {
+                ListenersSection(mount: mount)      // a table, not a Form: it has to stay fast with thousands of rows
+            } else {
+                Form { tabContent }
+                    .formStyle(.grouped)
+            }
         }
         .onAppear {
             nameAtOpen = mount.name
@@ -85,7 +89,7 @@ struct MountView: View {
         switch model.mountTab {
         case .connect: connectSection
         case .share: shareSection
-        case .listeners: ListenersSection(mount: mount)
+        case .listeners: EmptyView()
         case .streamInfo: streamInfoSection
         case .backup: backupSection
         case .advanced: advancedSections
