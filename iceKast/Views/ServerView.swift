@@ -170,7 +170,7 @@ struct ServerView: View {
             Spacer()
             if model.server.isEnabled {
                 Button("Open Web Admin") { model.openWebAdmin() }
-                    .help("Opens Icecast's own admin pages in your browser. It asks for the admin user and password (see Access).")
+                    .help("Opens Icecast's own admin pages in your browser, signed in with the admin user and password from the Access tab.")
                 Button("Restart Server…") { model.promptForRestart() }
             }
         }

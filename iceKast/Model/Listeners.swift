@@ -42,10 +42,16 @@ enum ListenerParser {
     }
 }
 
-/// Where the web admin lives, for the "Open Web Admin" button. Never contains credentials.
+/// Where the web admin lives, for the "Open Web Admin" button. Carries the admin login so the browser signs in
+/// by itself (the server is on this Mac, and this is the admin login iceKast already holds).
 enum WebAdmin {
-    static func url(port: Int, bindAddress: String) -> URL? {
-        let host = (bindAddress.isEmpty || bindAddress == "0.0.0.0") ? "localhost" : bindAddress
-        return URL(string: "http://\(host):\(port)/admin/stats.xsl")
+    static func url(port: Int, bindAddress: String, user: String = "", password: String = "") -> URL? {
+        var c = URLComponents()
+        c.scheme = "http"
+        c.host = (bindAddress.isEmpty || bindAddress == "0.0.0.0") ? "localhost" : bindAddress
+        c.port = port
+        c.path = "/admin/stats.xsl"
+        if !user.isEmpty { c.user = user; c.password = password }      // URLComponents percent-encodes both
+        return c.url
     }
 }

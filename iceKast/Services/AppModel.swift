@@ -221,9 +221,10 @@ final class AppModel: ObservableObject {
         return await admin.kick(id: listener.id, mount: path)
     }
 
-    /// Opens Icecast's own admin pages in the browser, which asks for the admin user and password.
+    /// Opens Icecast's own admin pages in the browser, already signed in with the admin login.
     func openWebAdmin() {
-        if let url = WebAdmin.url(port: config.server.port, bindAddress: config.server.bindAddress) {
+        let s = config.server
+        if let url = WebAdmin.url(port: s.port, bindAddress: s.bindAddress, user: s.adminUser, password: s.adminPassword) {
             NSWorkspace.shared.open(url)
         }
     }

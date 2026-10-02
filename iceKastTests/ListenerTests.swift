@@ -27,10 +27,14 @@ final class ListenerTests: XCTestCase {
         XCTAssertTrue(ListenerParser.parse(Data("junk".utf8)).isEmpty)
     }
 
-    func testWebAdminURLHasNoCredentials() {
+    func testWebAdminURLCarriesTheAdminLogin() {
         XCTAssertEqual(WebAdmin.url(port: 8000, bindAddress: "")?.absoluteString, "http://localhost:8000/admin/stats.xsl")
         XCTAssertEqual(WebAdmin.url(port: 8001, bindAddress: "192.168.1.5")?.host, "192.168.1.5")
-        XCTAssertNil(WebAdmin.url(port: 8000, bindAddress: "")?.user)
+        let url = WebAdmin.url(port: 8000, bindAddress: "", user: "admin", password: "p@ss:w/rd#1 x")
+        XCTAssertEqual(url?.user, "admin")
+        XCTAssertEqual(url?.password?.removingPercentEncoding, "p@ss:w/rd#1 x")      // encoded in the URL, intact once decoded
+        XCTAssertEqual(url?.host, "localhost")
+        XCTAssertEqual(url?.path, "/admin/stats.xsl")
     }
 }
 
