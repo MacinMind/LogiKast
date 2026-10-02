@@ -122,16 +122,19 @@ def wave(amp, cycles, phase, width, colour, opacity, cy=(T + B) / 2):
     ld = ImageDraw.Draw(layer)
     pts = []
     x0, x1 = L - 4, R + 4
-    for k in range(1201):
-        x = x0 + (x1 - x0) * k / 1200
-        y = cy + amp * math.sin(2 * math.pi * cycles * (x - L) / W + phase)
+    for k in range(2401):
+        x = x0 + (x1 - x0) * k / 2400
+        u = (x - L) / W
+        y = cy + amp * (0.7 + 0.5 * u) * math.sin(2 * math.pi * cycles * u + phase)   # swell left to right: no mirror symmetry
         pts.append((sc(x), sc(y)))
-    ld.line(pts, fill=255, width=int(sc(width)), joint="curve")
+    r = sc(width) / 2
+    for px, py in pts:                       # round dabs along the path: smooth edges at any slope
+        ld.ellipse([px - r, py - r, px + r, py + r], fill=255)
     a = np.array(layer.filter(ImageFilter.GaussianBlur(S * 0.7))).astype(np.float32)[..., None] / 255.0
     return a * opacity * a_big[..., None], np.array(colour, np.float32)
 
-for amp, cyc, ph, wd, colr, op in [(80, 1.5, 0.0, 16, (214, 24, 32), 0.95),
-                                   (62, 1.5, 1.1, 11, (255, 120, 118), 0.75)]:
+for amp, cyc, ph, wd, colr, op in [(120, 1.3, 0.5, 26, (214, 24, 32), 0.95),
+                                   (96, 1.3, 1.9, 18, (255, 120, 118), 0.75)]:
     wa, wc = wave(amp, cyc, ph, wd, colr, op)
     rgb = rgb * (1 - wa) + wc * wa
 
