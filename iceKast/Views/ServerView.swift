@@ -5,8 +5,8 @@ struct ServerView: View {
     @State private var showLog = false
 
     var body: some View {
-        Form {
-            Section {
+        VStack(spacing: 0) {
+            StatusPanel {
                 header
                 if model.server.state == .needsApproval {
                     Button("Open Login Items Settings…") { model.server.openLoginItemsSettings() }
@@ -14,7 +14,23 @@ struct ServerView: View {
                 IssuesView(issues: model.issues)
                 if model.hasPendingChanges { pendingBanner }
             }
+            SegmentedTabs(selection: $model.serverTab)
+            Form { tabContent }
+                .formStyle(.grouped)
+        }
+        .navigationTitle("Server")
+    }
 
+    @ViewBuilder private var tabContent: some View {
+        switch model.serverTab {
+        case .network: networkTab
+        case .access: accessTab
+        case .alerts: alertsTab
+        case .app: appTab
+        }
+    }
+
+    @ViewBuilder private var networkTab: some View {
             Section("Network") {
                 IntField(title: "Port", value: $model.config.server.port)
                 LabeledContent("Public host name") {
@@ -35,7 +51,9 @@ struct ServerView: View {
                 IntField(title: "Listener timeout", value: $model.config.server.clientTimeout, suffix: "s")
                 IntField(title: "Encoder timeout", value: $model.config.server.sourceTimeout, suffix: "s")
             }
+    }
 
+    @ViewBuilder private var accessTab: some View {
             Section {
                 PasswordRow(label: "Encoder password", value: $model.config.server.sourcePassword)
                 PasswordRow(label: "Admin password", value: $model.config.server.adminPassword)
@@ -56,7 +74,9 @@ struct ServerView: View {
                     TextField("", text: $model.config.server.adminEmail, prompt: Text("you@example.com")).multilineTextAlignment(.trailing)
                 }
             }
+    }
 
+    @ViewBuilder private var alertsTab: some View {
             Section {
                 Toggle("Send notifications", isOn: $model.config.notifications.enabled)
                 if model.config.notifications.enabled {
@@ -87,7 +107,9 @@ struct ServerView: View {
             } footer: {
                 Text("Alerts need iceKast to be running; it sits in the menu bar, and \"Open iceKast when I log in\" keeps it there. The server itself keeps running without the app, but nobody is told if it has a problem.")
             }
+    }
 
+    @ViewBuilder private var appTab: some View {
             Section("App") {
                 Text("The server runs in the background: it keeps running when you close or quit iceKast, restarts if it stops unexpectedly, and starts when you log in. Use Stop Server to turn it off.")
                     .font(.callout).foregroundStyle(.secondary)
@@ -111,10 +133,8 @@ struct ServerView: View {
                     .frame(height: 180)
                 }
             }
-        }
-        .formStyle(.grouped)
-        .navigationTitle("Server")
     }
+
 
     private var header: some View {
         HStack(spacing: 12) {

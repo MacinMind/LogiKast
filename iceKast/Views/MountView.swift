@@ -19,12 +19,42 @@ struct MountView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
+        VStack(spacing: 0) {
+            StatusPanel {
                 statusCard
                 IssuesView(issues: model.issues.filter { $0.mountID == mount.id })
             }
+            SegmentedTabs(selection: $model.mountTab)
+            Form { tabContent }
+                .formStyle(.grouped)
+        }
+        .onAppear {
+            dropMode = !mount.backupFile.isEmpty ? .file : (!mount.fallbackMount.isEmpty ? .mount : .nothing)
+        }
+        .onChange(of: dropMode) { newMode in
+            // Switching away from a choice clears it, so the saved settings match what is shown.
+            if newMode != .file, !mount.backupFile.isEmpty { removeBackup() }
+            if newMode != .mount, !mount.fallbackMount.isEmpty { mount.fallbackMount = "" }
+        }
+        .navigationTitle(mount.name)
+        .confirmationDialog("Delete \(mount.name)?", isPresented: $confirmDelete) {
+            Button("Delete", role: .destructive, action: onDelete)
+        } message: {
+            Text("Connected listeners and encoders on this mount will be dropped the next time you apply changes.")
+        }
+    }
 
+    @ViewBuilder private var tabContent: some View {
+        switch model.mountTab {
+        case .connect: connectSection
+        case .share: shareSection
+        case .streamInfo: streamInfoSection
+        case .backup: backupSection
+        case .advanced: advancedSections
+        }
+    }
+
+    @ViewBuilder private var connectSection: some View {
             Section {
                 CopyableRow(label: "Server type", value: "Icecast")
                 CopyableRow(label: "Address", value: host)
@@ -37,7 +67,9 @@ struct MountView: View {
             } footer: {
                 Text("The username is always “source” (lowercase) — type it exactly like that in your encoder. The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; iceKast detects them once it connects.")
             }
+    }
 
+    @ViewBuilder private var shareSection: some View {
             Section {
                 CopyableRow(label: "Listen link", value: share.listenURL)
                 CopyableRow(label: "Playlist (.m3u)", value: share.playlistURL)
@@ -55,7 +87,9 @@ struct MountView: View {
             } footer: {
                 Text("Listeners open the link or playlist in any player. The website player code works on any web page. " + ShareLinks.httpsNote)
             }
+    }
 
+    @ViewBuilder private var backupSection: some View {
             Section {
                 Picker("", selection: $dropMode) {
                     Text("Nothing — listeners hear silence").tag(DropMode.nothing)
@@ -81,18 +115,9 @@ struct MountView: View {
             } footer: {
                 Text("Listeners keep hearing something instead of silence, and move back to the live stream automatically when your encoder reconnects.")
             }
+    }
 
-            Section("Mount") {
-                LabeledContent("Mount name") {
-                    TextField("", text: $mount.name, prompt: Text("/live")).multilineTextAlignment(.trailing)
-                }
-                IntField(title: "Max listeners (0 = no limit)", value: $mount.maxListeners)
-                IntField(title: "Burst size", value: $mount.burstSize, suffix: "bytes")
-                LabeledContent("Own encoder password") {
-                    TextField("", text: $mount.customPassword, prompt: Text("Use server password")).multilineTextAlignment(.trailing)
-                }
-            }
-
+    @ViewBuilder private var streamInfoSection: some View {
             Section {
                 LabeledContent("Name") { TextField("", text: $mount.streamName, prompt: Text(status?.streamName ?? "e.g. My Radio Station")).multilineTextAlignment(.trailing) }
                 DescriptionField(text: $mount.streamDescription, prompt: status?.streamDescription ?? "e.g. Classic hits, all day")
@@ -132,27 +157,25 @@ struct MountView: View {
                     markdownText(Encoders.streamInfoNote)
                 }
             }
+    }
+
+    @ViewBuilder private var advancedSections: some View {
+            Section("Mount") {
+                LabeledContent("Mount name") {
+                    TextField("", text: $mount.name, prompt: Text("/live")).multilineTextAlignment(.trailing)
+                }
+                IntField(title: "Max listeners (0 = no limit)", value: $mount.maxListeners)
+                IntField(title: "Burst size", value: $mount.burstSize, suffix: "bytes")
+                LabeledContent("Own encoder password") {
+                    TextField("", text: $mount.customPassword, prompt: Text("Use server password")).multilineTextAlignment(.trailing)
+                }
+            }
 
             Section {
                 Button("Delete Mount…", role: .destructive) { confirmDelete = true }
             }
-        }
-        .formStyle(.grouped)
-        .onAppear {
-            dropMode = !mount.backupFile.isEmpty ? .file : (!mount.fallbackMount.isEmpty ? .mount : .nothing)
-        }
-        .onChange(of: dropMode) { newMode in
-            // Switching away from a choice clears it, so the saved settings match what is shown.
-            if newMode != .file, !mount.backupFile.isEmpty { removeBackup() }
-            if newMode != .mount, !mount.fallbackMount.isEmpty { mount.fallbackMount = "" }
-        }
-        .navigationTitle(mount.name)
-        .confirmationDialog("Delete \(mount.name)?", isPresented: $confirmDelete) {
-            Button("Delete", role: .destructive, action: onDelete)
-        } message: {
-            Text("Connected listeners and encoders on this mount will be dropped the next time you apply changes.")
-        }
     }
+
 
     private func encoderLine(_ s: MountStatus) -> String? {
         var parts: [String] = []

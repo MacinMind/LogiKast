@@ -17,7 +17,6 @@ final class SnapshotTests: XCTestCase {
             @State var mount = Mount()
             var body: some View { MountView(mount: $mount, onDelete: {}) }
         }
-        try snapshot(MountHost().environmentObject(model), size: NSSize(width: 640, height: 1750), to: "mount.png", in: dir)
 
         try snapshot(SetupWizard(initialStep: .welcome, isRerun: true).environmentObject(model),
                      size: NSSize(width: 640, height: 650), to: "wizard-rerun-welcome.png", in: dir)
@@ -28,8 +27,18 @@ final class SnapshotTests: XCTestCase {
             }()
             var body: some View { MountView(mount: $mount, onDelete: {}) }
         }
-        try snapshot(BackupHost().environmentObject(model), size: NSSize(width: 640, height: 1900), to: "mount-backup.png", in: dir)
-        try snapshot(ServerView().environmentObject(model), size: NSSize(width: 640, height: 1700), to: "server.png", in: dir)
+
+        // Every tab of the mount and server pages, at a realistic window size.
+        for tab in MountTab.allCases {
+            model.mountTab = tab
+            try snapshot(MountHost().environmentObject(model), size: NSSize(width: 700, height: 820), to: "mount-\(tab.rawValue).png", in: dir)
+        }
+        model.mountTab = .backup
+        try snapshot(BackupHost().environmentObject(model), size: NSSize(width: 700, height: 820), to: "mount-backup-withfile.png", in: dir)
+        for tab in ServerTab.allCases {
+            model.serverTab = tab
+            try snapshot(ServerView().environmentObject(model), size: NSSize(width: 700, height: 820), to: "server-\(tab.rawValue).png", in: dir)
+        }
 
         for step in WizardStep.allCases {
             let host = NSHostingView(rootView: SetupWizard(initialStep: step).environmentObject(model))

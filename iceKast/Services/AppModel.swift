@@ -14,6 +14,9 @@ final class AppModel: ObservableObject {
     @Published var restartPrompt: RestartPrompt?
     /// Shows the setup assistant: automatically on a new install, or from Help › Setup Assistant.
     @Published var showSetup = false
+    /// The tab shown on the mount and server pages; kept while you move between mounts.
+    @Published var mountTab = MountTab.connect
+    @Published var serverTab = ServerTab.network
     /// Asked before the assistant opens on a station that is already set up.
     @Published var showSetupWarning = false
     /// True when the assistant was opened on an existing setup (it then warns and confirms changes).
