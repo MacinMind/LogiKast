@@ -340,27 +340,27 @@ struct MountView: View {
             }
             Spacer()
             if let s = status {
-                stat("Listeners", "\(s.listeners)")
-                stat("Peak", "\(s.peak)")
-                if let out = model.poller.bandwidth?.outgoing(mount: mount.name) {
-                    let f = BandwidthRates.format(out)
-                    stat("Out \(f.unit)", f.value)
-                        .help("Audio going out to listeners right now" + (model.poller.bandwidth?.into[mount.name].map { ". Encoder sending: \(BandwidthRates.format($0).value) \(BandwidthRates.format($0).unit)" } ?? ""))
+                // Fixed-width columns, so changing digits never move their neighbours. Out comes first: it
+                // changes width most often (kb/s to Mb/s), and nothing to its right depends on it.
+                let rate = model.poller.bandwidth?.outgoing(mount: mount.name).map(BandwidthRates.format)
+                stat("Out \(rate?.unit ?? "kb/s")", rate?.value ?? "–", width: 76)
+                    .help("Audio going out to listeners right now" + (model.poller.bandwidth?.into[mount.name].map { ". Encoder sending: \(BandwidthRates.format($0).value) \(BandwidthRates.format($0).unit)" } ?? ""))
+                stat("Listeners", "\(s.listeners)", width: 70)
+                stat("Peak", "\(s.peak)", width: 46)
+                VStack(alignment: .trailing) {
+                    Text("On air since").font(.caption).foregroundStyle(.secondary)
+                    if let since = s.streamStart { Text(since, style: .relative).monospacedDigit() } else { Text("–") }
                 }
-                if let since = s.streamStart {
-                    VStack(alignment: .trailing) {
-                        Text("On air since").font(.caption).foregroundStyle(.secondary)
-                        Text(since, style: .relative).monospacedDigit()
-                    }
-                }
+                .frame(width: 104, alignment: .trailing)
             }
         }
     }
 
-    private func stat(_ title: String, _ value: String) -> some View {
+    private func stat(_ title: String, _ value: String, width: CGFloat) -> some View {
         VStack(alignment: .trailing) {
             Text(title).font(.caption).foregroundStyle(.secondary)
-            Text(value).font(.system(size: 28, weight: .semibold)).monospacedDigit()
+            Text(value).font(.system(size: 28, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
         }
+        .frame(width: width, alignment: .trailing)
     }
 }
