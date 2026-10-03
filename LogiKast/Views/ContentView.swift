@@ -105,7 +105,7 @@ struct ServerToggleButton: View {
                     .padding(.horizontal, 8)
             }
             .modifier(ProminentToolbarStyle())
-            .tint(.green)
+            .tint(Color(hue: 0.37, saturation: 0.5, brightness: 0.62))   // a calm forest green, not system green
             .disabled(!model.canStart)
             .help("Start the server")
         }
