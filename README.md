@@ -23,9 +23,20 @@ Icecast is bundled; nothing else needs to be installed. MP3, AAC and HE-AAC stre
 
 Requires Xcode, and `xcodegen` (`brew install xcodegen`) to generate the Xcode project (it is generated from `project.yml` and not checked in).
 
+Run these one at a time. Don't paste the `#` comments into Terminal: zsh doesn't treat them as comments, and they would be passed to the script as extra arguments.
+
 ```bash
-scripts/build-icecast.sh     # builds the universal static Icecast into build/icecast
-xcodegen generate            # creates LogiKast.xcodeproj from project.yml
+# 1. Build the universal static Icecast into build/icecast
+scripts/build-icecast.sh
+```
+
+```bash
+# 2. Create LogiKast.xcodeproj from project.yml
+xcodegen generate
+```
+
+```bash
+# 3. Build, then test
 xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -derivedDataPath build/xcode build
 xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -derivedDataPath build/xcode test
 ```

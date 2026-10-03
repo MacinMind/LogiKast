@@ -9,6 +9,9 @@ SRC="$ROOT/third_party/src"
 OUT="$ROOT/build/icecast"
 MIN_MACOS=13.0
 ARCHS=("$@"); [ ${#ARCHS[@]} -eq 0 ] && ARCHS=(arm64 x86_64)
+for a in "${ARCHS[@]}"; do
+  case "$a" in arm64|x86_64) ;; *) echo "error: unknown architecture '$a' (use arm64 and/or x86_64, or no arguments for both)" >&2; exit 1 ;; esac
+done
 JOBS=$(sysctl -n hw.ncpu)
 
 # name|url  (versions pinned; checksums recorded in third_party/SHA256SUMS)
