@@ -45,13 +45,25 @@ struct AppCommands: Commands {
             Button("Check for Updates…") { updater.checkForUpdates() }
                 .disabled(!updater.canCheck)
         }
-        CommandGroup(after: .help) {
+        // Replaces the standard "LogiKast Help" item, which only says that no help book exists.
+        CommandGroup(replacing: .help) {
+            Button("LogiKast Website") { NSWorkspace.shared.open(HelpLinks.website) }
+            Button("Report a Problem…") { NSWorkspace.shared.open(HelpLinks.issues) }
+            Button("Icecast Documentation") { NSWorkspace.shared.open(HelpLinks.icecastDocs) }
+            Divider()
             Button(VersionNotes.menuTitle(includeBetas: updater.includeBetas)) { openWindow(id: "notes") }
             Divider()
             Button("Setup Assistant…") { model.requestSetup() }
             Menu("Encoder Apps") { EncoderLinkButtons() }
         }
     }
+}
+
+/// Where the Help menu sends people.
+enum HelpLinks {
+    static let website = URL(string: "https://macinmind.com/logikast/info/")!
+    static let issues = URL(string: "https://github.com/MacinMind/LogiKast/issues")!
+    static let icecastDocs = URL(string: "https://icecast.org/docs/icecast-latest/")!
 }
 
 struct MenuBarLabel: View {
