@@ -26,8 +26,6 @@ struct ServerView: View {
                     .formStyle(.grouped)
             }
         }
-        .navigationTitle("LogiKast")
-        .navigationSubtitle("Server")
     }
 
     @ViewBuilder private var tabContent: some View {
@@ -73,7 +71,7 @@ struct ServerView: View {
             } header: {
                 Text("Passwords")
             } footer: {
-                Text("Encoders connect with the username “source” and the encoder password. The admin user and password are only for Icecast's web admin pages (the Open Web Admin button above), never for encoders.")
+                Text("Encoders connect with the username “source” and the encoder password. The admin user and password are only for Icecast's web admin pages (the Web Admin button above), never for encoders.")
             }
 
             Section("Station info") {
@@ -172,7 +170,7 @@ struct ServerView: View {
             }
             Spacer()
             if model.server.isEnabled {
-                Button("Open Web Admin") { model.openWebAdmin() }
+                Button("Web Admin…") { model.openWebAdmin() }
                     .help("Opens Icecast's own admin pages in your browser, signed in with the admin user and password from the Access tab.")
                 Button("Restart Server…") { model.promptForRestart() }
             }

@@ -43,8 +43,6 @@ struct MountView: View {
             if newMode != .file, !mount.backupFile.isEmpty { removeBackup() }
             if newMode != .mount, !mount.fallbackMount.isEmpty { mount.fallbackMount = "" }
         }
-        .navigationTitle("LogiKast")
-        .navigationSubtitle(mount.name)
         .confirmationDialog("Delete \(mount.name)?", isPresented: $confirmDelete) {
             Button("Delete", role: .destructive, action: onDelete)
         } message: {

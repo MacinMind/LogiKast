@@ -1,7 +1,7 @@
 import Foundation
 import Network
 
-/// A tiny web proxy on this Mac that lets "Open Web Admin" sign in by itself. Browsers such as Safari ignore a
+/// A tiny web proxy on this Mac that lets "Web Admin…" sign in by itself. Browsers such as Safari ignore a
 /// username and password written into an address, so the browser opens this proxy instead; the proxy adds the
 /// admin login and passes the page through from Icecast.
 ///
@@ -105,7 +105,7 @@ final class AdminProxy: @unchecked Sendable {
         let cookies = req.headers["cookie"] ?? ""
         guard cookies.split(separator: ";").contains(where: { $0.trimmingCharacters(in: .whitespaces) == "logikast=\(token)" }) else {
             return send(conn, status: 403, reason: "Forbidden", headers: ["Content-Type": "text/plain"],
-                        body: Data("Open this from the LogiKast app (Open Web Admin).".utf8))
+                        body: Data("Open this from the LogiKast app (Web Admin…).".utf8))
         }
         lock.lock(); let t = target; lock.unlock()
         guard let url = URL(string: "http://\(t.host):\(t.port)\(req.path)") else {

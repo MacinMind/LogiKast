@@ -34,9 +34,10 @@ struct ContentView: View {
             }
         }
         .toolbar {
+            HeaderToolbar(selection: selection)
             ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
         }
-        .background(NoInitialFocus())
+        .background(WindowSetup())
         .sheet(isPresented: $model.showSetup) {
             SetupWizard(isRerun: model.setupIsRerun).environmentObject(model)
         }
@@ -217,17 +218,63 @@ struct StatusDot: View {
     }
 }
 
-/// macOS gives the window's first text field (the Port) keyboard focus, with its text selected, when the window opens.
-/// Hand the focus back to nobody, so a field is only edited once the user clicks it.
-private struct NoInitialFocus: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView { NSView() }
+/// The header as a toolbar item. Newer macOS wraps every toolbar item in a rounded background; the header is text, so drop it there.
+struct HeaderToolbar: ToolbarContent {
+    var selection: SidebarSelection?
+
+    var body: some ToolbarContent {
+        if #available(macOS 26.0, *) {
+            ToolbarItem(placement: .principal) { WindowHeader(selection: selection) }
+                .sharedBackgroundVisibility(.hidden)
+        } else {
+            ToolbarItem(placement: .principal) { WindowHeader(selection: selection) }
+        }
+    }
+}
+
+/// The top of the window: the app's name, then the selected sidebar item in large type.
+struct WindowHeader: View {
+    @EnvironmentObject var model: AppModel
+    var selection: SidebarSelection?
+
+    private var title: String {
+        if case .mount(let id) = selection, let mount = model.config.mounts.first(where: { $0.id == id }) { return mount.name }
+        return "Server"
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("LogiKast").font(.system(size: 17, weight: .semibold)).foregroundStyle(.secondary)
+            Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(.tertiary)
+            Text(title).font(.system(size: 22, weight: .bold)).lineLimit(1).truncationMode(.middle)
+        }
+        .padding(.leading, 6)
+        .frame(minWidth: 300, maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Window chrome the SwiftUI scene can't express on macOS 13:
+/// - The header above replaces the title bar's own text (the window keeps its title for Mission Control and the Window menu).
+/// - macOS gives the window's first text field (the Port) keyboard focus, with its text selected, when the window opens.
+///   Hand the focus back to nobody, so a field is only edited once the user clicks it.
+private struct WindowSetup: NSViewRepresentable {
+    final class HostView: NSView {
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            window?.titleVisibility = .hidden
+        }
+    }
+
+    func makeNSView(context: Context) -> NSView { HostView() }
 
     func updateNSView(_ view: NSView, context: Context) {
+        view.window?.titleVisibility = .hidden
         guard !context.coordinator.done else { return }
         context.coordinator.done = true
         // The first responder is assigned after the window appears, so clear it a moment later (twice, to be sure).
         for delay in [0.0, 0.25] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak view] in
+                view?.window?.titleVisibility = .hidden
                 guard let window = view?.window, window.firstResponder is NSText else { return }
                 window.makeFirstResponder(nil)
             }
