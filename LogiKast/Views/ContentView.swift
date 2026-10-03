@@ -86,35 +86,23 @@ extension ContentView {
 }
 
 /// Starts or stops the whole server. Spelled out, because a bare play/stop icon doesn't say what it controls.
-/// Start is the tinted, prominent button (Liquid Glass on macOS 26); Stop is the plain one with a red stop glyph.
+/// A plain toolbar button, so it looks like every other Mac toolbar control.
 struct ServerToggleButton: View {
     @EnvironmentObject var model: AppModel
 
     var body: some View {
         if model.server.isEnabled {
             Button { model.stopServer() } label: {
-                Label { Text("Stop Server") } icon: { Image(systemName: "stop.fill").foregroundStyle(.red) }
-                    .labelStyle(.titleAndIcon)
-                    .padding(.horizontal, 8)
+                Label("Stop Server", systemImage: "stop.fill").labelStyle(.titleAndIcon).padding(.horizontal, 4)
             }
             .help("Stop the server. Encoders and listeners are disconnected.")
         } else {
             Button { model.startServer() } label: {
-                Label("Start Server", systemImage: "play.fill")
-                    .labelStyle(.titleAndIcon)
-                    .padding(.horizontal, 8)
+                Label("Start Server", systemImage: "play.fill").labelStyle(.titleAndIcon).padding(.horizontal, 4)
             }
-            .modifier(ProminentToolbarStyle())
-            .tint(Color(hue: 0.37, saturation: 0.5, brightness: 0.62))   // a calm forest green, not system green
             .disabled(!model.canStart)
             .help("Start the server")
         }
-    }
-}
-
-struct ProminentToolbarStyle: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(macOS 26.0, *) { content.buttonStyle(.glassProminent) } else { content.buttonStyle(.borderedProminent) }
     }
 }
 
