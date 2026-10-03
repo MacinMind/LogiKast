@@ -111,7 +111,7 @@ struct MountView: View {
                     CopyableRow(label: "On your network", value: "http://\(ip):\(port)\(mount.name)")
                 }
                 if DirectoryListing.isPrivateHost(host) {
-                    Label("These links use \"\(host)\", which only works on this Mac or your own network. For people on the internet, enter your public address under Server › Network › Public host name.",
+                    Label("These links use \"\(host)\", which only works on this Mac or your own network. For people on the internet, enter your public address under Server › Setup › Public host name.",
                           systemImage: "info.circle").foregroundStyle(.secondary).font(.callout)
                 }
                 SharePlayerView(share: share)

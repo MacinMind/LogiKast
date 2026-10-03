@@ -20,7 +20,7 @@ struct ListenersSection: View {
             if source == nil, !model.server.isEnabled {
                 note("The server is off. Start it to see who is listening.")
             } else if listeners == nil {
-                note("Couldn't read the listener list. Check that the server is running and that the admin password in the Access tab hasn't been changed without applying it.", warning: true)
+                note("Couldn't read the listener list. Check that the server is running and that the admin password under Server › Setup hasn't been changed without applying it.", warning: true)
             } else if listeners?.isEmpty == true {
                 note("Nobody is listening to this stream right now.")
             } else {

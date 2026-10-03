@@ -35,15 +35,15 @@ struct ServerView: View {
 
     @ViewBuilder private var tabContent: some View {
         switch model.serverTab {
-        case .network: networkTab
-        case .access: accessTab
+        case .setup: setupTab
+        case .limits: limitsTab
         case .alerts: alertsTab
         case .app: appTab
         case .updates: UpdateSettings(updater: model.updater)
         }
     }
 
-    @ViewBuilder private var networkTab: some View {
+    @ViewBuilder private var setupTab: some View {
             Section("Network") {
                 IntField(title: "Port", value: $model.config.server.port)
                 LabeledContent("Public host name") {
@@ -56,17 +56,6 @@ struct ServerView: View {
                 }
             }
 
-            Section("Limits") {
-                IntField(title: "Max listeners (all mounts)", value: $model.config.server.maxClients)
-                IntField(title: "Max encoder connections", value: $model.config.server.maxSources)
-                IntField(title: "Default burst size", value: $model.config.server.burstSize, suffix: "bytes")
-                IntField(title: "Queue size", value: $model.config.server.queueSize, suffix: "bytes")
-                IntField(title: "Listener timeout", value: $model.config.server.clientTimeout, suffix: "s")
-                IntField(title: "Encoder timeout", value: $model.config.server.sourceTimeout, suffix: "s")
-            }
-    }
-
-    @ViewBuilder private var accessTab: some View {
             Section {
                 PasswordRow(label: "Encoder password", value: $model.config.server.sourcePassword)
                 PasswordRow(label: "Admin password", value: $model.config.server.adminPassword)
@@ -79,13 +68,24 @@ struct ServerView: View {
                 Text("Encoders connect with the username “source” and the encoder password. The admin user and password are only for Icecast's web admin pages (the Web Admin button above), never for encoders.")
             }
 
-            Section("Station info") {
+            Section("About this server") {
                 LabeledContent("Location") {
                     TextField("", text: $model.config.server.location, prompt: Text("Earth")).multilineTextAlignment(.trailing)
                 }
                 LabeledContent("Admin email") {
                     TextField("", text: $model.config.server.adminEmail, prompt: Text("you@example.com")).multilineTextAlignment(.trailing)
                 }
+            }
+    }
+
+    @ViewBuilder private var limitsTab: some View {
+            Section("Limits") {
+                IntField(title: "Max listeners (all mounts)", value: $model.config.server.maxClients)
+                IntField(title: "Max encoder connections", value: $model.config.server.maxSources)
+                IntField(title: "Default burst size", value: $model.config.server.burstSize, suffix: "bytes")
+                IntField(title: "Queue size", value: $model.config.server.queueSize, suffix: "bytes")
+                IntField(title: "Listener timeout", value: $model.config.server.clientTimeout, suffix: "s")
+                IntField(title: "Encoder timeout", value: $model.config.server.sourceTimeout, suffix: "s")
             }
     }
 
@@ -176,7 +176,7 @@ struct ServerView: View {
             Spacer()
             if model.server.isEnabled {
                 Button("Web Admin…") { model.openWebAdmin() }
-                    .help("Opens Icecast's own admin pages in your browser, signed in with the admin user and password from the Access tab.")
+                    .help("Opens Icecast's own admin pages in your browser, signed in with the admin user and password from the Setup tab.")
                 Button("Restart Server…") { model.promptForRestart() }
             }
         }

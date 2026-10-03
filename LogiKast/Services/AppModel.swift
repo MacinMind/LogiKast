@@ -17,7 +17,7 @@ final class AppModel: ObservableObject {
     @Published var showSetup = false
     /// The tab shown on the mount and server pages; kept while you move between mounts.
     @Published var mountTab = MountTab.connect
-    @Published var serverTab = ServerTab.network
+    @Published var serverTab = ServerTab.setup
     /// Set when the old iceKast server is still running; the app offers to move it to LogiKast.
     @Published var showLegacyPrompt = false
     /// Asked before the assistant opens on a station that is already set up.

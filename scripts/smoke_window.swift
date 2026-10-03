@@ -52,8 +52,8 @@ func scrollBarVisible(_ rep: NSBitmapImageRep) -> Bool {
 /// `mayScroll`: pages allowed to need a scroll bar at the minimum window size (Share grows with one row per network
 /// interface this Mac has, so it fits on some Macs and scrolls on others).
 struct Case { let name: String; let args: [String]; var mayScroll = false }
-var cases = [Case(name: "server / network", args: ["--skip-legacy", "--server-tab", "network"]),
-             Case(name: "server / access", args: ["--skip-legacy", "--server-tab", "access"]),
+var cases = [Case(name: "server / setup", args: ["--skip-legacy", "--server-tab", "setup"]),
+             Case(name: "server / limits", args: ["--skip-legacy", "--server-tab", "limits"]),
              Case(name: "server / alerts", args: ["--skip-legacy", "--server-tab", "alerts"]),
              Case(name: "server / app", args: ["--skip-legacy", "--server-tab", "app"]),
              Case(name: "server / updates", args: ["--skip-legacy", "--server-tab", "updates"])]
