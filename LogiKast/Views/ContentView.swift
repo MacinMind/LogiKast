@@ -16,7 +16,7 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             SidebarView(selection: $selection)
-                .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
+                .navigationSplitViewColumnWidth(min: 200, ideal: 250, max: 340)
         } detail: {
             switch selection {
             case .mount(let id):
@@ -99,30 +99,25 @@ struct SidebarView: View {
     var body: some View {
         List(selection: $selection) {
             Section("Server") {
-                HStack {
-                    StatusDot(color: serverColor)
-                    Text("Server")
-                    Spacer()
-                    Text(model.server.isEnabled ? "On" : "Off")
-                        .foregroundStyle(.secondary)
-                }
-                .tag(SidebarSelection.server)
+                SidebarRow(color: serverColor, title: "Server", detail: serverDetail)
+                    .tag(SidebarSelection.server)
             }
-            Section("Mounts") {
+            Section {
                 ForEach(model.config.mounts) { mount in
                     let s = model.status(for: mount)
-                    HStack {
-                        StatusDot(color: s != nil ? .green : (model.server.isEnabled ? .orange : .gray))
-                        Text(mount.name).lineLimit(1)
-                        Spacer()
-                        if let s {
-                            Label("\(s.listeners)", systemImage: "headphones")
-                                .labelStyle(.titleAndIcon)
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                    }
-                    .tag(SidebarSelection.mount(mount.id))
+                    SidebarRow(color: s != nil ? .green : (model.server.isEnabled ? .orange : .gray),
+                               title: mount.name, detail: mountDetail(s), listeners: s?.listeners)
+                        .tag(SidebarSelection.mount(mount.id))
+                }
+            } header: {
+                HStack {
+                    Text("Mounts")
+                    Spacer()
+                    Button {
+                        selection = .mount(model.addMount().id)
+                    } label: { Image(systemName: "plus") }
+                    .buttonStyle(.borderless)
+                    .help("Add a mount point")
                 }
             }
         }
@@ -135,6 +130,23 @@ struct SidebarView: View {
                 .help("Add a mount point")
             }
         }
+    }
+
+    private var serverDetail: String {
+        switch model.server.state {
+        case .stopped: return "Off"
+        case .needsApproval: return "Needs approval"
+        case .failed: return "Problem"
+        case .running:
+            guard model.poller.reachable else { return "Starting…" }
+            let n = model.poller.status?.totalListeners ?? 0
+            return "Running · port \(model.config.server.port) · \(n) \(n == 1 ? "listener" : "listeners")"
+        }
+    }
+
+    private func mountDetail(_ s: MountStatus?) -> String {
+        if let s { return s.bitrate.map { "On air · \($0) kbps" } ?? "On air" }
+        return model.server.isEnabled ? "No encoder" : "Server off"
     }
 
     private var serverColor: Color {
@@ -168,6 +180,33 @@ struct VersionFooter: View {
         }
         .buttonStyle(.plain)
         .help("About LogiKast")
+    }
+}
+
+/// A sidebar entry: status dot, a prominent name, a small gray line of detail, and optionally the listener count.
+struct SidebarRow: View {
+    var color: Color
+    var title: String
+    var detail: String
+    var listeners: Int?
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Circle().fill(color).frame(width: 11, height: 11)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 14, weight: .semibold)).lineLimit(1)
+                Text(detail).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            if let listeners {
+                Label("\(listeners)", systemImage: "headphones")
+                    .labelStyle(.titleAndIcon)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 
