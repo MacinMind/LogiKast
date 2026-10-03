@@ -6,15 +6,11 @@ enum SidebarSelection: Hashable {
 }
 
 struct ContentView: View {
-    static let sidebarWidth: CGFloat = 275
 
     @EnvironmentObject var model: AppModel
     @State private var selection: SidebarSelection?
     /// The sidebar is how you move around, so it always stays open.
     @State private var columns = NavigationSplitViewVisibility.all
-    /// Width of the area right of the sidebar. Before macOS 26 the toolbar has no flexible space once the window title is
-    /// removed, so the header and the Start/Stop button are one item sized to fill it.
-    @State private var detailWidth: CGFloat = 600
     /// The mount the user asked to delete; set by the sidebar, confirmed (or not) in the dialog below.
     @State private var mountToDelete: UUID?
 
@@ -25,7 +21,7 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView(columnVisibility: $columns) {
             SidebarView(selection: $selection, mountToDelete: $mountToDelete)
-                .navigationSplitViewColumnWidth(ContentView.sidebarWidth)   // fixed: nothing in the sidebar needs more, and a wider one only squeezes the page
+                .navigationSplitViewColumnWidth(275)   // fixed: nothing in the sidebar needs more, and a wider one only squeezes the page
                 .modifier(NoSidebarToggle())
         } detail: {
             switch selection {
@@ -54,12 +50,7 @@ struct ContentView: View {
             Text(deleteMessage)
         }
         .onChange(of: columns) { if $0 != .all { columns = .all } }
-        .toolbar { HeaderToolbar(selection: selection, detailWidth: detailWidth) }
-        .background(GeometryReader { geo in
-            Color.clear
-                .onAppear { detailWidth = geo.size.width - ContentView.sidebarWidth }
-                .onChange(of: geo.size.width) { detailWidth = $0 - ContentView.sidebarWidth }
-        })
+        .toolbar { HeaderToolbar(selection: selection) }
         .modifier(NoSidebarToggle())
         .background(WindowSetup())
         .sheet(isPresented: $model.showSetup) {
@@ -291,7 +282,6 @@ extension ContentView {
 
 struct HeaderToolbar: ToolbarContent {
     var selection: SidebarSelection?
-    var detailWidth: CGFloat
 
     var body: some ToolbarContent {
         if #available(macOS 26.0, *) {
@@ -300,13 +290,14 @@ struct HeaderToolbar: ToolbarContent {
             ToolbarSpacer(.flexible)
             ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
         } else {
+            // Before macOS 26 the toolbar can't be made to stretch an item or to keep a button at the far right once the window's
+            // title is removed (tried: a computed width fails during a fast resize; a flexible width isn't honored).
+            // So the Start/Stop button sits right after the header.
             ToolbarItem(placement: .navigation) {
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     WindowHeader(selection: selection)
-                    Spacer(minLength: 8)
                     ServerToggleButton()
                 }
-                .frame(width: max(320, detailWidth - 28))
             }
         }
     }
