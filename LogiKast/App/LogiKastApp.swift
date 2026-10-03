@@ -39,6 +39,7 @@ struct AppCommands: Commands {
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {}
+        CommandGroup(replacing: .sidebar) {}
         CommandGroup(replacing: .appInfo) {
             Button("About LogiKast") { AboutPanel.show() }
             Button("Check for Updates…") { updater.checkForUpdates() }

@@ -8,15 +8,18 @@ enum SidebarSelection: Hashable {
 struct ContentView: View {
     @EnvironmentObject var model: AppModel
     @State private var selection: SidebarSelection?
+    /// The sidebar is how you move around, so it always stays open.
+    @State private var columns = NavigationSplitViewVisibility.all
 
     init(initialSelection: SidebarSelection? = .server) {
         _selection = State(initialValue: initialSelection)
     }
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columns) {
             SidebarView(selection: $selection)
                 .navigationSplitViewColumnWidth(min: 200, ideal: 250, max: 340)
+                .modifier(NoSidebarToggle())
         } detail: {
             switch selection {
             case .mount(let id):
@@ -33,10 +36,12 @@ struct ContentView: View {
                 ServerView()
             }
         }
+        .onChange(of: columns) { if $0 != .all { columns = .all } }
         .toolbar {
             HeaderToolbar(selection: selection)
             ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
         }
+        .modifier(NoSidebarToggle())
         .background(WindowSetup())
         .sheet(isPresented: $model.showSetup) {
             SetupWizard(isRerun: model.setupIsRerun).environmentObject(model)
@@ -80,15 +85,25 @@ extension ContentView {
     }
 }
 
+/// Starts or stops the whole server. Spelled out, because a bare play/stop icon doesn't say what it controls.
 struct ServerToggleButton: View {
     @EnvironmentObject var model: AppModel
 
     var body: some View {
         if model.server.isEnabled {
-            Button { model.stopServer() } label: { Label("Stop Server", systemImage: "stop.fill") }
+            Button { model.stopServer() } label: {
+                Label("Stop Server", systemImage: "stop.fill").labelStyle(.titleAndIcon)
+            }
+            .tint(.red)
+            .help("Stop the server. Encoders and listeners are disconnected.")
         } else {
-            Button { model.startServer() } label: { Label("Start Server", systemImage: "play.fill") }
-                .disabled(!model.canStart)
+            Button { model.startServer() } label: {
+                Label("Start Server", systemImage: "play.fill").labelStyle(.titleAndIcon)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.green)
+            .disabled(!model.canStart)
+            .help("Start the server")
         }
     }
 }
@@ -116,21 +131,18 @@ struct SidebarView: View {
                     Spacer()
                     Button {
                         selection = .mount(model.addMount().id)
-                    } label: { Image(systemName: "plus") }
-                    .buttonStyle(.borderless)
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 20))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.accentColor)
                     .help("Add a mount point")
                 }
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { VersionFooter() }
-        .toolbar {
-            ToolbarItem {
-                Button {
-                    selection = .mount(model.addMount().id)
-                } label: { Label("Add Mount", systemImage: "plus") }
-                .help("Add a mount point")
-            }
-        }
     }
 
     private var serverDetail: String {
@@ -218,17 +230,26 @@ struct StatusDot: View {
     }
 }
 
-/// The header as a toolbar item. Newer macOS wraps every toolbar item in a rounded background; the header is text, so drop it there.
+/// The header as a toolbar item. Newer macOS wraps every toolbar item in a rounded background and has no title to push the
+/// buttons aside; the header is text, so it drops the background and a flexible space keeps the Start/Stop button at the right.
 struct HeaderToolbar: ToolbarContent {
     var selection: SidebarSelection?
 
     var body: some ToolbarContent {
         if #available(macOS 26.0, *) {
-            ToolbarItem(placement: .principal) { WindowHeader(selection: selection) }
+            ToolbarItem(placement: .navigation) { WindowHeader(selection: selection) }
                 .sharedBackgroundVisibility(.hidden)
+            ToolbarSpacer(.flexible)
         } else {
             ToolbarItem(placement: .principal) { WindowHeader(selection: selection) }
         }
+    }
+}
+
+/// Removes the toolbar's sidebar button (macOS 14 and later) and the View menu's Show/Hide Sidebar is removed in AppCommands.
+struct NoSidebarToggle: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 14.0, *) { content.toolbar(removing: .sidebarToggle) } else { content }
     }
 }
 
@@ -249,7 +270,6 @@ struct WindowHeader: View {
             Text(title).font(.system(size: 22, weight: .bold)).lineLimit(1).truncationMode(.middle)
         }
         .padding(.leading, 6)
-        .frame(minWidth: 300, maxWidth: .infinity, alignment: .leading)
     }
 }
 
