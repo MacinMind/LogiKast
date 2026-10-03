@@ -44,7 +44,7 @@ struct ServerView: View {
     }
 
     @ViewBuilder private var setupTab: some View {
-            Section("Network") {
+            Section("This server") {
                 IntField(title: "Port", value: $model.config.server.port)
                 LabeledContent("Public host name") {
                     TextField("", text: $model.config.server.hostname, prompt: Text("localhost"))
@@ -53,6 +53,12 @@ struct ServerView: View {
                 LabeledContent("Listen on") {
                     TextField("", text: $model.config.server.bindAddress, prompt: Text("All interfaces"))
                         .multilineTextAlignment(.trailing)
+                }
+                LabeledContent("Location") {
+                    TextField("", text: $model.config.server.location, prompt: Text("Earth")).multilineTextAlignment(.trailing)
+                }
+                LabeledContent("Admin email") {
+                    TextField("", text: $model.config.server.adminEmail, prompt: Text("you@example.com")).multilineTextAlignment(.trailing)
                 }
             }
 
@@ -65,16 +71,7 @@ struct ServerView: View {
             } header: {
                 Text("Passwords")
             } footer: {
-                Text("Encoders connect with the username “source” and the encoder password. The admin user and password are only for Icecast's web admin pages (the Web Admin button above), never for encoders.")
-            }
-
-            Section("About this server") {
-                LabeledContent("Location") {
-                    TextField("", text: $model.config.server.location, prompt: Text("Earth")).multilineTextAlignment(.trailing)
-                }
-                LabeledContent("Admin email") {
-                    TextField("", text: $model.config.server.adminEmail, prompt: Text("you@example.com")).multilineTextAlignment(.trailing)
-                }
+                Text("Encoders log in as “source” with the encoder password. The admin login is for Web Admin only.")
             }
     }
 
