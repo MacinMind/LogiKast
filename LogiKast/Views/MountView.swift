@@ -5,8 +5,6 @@ import UniformTypeIdentifiers
 struct MountView: View {
     @EnvironmentObject var model: AppModel
     @Binding var mount: Mount
-    var onDelete: () -> Void
-    @State private var confirmDelete = false
     @State private var dropMode = DropMode.nothing
     @State private var backupError: String?
     @State private var nameAtOpen = ""
@@ -42,11 +40,6 @@ struct MountView: View {
             // Switching away from a choice clears it, so the saved settings match what is shown.
             if newMode != .file, !mount.backupFile.isEmpty { removeBackup() }
             if newMode != .mount, !mount.fallbackMount.isEmpty { mount.fallbackMount = "" }
-        }
-        .confirmationDialog("Delete \(mount.name)?", isPresented: $confirmDelete) {
-            Button("Delete", role: .destructive, action: onDelete)
-        } message: {
-            Text("Connected listeners and encoders on this mount will be dropped the next time you apply changes.")
         }
     }
 
@@ -212,10 +205,6 @@ struct MountView: View {
                 LabeledContent("Own encoder password") {
                     TextField("", text: $mount.customPassword, prompt: Text("Use server password")).multilineTextAlignment(.trailing)
                 }
-            }
-
-            Section {
-                Button("Delete Mount…", role: .destructive) { confirmDelete = true }
             }
     }
 

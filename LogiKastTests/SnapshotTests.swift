@@ -15,7 +15,7 @@ final class SnapshotTests: XCTestCase {
         // The mount page (this is where raw markdown once showed up in a heading).
         struct MountHost: View {
             @State var mount = Mount()
-            var body: some View { MountView(mount: $mount, onDelete: {}) }
+            var body: some View { MountView(mount: $mount) }
         }
 
         try snapshot(SetupWizard(initialStep: .welcome, isRerun: true).environmentObject(model),
@@ -25,7 +25,7 @@ final class SnapshotTests: XCTestCase {
             @State var mount: Mount = {
                 var m = Mount(); m.backupFile = "live-backup.mp3"; m.backupName = "Be Right Back.mp3"; return m
             }()
-            var body: some View { MountView(mount: $mount, onDelete: {}) }
+            var body: some View { MountView(mount: $mount) }
         }
 
         // Every tab of the mount and server pages, at a realistic window size.
@@ -88,7 +88,7 @@ final class SnapshotTests: XCTestCase {
         struct Host: View {
             @EnvironmentObject var model: AppModel
             @State var mount: Mount
-            var body: some View { MountView(mount: $mount, onDelete: {}) }
+            var body: some View { MountView(mount: $mount) }
         }
         let width: CGFloat = 590   // 865 minimum window width minus the 275 fixed sidebar
         for tab in MountTab.allCases {

@@ -10,6 +10,8 @@ struct ContentView: View {
     @State private var selection: SidebarSelection?
     /// The sidebar is how you move around, so it always stays open.
     @State private var columns = NavigationSplitViewVisibility.all
+    /// The mount the user asked to delete; set by the sidebar, confirmed (or not) in the dialog below.
+    @State private var mountToDelete: UUID?
 
     init(initialSelection: SidebarSelection? = .server) {
         _selection = State(initialValue: initialSelection)
@@ -17,24 +19,34 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columns) {
-            SidebarView(selection: $selection)
+            SidebarView(selection: $selection, mountToDelete: $mountToDelete)
                 .navigationSplitViewColumnWidth(275)   // fixed: nothing in the sidebar needs more, and a wider one only squeezes the page
                 .modifier(NoSidebarToggle())
         } detail: {
             switch selection {
             case .mount(let id):
                 if let index = model.config.mounts.firstIndex(where: { $0.id == id }) {
-                    MountView(mount: $model.config.mounts[index], onDelete: {
-                        selection = .server
-                        model.deleteMount(id)
-                    })
-                    .id(id)
+                    MountView(mount: $model.config.mounts[index])
+                        .id(id)
                 } else {
                     ServerView()
                 }
             default:
                 ServerView()
             }
+        }
+        .confirmationDialog(deleteTitle, isPresented: Binding(get: { mountToDelete != nil }, set: { if !$0 { mountToDelete = nil } }),
+                            titleVisibility: .visible) {
+            Button("Delete Mount", role: .destructive) {
+                if let id = mountToDelete {
+                    selection = .server
+                    model.deleteMount(id)
+                }
+                mountToDelete = nil
+            }
+            Button("Cancel", role: .cancel) { mountToDelete = nil }
+        } message: {
+            Text(deleteMessage)
         }
         .onChange(of: columns) { if $0 != .all { columns = .all } }
         .toolbar {
@@ -109,6 +121,12 @@ struct ServerToggleButton: View {
 struct SidebarView: View {
     @EnvironmentObject var model: AppModel
     @Binding var selection: SidebarSelection?
+    @Binding var mountToDelete: UUID?
+
+    private var selectedMount: UUID? {
+        if case .mount(let id) = selection { return id }
+        return nil
+    }
 
     var body: some View {
         List(selection: $selection) {
@@ -122,11 +140,25 @@ struct SidebarView: View {
                     SidebarRow(color: s != nil ? .green : (model.server.isEnabled ? .orange : .gray),
                                title: mount.name, detail: mountDetail(s), listeners: s?.listeners)
                         .tag(SidebarSelection.mount(mount.id))
+                        .contextMenu {
+                            Button("Delete \(mount.name)…", role: .destructive) { mountToDelete = mount.id }
+                        }
                 }
             } header: {
-                HStack {
+                HStack(spacing: 10) {
                     Text("Mounts")
                     Spacer()
+                    Button {
+                        mountToDelete = selectedMount
+                    } label: {
+                        Image(systemName: "minus.circle")
+                            .font(.system(size: 18))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(selectedMount == nil ? Color.secondary.opacity(0.4) : Color.secondary)
+                    .disabled(selectedMount == nil)
+                    .help("Delete the selected mount")
                     Button {
                         selection = .mount(model.addMount().id)
                     } label: {
@@ -140,6 +172,7 @@ struct SidebarView: View {
                 }
             }
         }
+        .onDeleteCommand { mountToDelete = selectedMount }
         .safeAreaInset(edge: .bottom, spacing: 0) { VersionFooter() }
     }
 
@@ -230,6 +263,25 @@ struct StatusDot: View {
 
 /// The header as a toolbar item. Newer macOS wraps every toolbar item in a rounded background and has no title to push the
 /// buttons aside; the header is text, so it drops the background and a flexible space keeps the Start/Stop button at the right.
+extension ContentView {
+    private var mountBeingDeleted: Mount? { model.config.mounts.first { $0.id == mountToDelete } }
+
+    fileprivate var deleteTitle: String { "Delete \(mountBeingDeleted?.name ?? "this mount")?" }
+
+    fileprivate var deleteMessage: String {
+        guard let mount = mountBeingDeleted else { return "" }
+        var lines = ["This removes the mount and its settings. It can't be undone."]
+        if let s = model.status(for: mount) {
+            let n = s.listeners
+            lines.append("It is on air right now with \(n) \(n == 1 ? "listener" : "listeners"). Its encoder and listeners will be disconnected, and the stream address \(mount.name) will stop working.")
+        } else {
+            lines.append("Encoders and listeners using \(mount.name) will no longer be able to connect.")
+        }
+        if !mount.backupFile.isEmpty { lines.append("Its backup audio file is deleted too.") }
+        return lines.joined(separator: "\n\n")
+    }
+}
+
 struct HeaderToolbar: ToolbarContent {
     var selection: SidebarSelection?
 
