@@ -81,13 +81,13 @@ Icon (square, 1024 px) is in the app repo at `Design/logikast-icon-1024.png`; th
 - Label it clearly as a **beta** while the version has the `b` suffix.
 - Install steps: open the DMG, drag LogiKast to Applications, open it. On first run, approve the background server under System Settings > General > Login Items & Extensions if macOS asks.
 - Requirements line: macOS 13 or later, Apple silicon or Intel.
-- Updating: the app updates itself with Sparkle. Beta 2 testers must install beta 4 manually (beta 2 had no updater).
+- Updating: the app updates itself with Sparkle. Beta 2 testers must install beta 5 manually (beta 2 had no updater).
 - Link to the source and release notes on GitHub, and mention it is free and open source.
 - When a final 1.0 ships, the download link and "beta" labeling need to change. Keep the version, size and checksum in one place on the site so each release is a single edit.
 
-### Version notes for 1.0 beta 4 (optional "What's new" section)
+### Version notes for 1.0 beta 5 (optional "What's new" section)
 
-Ask the user for the exact beta 4 notes; they were published in the appcast and the GitHub release. Highlights: Sparkle automatic updates with a beta switch; Version Notes in the Help menu; fix for Icecast using 100% CPU with idle connections; sturdier server start-up (stops leftover Icecast processes, names whatever holds a port); the app renamed from iceKast to LogiKast.
+Ask the user for the exact beta 5 notes; they are published in the appcast and the GitHub release. Highlights of the 1.0 betas so far: Sparkle automatic updates with a beta switch; Version Notes in the Help menu; fixes for Icecast CPU use and a web admin dashboard crash; sturdier server start-up; a refreshed window (header, status in the sidebar, Start/Stop Server button, delete mounts from the sidebar); the app was renamed from iceKast to LogiKast.
 
 ## Things not to claim
 
