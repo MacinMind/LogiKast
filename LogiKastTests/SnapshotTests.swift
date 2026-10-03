@@ -90,7 +90,7 @@ final class SnapshotTests: XCTestCase {
             @State var mount: Mount
             var body: some View { MountView(mount: $mount, onDelete: {}) }
         }
-        let width: CGFloat = 590   // 820 minimum window width minus the 230 ideal sidebar
+        let width: CGFloat = 590   // 865 minimum window width minus the 275 fixed sidebar
         for tab in MountTab.allCases {
             model.mountTab = tab
             try snapshot(Host(mount: m).environmentObject(model), size: NSSize(width: width, height: 1700), to: "m-\(tab.rawValue).png", in: dir)

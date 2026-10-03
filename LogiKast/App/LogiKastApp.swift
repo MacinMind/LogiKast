@@ -12,7 +12,7 @@ struct LogiKastApp: App {
         Window("LogiKast", id: "main") {
             ContentView()
                 .environmentObject(model)
-                .frame(minWidth: 820, minHeight: 730)
+                .frame(minWidth: 865, minHeight: 730)
         }
         .commands {
             AppCommands(model: model, updater: model.updater)

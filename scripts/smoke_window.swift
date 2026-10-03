@@ -86,8 +86,8 @@ for c in cases {
     run("/usr/sbin/screencapture", ["-x", "-o", "-l", String(id), out])
     guard let data = FileManager.default.contents(atPath: out), let rep = NSBitmapImageRep(data: data) else { print("FAIL  \(c.name): no capture"); failures += 1; continue }
     let w = CGFloat(rep.pixelsWide), h = CGFloat(rep.pixelsHigh)
-    let sidebar = ink(rep, CGRect(x: 0, y: 70, width: w * 0.22, height: h * 0.4))
-    let detail = ink(rep, CGRect(x: w * 0.30, y: 70, width: w * 0.65, height: h * 0.6))
+    let sidebar = ink(rep, CGRect(x: 0, y: 70, width: w * 0.30, height: h * 0.4))
+    let detail = ink(rep, CGRect(x: w * 0.40, y: 70, width: w * 0.55, height: h * 0.6))
     let bar = scrollBarVisible(rep)
     let ok = sidebar > 0.002 && detail > 0.02 && (bar == false || c.mayScroll)
     let barNote = bar ? "SCROLL BAR" : "no scroll bar"
