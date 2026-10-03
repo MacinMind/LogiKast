@@ -26,7 +26,8 @@ struct ServerView: View {
                     .formStyle(.grouped)
             }
         }
-        .navigationTitle("Server")
+        .navigationTitle("LogiKast")
+        .navigationSubtitle("Server")
     }
 
     @ViewBuilder private var tabContent: some View {

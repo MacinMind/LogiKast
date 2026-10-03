@@ -25,7 +25,8 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>13.0</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>© MacinMind Software, Inc. Free software (GPLv2).</string>
+	<string>© 2026 MacinMind Software, Inc.
+Free software (GPLv2).</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>

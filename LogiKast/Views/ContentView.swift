@@ -126,6 +126,7 @@ struct SidebarView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) { VersionFooter() }
         .toolbar {
             ToolbarItem {
                 Button {
@@ -143,6 +144,30 @@ struct SidebarView: View {
         case .needsApproval: .orange
         case .stopped: .gray
         }
+    }
+}
+
+/// "LogiKast 1.0b4 (14)" at the bottom of the sidebar; clicking it opens the About window.
+/// The build number is shown because a rebuilt beta keeps the same public version.
+struct VersionFooter: View {
+    static var text: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? ""
+        let build = info?["CFBundleVersion"] as? String ?? ""
+        return "LogiKast \(version) (\(build))"
+    }
+
+    var body: some View {
+        Button { AboutPanel.show() } label: {
+            Text(Self.text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("About LogiKast")
     }
 }
 
