@@ -277,7 +277,7 @@ extension ContentView {
         } else {
             lines.append("Encoders and listeners using \(mount.name) will no longer be able to connect.")
         }
-        if !mount.backupFile.isEmpty { lines.append("Its backup audio file is deleted too.") }
+        if !mount.backupFile.isEmpty { lines.append("LogiKast's copy of its backup audio file is deleted too. The original file you chose is not touched.") }
         return lines.joined(separator: "\n\n")
     }
 }
