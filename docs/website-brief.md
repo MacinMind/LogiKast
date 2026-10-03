@@ -6,12 +6,12 @@ Hand this file to the Claude project that maintains macinmind.com. Task: add a *
 
 | | |
 |---|---|
-| Name | LogiKast (formerly "iceKast"; never use the old name or "NiceKast") |
+| Name | LogiKast |
 | Publisher | MacinMind Software, Inc. |
 | Price | Free. Open source, GPLv2 |
-| Current version | 1.0 beta 3 (public version `1.0b3`, build 12). A pre-release; no final 1.0 yet |
+| Current version | 1.0 beta 5 (public version `1.0b5`, build 15). A pre-release; no final 1.0 yet |
 | Requires | macOS 13 Ventura or later. Universal: Apple silicon and Intel |
-| Size | About 7.3 MB (DMG) |
+| Size | About 7.4 MB (DMG) |
 | Bundle ID | com.macinmind.logikast |
 | Signed | Developer ID (MacinMind Software, Inc.) and notarized by Apple; opens without Gatekeeper warnings |
 | Source and releases | https://github.com/MacinMind/LogiKast (releases at https://github.com/MacinMind/LogiKast/releases) |
@@ -74,20 +74,20 @@ Icon (square, 1024 px) is in the app repo at `Design/logikast-icon-1024.png`; th
 
 ## Download page
 
-- Primary button: **Download LogiKast 1.0b3** (DMG, about 7.3 MB). Release asset on GitHub: `LogiKast-1.0b3.dmg`. The direct link has the form
-  `https://github.com/MacinMind/LogiKast/releases/download/v1.0b3/LogiKast-1.0b3.dmg`
-  (confirm against the Releases page; the tag is `v1.0b3`).
-- SHA-256: `df00e5bcdddb1a2be51fe3357aa32879f72419751aa72254feacbd5b026af36c`
+- Primary button: **Download LogiKast 1.0b5** (DMG, about 7.4 MB). Release asset on GitHub: `LogiKast-1.0b5.dmg`. The direct link has the form
+  `https://github.com/MacinMind/LogiKast/releases/download/v1.0b5/LogiKast-1.0b5.dmg`
+  (confirm against the Releases page; the tag is `v1.0b5`).
+- SHA-256: `6f733f1a3f7da5fa245558f103145aee3ceb7fb2c8069cc6b18e1a2a7643ceac`
 - Label it clearly as a **beta** while the version has the `b` suffix.
 - Install steps: open the DMG, drag LogiKast to Applications, open it. On first run, approve the background server under System Settings > General > Login Items & Extensions if macOS asks.
 - Requirements line: macOS 13 or later, Apple silicon or Intel.
-- Updating: the app updates itself with Sparkle. Beta 2 testers must install beta 3 manually (beta 2 had no updater).
+- Updating: the app updates itself with Sparkle. Beta 2 testers must install beta 4 manually (beta 2 had no updater).
 - Link to the source and release notes on GitHub, and mention it is free and open source.
 - When a final 1.0 ships, the download link and "beta" labeling need to change. Keep the version, size and checksum in one place on the site so each release is a single edit.
 
-### Version notes for 1.0 beta 3 (optional "What's new" section)
+### Version notes for 1.0 beta 4 (optional "What's new" section)
 
-Ask the user for the exact beta 3 notes; they were published in the appcast and the GitHub release. Highlights: Sparkle automatic updates with a beta switch; Version Notes in the Help menu; fix for Icecast using 100% CPU with idle connections; sturdier server start-up (stops leftover Icecast processes, names whatever holds a port); the app renamed from iceKast to LogiKast.
+Ask the user for the exact beta 4 notes; they were published in the appcast and the GitHub release. Highlights: Sparkle automatic updates with a beta switch; Version Notes in the Help menu; fix for Icecast using 100% CPU with idle connections; sturdier server start-up (stops leftover Icecast processes, names whatever holds a port); the app renamed from iceKast to LogiKast.
 
 ## Things not to claim
 
