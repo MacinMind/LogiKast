@@ -18,7 +18,7 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView(columnVisibility: $columns) {
             SidebarView(selection: $selection)
-                .navigationSplitViewColumnWidth(min: 200, ideal: 250, max: 340)
+                .navigationSplitViewColumnWidth(275)   // fixed: nothing in the sidebar needs more, and a wider one only squeezes the page
                 .modifier(NoSidebarToggle())
         } detail: {
             switch selection {
