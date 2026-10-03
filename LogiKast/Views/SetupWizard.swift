@@ -132,7 +132,7 @@ struct SetupWizard: View {
             } footer: {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("This is shown to listeners and in directories. You can change it any time.")
-                    markdownText(Encoders.streamInfoNote)
+                    LinkedText(markdown: Encoders.streamInfoNote, font: .systemFont(ofSize: 11), color: .secondaryLabelColor)
                 }
             }
             Section {
@@ -340,6 +340,7 @@ private struct WelcomeStep: View {
                 row("3.circle.fill", "Set your listener limit", "And see the internet speed it needs.")
                 row("4.circle.fill", "Connect your encoder", "An encoder app such as \(Encoders.linkedList) sends your audio here.")
             }
+            .frame(maxWidth: 600)
             Text("LogiKast runs the server in the background, so your station stays on the air even when this window is closed.")
                 .font(.callout).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -351,9 +352,9 @@ private struct WelcomeStep: View {
     private func row(_ icon: String, _ title: String, _ detail: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon).font(.title2).foregroundStyle(Color.accentColor)
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.headline)
-                markdownText(detail).foregroundStyle(.secondary)
+                LinkedText(markdown: detail, color: .secondaryLabelColor)
             }
         }
     }
@@ -396,7 +397,7 @@ private struct EncoderStep: View {
             } header: {
                 Text("2. Enter these in your encoder")
             } footer: {
-                markdownText("Choose “Icecast” as the server type. The username is always “source”. Format and bitrate are chosen in your encoder. Need one? Get \(Encoders.linkedList).")
+                LinkedText(markdown: "Choose “Icecast” as the server type. The username is always “source”. Format and bitrate are chosen in your encoder. Need one? Get \(Encoders.linkedList).", font: .systemFont(ofSize: 11), color: .secondaryLabelColor)
             }
 
             Section("3. Check the connection") {

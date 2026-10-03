@@ -97,7 +97,7 @@ struct MountView: View {
             CopyableRow(label: "Username", value: "source")
             CopyableRow(label: "Password", value: mount.customPassword.isEmpty ? model.config.server.sourcePassword : mount.customPassword, secret: true)
         } header: {
-            markdownText("Connect your encoder (\(Encoders.linkedList))")
+            LinkedText(markdown: "Connect your encoder (\(Encoders.linkedList))", font: .systemFont(ofSize: 13, weight: .semibold))
         } footer: {
             Text("These are filled in for you, so there is nothing to type here: copy them into your encoder. They update as you change the mount name above. The username is always “source” (lowercase). The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; LogiKast detects them once it connects.")
         }
@@ -193,7 +193,7 @@ struct MountView: View {
                         Text("What listeners and directories see about this stream.")
                         Text("Anything you enter here replaces the encoder's value.")
                     }
-                    markdownText(Encoders.streamInfoNote)
+                    LinkedText(markdown: Encoders.streamInfoNote, font: .systemFont(ofSize: 11), color: .secondaryLabelColor)
                 }
             }
     }
