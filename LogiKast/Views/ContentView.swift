@@ -267,7 +267,7 @@ struct WindowHeader: View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text("LogiKast").font(.system(size: 17, weight: .semibold)).foregroundStyle(.secondary)
             Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(.tertiary)
-            Text(title).font(.system(size: 22, weight: .bold)).lineLimit(1).truncationMode(.middle)
+            Text(title).font(.system(size: 17, weight: .bold)).lineLimit(1).truncationMode(.middle)
         }
         .padding(.leading, 6)
     }
