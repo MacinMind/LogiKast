@@ -6,10 +6,15 @@ enum SidebarSelection: Hashable {
 }
 
 struct ContentView: View {
+    static let sidebarWidth: CGFloat = 275
+
     @EnvironmentObject var model: AppModel
     @State private var selection: SidebarSelection?
     /// The sidebar is how you move around, so it always stays open.
     @State private var columns = NavigationSplitViewVisibility.all
+    /// Width of the area right of the sidebar. Before macOS 26 the toolbar has no flexible space once the window title is
+    /// removed, so the header and the Start/Stop button are one item sized to fill it.
+    @State private var detailWidth: CGFloat = 600
     /// The mount the user asked to delete; set by the sidebar, confirmed (or not) in the dialog below.
     @State private var mountToDelete: UUID?
 
@@ -20,7 +25,7 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView(columnVisibility: $columns) {
             SidebarView(selection: $selection, mountToDelete: $mountToDelete)
-                .navigationSplitViewColumnWidth(275)   // fixed: nothing in the sidebar needs more, and a wider one only squeezes the page
+                .navigationSplitViewColumnWidth(ContentView.sidebarWidth)   // fixed: nothing in the sidebar needs more, and a wider one only squeezes the page
                 .modifier(NoSidebarToggle())
         } detail: {
             switch selection {
@@ -49,10 +54,12 @@ struct ContentView: View {
             Text(deleteMessage)
         }
         .onChange(of: columns) { if $0 != .all { columns = .all } }
-        .toolbar {
-            HeaderToolbar(selection: selection)
-            ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
-        }
+        .toolbar { HeaderToolbar(selection: selection, detailWidth: detailWidth) }
+        .background(GeometryReader { geo in
+            Color.clear
+                .onAppear { detailWidth = geo.size.width - ContentView.sidebarWidth }
+                .onChange(of: geo.size.width) { detailWidth = $0 - ContentView.sidebarWidth }
+        })
         .modifier(NoSidebarToggle())
         .background(WindowSetup())
         .sheet(isPresented: $model.showSetup) {
@@ -284,15 +291,23 @@ extension ContentView {
 
 struct HeaderToolbar: ToolbarContent {
     var selection: SidebarSelection?
+    var detailWidth: CGFloat
 
     var body: some ToolbarContent {
         if #available(macOS 26.0, *) {
             ToolbarItem(placement: .navigation) { WindowHeader(selection: selection) }
                 .sharedBackgroundVisibility(.hidden)
             ToolbarSpacer(.flexible)
+            ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
         } else {
-            // Before Liquid Glass the toolbar has room on the left once the window's own title is removed.
-            ToolbarItem(placement: .navigation) { WindowHeader(selection: selection) }
+            ToolbarItem(placement: .navigation) {
+                HStack(spacing: 12) {
+                    WindowHeader(selection: selection)
+                    Spacer(minLength: 8)
+                    ServerToggleButton()
+                }
+                .frame(width: max(320, detailWidth - 28))
+            }
         }
     }
 }
