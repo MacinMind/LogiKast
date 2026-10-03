@@ -36,6 +36,7 @@ struct ContentView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) { ServerToggleButton() }
         }
+        .background(NoInitialFocus())
         .sheet(isPresented: $model.showSetup) {
             SetupWizard(isRerun: model.setupIsRerun).environmentObject(model)
         }
@@ -150,4 +151,25 @@ struct StatusDot: View {
     var body: some View {
         Circle().fill(color).frame(width: 9, height: 9)
     }
+}
+
+/// macOS gives the window's first text field (the Port) keyboard focus, with its text selected, when the window opens.
+/// Hand the focus back to nobody, so a field is only edited once the user clicks it.
+private struct NoInitialFocus: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView { NSView() }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        guard !context.coordinator.done else { return }
+        context.coordinator.done = true
+        // The first responder is assigned after the window appears, so clear it a moment later (twice, to be sure).
+        for delay in [0.0, 0.25] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak view] in
+                guard let window = view?.window, window.firstResponder is NSText else { return }
+                window.makeFirstResponder(nil)
+            }
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+    final class Coordinator { var done = false }
 }
