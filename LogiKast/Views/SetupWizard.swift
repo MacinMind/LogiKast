@@ -341,7 +341,7 @@ private struct WelcomeStep: View {
                 row("4.circle.fill", "Connect your encoder", "An encoder app such as \(Encoders.linkedList) sends your audio here.")
             }
             .frame(maxWidth: 600)
-            Text("LogiKast runs the server in the background, so your station stays on the air even when this window is closed.")
+            Text("LogiKast runs the server in the background after quitting this app.")
                 .font(.callout).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)

@@ -19,13 +19,18 @@ struct ServerView: View {
                 Form { appTab }
                     .formStyle(.grouped)
                     .scrollDisabled(true)
-                    .frame(height: 175)
+                    .frame(height: appFormHeight)
                 logView
             } else {
                 Form { tabContent }
                     .formStyle(.grouped)
             }
         }
+    }
+
+    /// The App section is a fixed-height form (the log below takes the rest), so it grows for the rows that only sometimes appear.
+    private var appFormHeight: CGFloat {
+        195 + (model.loginItem.needsApproval ? 44 : 0) + (model.loginItem.lastError != nil ? 34 : 0)
     }
 
     @ViewBuilder private var tabContent: some View {
@@ -103,17 +108,10 @@ struct ServerView: View {
                     Label("Notifications are turned off for LogiKast in System Settings, so no alerts can appear.", systemImage: "bell.slash")
                         .foregroundStyle(.orange).font(.callout)
                 }
-                Toggle("Open LogiKast when I log in", isOn: Binding(get: { model.loginItem.isEnabled }, set: { model.loginItem.set($0) }))
-                if model.loginItem.needsApproval {
-                    Button("Allow in Login Items Settings…") { model.loginItem.openSettings() }
-                }
-                if let err = model.loginItem.lastError {
-                    Label(err, systemImage: "exclamationmark.triangle").foregroundStyle(.orange).font(.callout)
-                }
             } header: {
                 Text("Alerts")
             } footer: {
-                Text("Alerts need LogiKast to be running; it sits in the menu bar, and \"Open LogiKast when I log in\" keeps it there. The server itself keeps running without the app, but nobody is told if it has a problem.")
+                Text("Alerts need LogiKast to be running; it sits in the menu bar. Turn on \"Open LogiKast when I log in\" under App & Log to keep it there. The server itself keeps running without the app, but nobody is told if it has a problem.")
             }
     }
 
@@ -121,6 +119,13 @@ struct ServerView: View {
             Section("App") {
                 Text("The server runs in the background: it keeps running when you close or quit LogiKast, restarts if it stops unexpectedly, and starts when you log in. Use Stop Server to turn it off.")
                     .font(.callout).foregroundStyle(.secondary)
+                Toggle("Open LogiKast when I log in", isOn: Binding(get: { model.loginItem.isEnabled }, set: { model.loginItem.set($0) }))
+                if model.loginItem.needsApproval {
+                    Button("Allow in Login Items Settings…") { model.loginItem.openSettings() }
+                }
+                if let err = model.loginItem.lastError {
+                    Label(err, systemImage: "exclamationmark.triangle").foregroundStyle(.orange).font(.callout)
+                }
                 Picker("Dock badge shows", selection: $model.config.badge) {
                     Text("Nothing").tag(BadgeTarget.none)
                     Text("Total listeners").tag(BadgeTarget.total)
