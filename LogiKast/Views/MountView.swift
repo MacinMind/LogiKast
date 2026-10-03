@@ -67,7 +67,7 @@ struct MountView: View {
                     .foregroundStyle(.orange).font(.callout)
             }
             Text("The mount name identifies this stream, like /live or /jazz. Listeners and your encoder both use it, so each stream on your server needs its own. You can run several streams on one server: add another with the + button above the mount list.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: FooterText.fontSize)).foregroundStyle(.secondary)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -111,7 +111,7 @@ struct MountView: View {
                     CopyableRow(label: "On your network", value: "http://\(ip):\(port)\(mount.name)")
                 }
                 if DirectoryListing.isPrivateHost(host) {
-                    Label("These links use \"\(host)\", which only works on this Mac or your own network. For people on the internet, enter your public address under Server › Setup › Public host name.",
+                    Label("For listeners outside your network, set a Public host name under Server › Setup.",
                           systemImage: "info.circle").foregroundStyle(.secondary).font(.callout)
                 }
                 SharePlayerView(share: share)
@@ -119,7 +119,7 @@ struct MountView: View {
             } header: {
                 Text("Share your stream")
             } footer: {
-                FooterText("Open the link or playlist in any player. " + ShareLinks.httpsNote)
+                FooterText(ShareLinks.httpsNote)
             }
     }
 

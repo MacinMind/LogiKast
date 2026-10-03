@@ -193,7 +193,7 @@ final class HoverLinkTextView: NSTextView {
 /// Explanatory text under a form section. Its size and alignment are spelled out because the system picks different ones
 /// on different macOS versions (a larger footer, and centered when it wraps, before macOS 26).
 struct FooterText: View {
-    static let fontSize: CGFloat = 11
+    static let fontSize: CGFloat = 12
     let text: String
     init(_ text: String) { self.text = text }
 

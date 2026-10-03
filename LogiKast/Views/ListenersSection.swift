@@ -32,11 +32,11 @@ struct ListenersSection: View {
                     }.fixedSize()
                 }
                 table
-                if shown.count != listeners?.count { Text("Showing \(shown.count) of \(listeners?.count ?? 0)").font(.caption).foregroundStyle(.secondary) }
+                if shown.count != listeners?.count { Text("Showing \(shown.count) of \(listeners?.count ?? 0)").font(.system(size: FooterText.fontSize)).foregroundStyle(.secondary) }
             }
             if let message { Text(message).font(.callout).foregroundStyle(.secondary) }
             Text("Updates every few seconds (less often with many listeners). Disconnecting a listener drops their connection; their player may simply reconnect, so this is for clearing stuck or unwanted connections, not a permanent block. Listeners on the backup audio are marked.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.system(size: FooterText.fontSize)).foregroundStyle(.secondary)
         }
         .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

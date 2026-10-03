@@ -245,7 +245,7 @@ struct UpdateSettings: View {
                 Button("Check for Updates…") { updater.checkForUpdates() }.disabled(!updater.canCheck)
                 Spacer()
                 if let last = updater.lastCheck {
-                    Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption).foregroundStyle(.secondary)
+                    Text("Last checked \(last.formatted(date: .abbreviated, time: .shortened))").font(.system(size: FooterText.fontSize)).foregroundStyle(.secondary)
                 }
             }
         } header: {
