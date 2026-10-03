@@ -37,11 +37,11 @@ struct QRShareView: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 16) {
-            if let image = QRCode.image(for: url, size: 150) {
+            if let image = QRCode.image(for: url, size: 110) {
                 Image(nsImage: image)
                     .interpolation(.none)
                     .resizable()
-                    .frame(width: 150, height: 150)
+                    .frame(width: 110, height: 110)
                     .accessibilityLabel("QR code for \(url)")
             }
             VStack(alignment: .leading, spacing: 8) {

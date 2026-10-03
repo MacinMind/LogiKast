@@ -29,8 +29,8 @@ struct ShareLinks {
         """
     }
 
-    /// Browsers refuse to play http audio on an https page.
-    static let httpsNote = "If your website uses https://, browsers will not play an http:// stream on it. Put the player on an http:// page, or link to the stream instead."
+    /// Browsers refuse to play http audio on an https page, so the player only works on http:// pages.
+    static let httpsNote = "The website player code works only on http:// pages: browsers block http:// audio on https:// sites, so link to the stream there instead."
 
     static func escapeHTML(_ s: String) -> String {
         s.replacingOccurrences(of: "&", with: "&amp;")

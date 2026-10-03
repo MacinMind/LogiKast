@@ -119,7 +119,7 @@ struct MountView: View {
             } header: {
                 Text("Share your stream")
             } footer: {
-                Text("Listeners open the link or playlist in any player. The website player code works on any web page. " + ShareLinks.httpsNote)
+                Text("Open the link or playlist in any player. " + ShareLinks.httpsNote)
             }
     }
 
