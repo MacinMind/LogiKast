@@ -131,8 +131,8 @@ struct SetupWizard: View {
                 Text("What listeners see")
             } footer: {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("This is shown to listeners and in directories. You can change it any time.")
-                    LinkedText(markdown: Encoders.streamInfoNote, font: .systemFont(ofSize: 11), color: .secondaryLabelColor)
+                    FooterText("This is shown to listeners and in directories. You can change it any time.")
+                    LinkedText(markdown: Encoders.streamInfoNote, font: .systemFont(ofSize: FooterText.fontSize), color: .secondaryLabelColor)
                 }
             }
             Section {
@@ -397,7 +397,7 @@ private struct EncoderStep: View {
             } header: {
                 Text("2. Enter these in your encoder")
             } footer: {
-                LinkedText(markdown: "Choose “Icecast” as the server type. The username is always “source”. Format and bitrate are chosen in your encoder. Need one? Get \(Encoders.linkedList).", font: .systemFont(ofSize: 11), color: .secondaryLabelColor)
+                LinkedText(markdown: "Choose “Icecast” as the server type. The username is always “source”. Format and bitrate are chosen in your encoder. Need one? Get \(Encoders.linkedList).", font: .systemFont(ofSize: FooterText.fontSize), color: .secondaryLabelColor)
             }
 
             Section("3. Check the connection") {

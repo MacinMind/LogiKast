@@ -187,13 +187,13 @@ struct MountView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     // Each sentence on its own line, so a wrap never splits one oddly.
                     if status != nil {
-                        Text("Gray text is what your encoder is sending right now, and listeners see it.")
-                        Text("Type here only to override it.")
+                        FooterText("Gray text is what your encoder is sending right now, and listeners see it.")
+                        FooterText("Type here only to override it.")
                     } else {
-                        Text("What listeners and directories see about this stream.")
-                        Text("Anything you enter here replaces the encoder's value.")
+                        FooterText("What listeners and directories see about this stream.")
+                        FooterText("Anything you enter here replaces the encoder's value.")
                     }
-                    LinkedText(markdown: Encoders.streamInfoNote, font: .systemFont(ofSize: 11), color: .secondaryLabelColor)
+                    LinkedText(markdown: Encoders.streamInfoNote, font: .systemFont(ofSize: FooterText.fontSize), color: .secondaryLabelColor)
                 }
             }
     }
