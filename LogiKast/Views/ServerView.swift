@@ -71,7 +71,7 @@ struct ServerView: View {
             } header: {
                 Text("Passwords")
             } footer: {
-                Text("Encoders log in as “source” with the encoder password. The admin login is for Web Admin only.")
+                FooterText("Encoders log in as “source” with the encoder password. The admin login is for Web Admin only.")
             }
     }
 
@@ -108,7 +108,7 @@ struct ServerView: View {
             } header: {
                 Text("Alerts")
             } footer: {
-                Text("Alerts need LogiKast to be running; it sits in the menu bar. Turn on \"Open LogiKast when I log in\" under App & Log to keep it there. The server itself keeps running without the app, but nobody is told if it has a problem.")
+                FooterText("Alerts need LogiKast to be running; it sits in the menu bar. Turn on \"Open LogiKast when I log in\" under App & Log to keep it there. The server itself keeps running without the app, but nobody is told if it has a problem.")
             }
     }
 
@@ -251,7 +251,7 @@ struct UpdateSettings: View {
         } header: {
             Text("Updates")
         } footer: {
-            Text("Beta versions arrive earlier and may have rough edges. Turn this off to receive final releases only.")
+            FooterText("Beta versions arrive earlier and may have rough edges. Turn this off to receive final releases only.")
         }
     }
 }

@@ -189,3 +189,15 @@ final class HoverLinkTextView: NSTextView {
         underlined = range
     }
 }
+
+/// Explanatory text under a form section. Spelled out as left-aligned because before macOS 26 a footer that wraps is centered.
+struct FooterText: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+
+    var body: some View {
+        Text(text)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}

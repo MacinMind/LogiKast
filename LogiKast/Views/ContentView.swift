@@ -291,15 +291,23 @@ struct HeaderToolbar: ToolbarContent {
                 .sharedBackgroundVisibility(.hidden)
             ToolbarSpacer(.flexible)
         } else {
-            ToolbarItem(placement: .principal) { WindowHeader(selection: selection) }
+            // Before Liquid Glass the toolbar has room on the left once the window's own title is removed.
+            ToolbarItem(placement: .navigation) { WindowHeader(selection: selection) }
         }
     }
 }
 
-/// Removes the toolbar's sidebar button (macOS 14 and later) and the View menu's Show/Hide Sidebar is removed in AppCommands.
+/// Removes the toolbar's sidebar button (macOS 14 and later) and the window's own title text (macOS 15 and later); the header replaces the title,
+/// and the View menu's Show/Hide Sidebar is removed in AppCommands.
 struct NoSidebarToggle: ViewModifier {
     func body(content: Content) -> some View {
-        if #available(macOS 14.0, *) { content.toolbar(removing: .sidebarToggle) } else { content }
+        if #available(macOS 15.0, *) {
+            content.toolbar(removing: .sidebarToggle).toolbar(removing: .title)
+        } else if #available(macOS 14.0, *) {
+            content.toolbar(removing: .sidebarToggle)
+        } else {
+            content
+        }
     }
 }
 

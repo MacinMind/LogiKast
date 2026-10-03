@@ -156,7 +156,7 @@ struct SetupWizard: View {
             } header: {
                 Text("Port")
             } footer: {
-                Text("Listeners and encoders reach your server through this number. 8000 is the usual choice.")
+                FooterText("Listeners and encoders reach your server through this number. 8000 is the usual choice.")
             }
 
             Section {
@@ -220,7 +220,7 @@ struct SetupWizard: View {
                     ForEach(SetupLogic.bitrates, id: \.self) { Text("\($0) kbps").tag($0) }
                 }
             } footer: {
-                Text("Extra listeners are turned away politely once the limit is reached. The bitrate is set in your encoder; it's only used here for the estimate below.")
+                FooterText("Extra listeners are turned away politely once the limit is reached. The bitrate is set in your encoder; it's only used here for the estimate below.")
             }
 
             Section("Internet speed you need") {

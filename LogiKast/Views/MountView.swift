@@ -99,7 +99,7 @@ struct MountView: View {
         } header: {
             LinkedText(markdown: "Connect your encoder (\(Encoders.linkedList))", font: .systemFont(ofSize: 13, weight: .semibold))
         } footer: {
-            Text("These are filled in for you, so there is nothing to type here: copy them into your encoder. They update as you change the mount name above. The username is always “source” (lowercase). The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; LogiKast detects them once it connects.")
+            FooterText("These are filled in for you, so there is nothing to type here: copy them into your encoder. They update as you change the mount name above. The username is always “source” (lowercase). The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; LogiKast detects them once it connects.")
         }
     }
 
@@ -119,7 +119,7 @@ struct MountView: View {
             } header: {
                 Text("Share your stream")
             } footer: {
-                Text("Open the link or playlist in any player. " + ShareLinks.httpsNote)
+                FooterText("Open the link or playlist in any player. " + ShareLinks.httpsNote)
             }
     }
 
@@ -147,7 +147,7 @@ struct MountView: View {
             } header: {
                 Text("When the encoder drops off")
             } footer: {
-                Text("Listeners keep hearing something instead of silence, and move back to the live stream automatically when your encoder reconnects.")
+                FooterText("Listeners keep hearing something instead of silence, and move back to the live stream automatically when your encoder reconnects.")
             }
     }
 
