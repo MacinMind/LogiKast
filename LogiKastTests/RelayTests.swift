@@ -444,20 +444,24 @@ final class MasterRelayTests: XCTestCase {
         XCTAssertEqual(xml.components(separatedBy: "<master-update-interval>").count - 1, 1)
     }
 
-    func testRestartIsNeededOnlyWhenARunningMasterRelayChangesOrGoesAway() {
+    func testAnyChangeToTheMasterRelayNeedsARestart() {
         let a = config()
         let xml = ConfigWriter.xml(for: a, paths: paths)
         XCTAssertEqual(IcecastService.masterKey(xml: xml), a.server.masterRelay.restartKey)
         XCTAssertFalse(a.server.masterRelay.restartKey.isEmpty)
+        XCTAssertFalse(IcecastService.masterRelayChanged(appliedXML: xml, config: a), "unchanged")
         var changed = a; changed.server.masterRelay.password = "other"
-        XCTAssertNotEqual(IcecastService.masterKey(xml: xml), changed.server.masterRelay.restartKey)
-        XCTAssertEqual(IcecastService.masterKey(xml: ConfigWriter.xml(for: AppConfig.makeDefault(), paths: paths)), "",
-                       "no master relay running: adding one needs no restart")
+        XCTAssertTrue(IcecastService.masterRelayChanged(appliedXML: xml, config: changed))
         var off = a; off.server.masterRelay.enabled = false
         XCTAssertEqual(off.server.masterRelay.restartKey, "")
+        XCTAssertTrue(IcecastService.masterRelayChanged(appliedXML: xml, config: off), "turning it off")
+        let without = ConfigWriter.xml(for: AppConfig.makeDefault(), paths: paths)
+        XCTAssertEqual(IcecastService.masterKey(xml: without), "")
+        XCTAssertTrue(IcecastService.masterRelayChanged(appliedXML: without, config: a), "turning it on")
+        XCTAssertFalse(IcecastService.masterRelayChanged(appliedXML: without, config: AppConfig.makeDefault()))
         // An empty username is written as "relay", so it must not count as a change.
         var blank = a; blank.server.masterRelay.username = ""
-        XCTAssertEqual(IcecastService.masterKey(xml: ConfigWriter.xml(for: blank, paths: paths)), blank.server.masterRelay.restartKey)
+        XCTAssertFalse(IcecastService.masterRelayChanged(appliedXML: ConfigWriter.xml(for: blank, paths: paths), config: blank))
     }
 
     func testValidation() {

@@ -64,8 +64,10 @@ struct ServerView: View {
             }
 
             Section {
-                PasswordRow(label: "Encoder password", value: $model.config.server.sourcePassword)
-                PasswordRow(label: "Admin password", value: $model.config.server.adminPassword)
+                PasswordRow(label: "Encoder password", value: $model.config.server.sourcePassword,
+                            consequence: "Every encoder using it is disconnected when you apply the change, and needs the new password to connect again.")
+                PasswordRow(label: "Admin password", value: $model.config.server.adminPassword,
+                            consequence: "Anyone who signs in to the web admin pages with it needs the new one.")
                 LabeledContent("Admin user") {
                     TextField("", text: $model.config.server.adminUser).multilineTextAlignment(.trailing)
                 }
@@ -96,7 +98,8 @@ struct ServerView: View {
                         if on, model.config.server.relayPassword.isEmpty { model.config.server.relayPassword = Password.random() }
                     }))
                 if model.config.server.allowRelaying {
-                    PasswordRow(label: "Relay password", value: $model.config.server.relayPassword)
+                    PasswordRow(label: "Relay password", value: $model.config.server.relayPassword,
+                                consequence: "Any server that relays all your mounts with it must be given the new one, or it will stop receiving them.")
                     CopyableRow(label: "Relay user", value: "relay")
                     CopyableRow(label: "Server", value: "\(model.config.server.hostname.isEmpty ? "localhost" : model.config.server.hostname):\(model.config.server.port)")
                 }
@@ -121,6 +124,15 @@ struct ServerView: View {
         Section {
             Toggle("Relay all mounts from another Icecast server", isOn: masterBinding.enabled)
                 .task(id: MasterCheckKey(master: master, ownInstance: model.poller.status?.instanceUUID)) { await watchMaster() }
+            if model.server.isEnabled, model.server.masterRelayNeedsRestart(for: model.config) {
+                HStack {
+                    Label(master.isActive ? "The server must be restarted before it starts relaying." : "The server must be restarted to stop relaying.",
+                          systemImage: "arrow.triangle.2.circlepath")
+                        .foregroundStyle(Color.accentColor)
+                    Spacer()
+                    Button("Restart & Apply…") { model.applyChanges() }.disabled(!model.canStart)
+                }
+            }
             if master.enabled {
                 LabeledContent("Server") {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -143,7 +155,7 @@ struct ServerView: View {
         } header: {
             Text("Relay everything from another server")
         } footer: {
-            FooterText("Takes every visible mount from the other Icecast server, under the same names, and picks up new ones within about 20 seconds. It needs that server's relay password (on a LogiKast server: Server › Relay). Changing or turning this off needs a server restart.")
+            FooterText("Takes every visible mount from the other Icecast server, under the same names, and picks up new ones within about 20 seconds. It needs that server's relay password (on a LogiKast server: Server › Relay). Turning this on, changing it or turning it off needs a server restart, which disconnects your encoders and listeners for a few seconds.")
         }
     }
 
@@ -300,7 +312,11 @@ struct ServerView: View {
 struct PasswordRow: View {
     let label: String
     @Binding var value: String
+    /// What changes for people and programs using the current password; shown before a new one is generated.
+    var consequence = ""
     @State private var revealed = false
+    @State private var copied = false
+    @State private var confirmGenerate = false
 
     var body: some View {
         LabeledContent(label) {
@@ -311,10 +327,23 @@ struct PasswordRow: View {
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: 200)
                 Button { revealed.toggle() } label: { Image(systemName: revealed ? "eye.slash" : "eye") }
-                    .buttonStyle(.borderless)
-                Button { value = Password.random() } label: { Image(systemName: "dice") }
-                    .buttonStyle(.borderless).help("Generate a new random password")
+                    .buttonStyle(.borderless).help(revealed ? "Hide" : "Show")
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(value, forType: .string)
+                    copied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { copied = false }
+                } label: { Image(systemName: copied ? "checkmark" : "doc.on.doc") }
+                    .buttonStyle(.borderless).help("Copy").disabled(value.isEmpty)
+                Button { confirmGenerate = true } label: { Image(systemName: "dice") }
+                    .buttonStyle(.borderless).help("Generate a new random password…")
             }
+        }
+        .confirmationDialog("Generate a new \(label.lowercased())?", isPresented: $confirmGenerate, titleVisibility: .visible) {
+            Button("Generate New Password", role: .destructive) { value = Password.random() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This replaces the current password, and the old one can't be brought back. " + consequence)
         }
     }
 }

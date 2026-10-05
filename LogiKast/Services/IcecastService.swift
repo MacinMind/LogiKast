@@ -60,11 +60,15 @@ final class IcecastService: ObservableObject {
         isEnabled && (Self.listenKey(config) != listenKey || masterRelayNeedsRestart(for: config))
     }
 
-    /// True if the running server is relaying another server and `config` changes or removes that.
+    /// True if the running server's relay from another server differs from `config`'s: turned on, changed or turned off.
+    /// (Icecast would pick up a new one on a reload, but never stops relays it already made, so every change restarts.)
     func masterRelayNeedsRestart(for config: AppConfig) -> Bool {
         guard isEnabled, let xml = appliedXML else { return false }
-        let running = Self.masterKey(xml: xml)
-        return !running.isEmpty && running != config.server.masterRelay.restartKey
+        return Self.masterRelayChanged(appliedXML: xml, config: config)
+    }
+
+    nonisolated static func masterRelayChanged(appliedXML xml: String, config: AppConfig) -> Bool {
+        masterKey(xml: xml) != config.server.masterRelay.restartKey
     }
 
     /// The relay-from-another-server settings of a written icecast.xml, in the same form as `MasterRelay.restartKey`.
