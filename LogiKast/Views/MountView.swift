@@ -383,7 +383,7 @@ struct MountView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     StatusDot(color: status != nil ? .green : .gray)
-                    Text(status != nil ? "On air" : (model.server.isEnabled ? (mount.isRelay ? "Waiting for the other server" : "Waiting for encoder") : "Server is off"))
+                    Text(status != nil ? "On air" : (model.server.isEnabled ? (mount.isRelay ? (mount.relay.onDemand ? "Waiting for the first listener" : "Waiting for the other server") : "Waiting for encoder") : "Server is off"))
                         .font(.headline)
                 }
                 if let title = status?.title {

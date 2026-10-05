@@ -190,7 +190,7 @@ struct SidebarView: View {
 
     private func mountDetail(_ s: MountStatus?, _ mount: Mount) -> String {
         if let s { return s.bitrate.map { "On air · \($0) kbps" } ?? "On air" }
-        return model.server.isEnabled ? (mount.isRelay ? "Waiting for server" : "No encoder") : "Server off"
+        return model.server.isEnabled ? (mount.isRelay ? (mount.relay.onDemand ? "Waiting for a listener" : "Waiting for server") : "No encoder") : "Server off"
     }
 
     private var serverColor: Color {
