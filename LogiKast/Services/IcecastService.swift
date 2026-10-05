@@ -96,8 +96,14 @@ final class IcecastService: ObservableObject {
     func stop() {
         log.notice("stop requested")
         do { try service.unregister() } catch {
-            state = .failed("Could not stop the background server: \(error.localizedDescription)")
+            // A server another copy of the app registered can't be unregistered from here: unload it instead.
+            if Launchctl.run(["bootout", "\(Launchctl.domain)/\(Self.label)"]) != 0 {
+                state = .failed("Could not stop the background server: \(error.localizedDescription)")
+            }
         }
+        if jobIsLoaded() { Launchctl.run(["bootout", "\(Launchctl.domain)/\(Self.label)"]) }
+        jobCheckedAt = .distantPast
+        noAdoptionUntil = Date().addingTimeInterval(10)
         appliedXML = nil
         reachable = false
         refresh()
@@ -150,9 +156,16 @@ final class IcecastService: ObservableObject {
             state = .needsApproval
             return
         default:
-            isEnabled = false
-            if case .failed = state {} else if state != .needsApproval { state = .stopped }
-            if state == .needsApproval { state = .stopped }
+            if Date() > noAdoptionUntil, Self.shouldAdoptRunningJob(serviceStatus: service.status, jobLoaded: jobIsLoaded()) {
+                // The server was started by another copy of the app (a different location, or an update): macOS reports
+                // this copy as unregistered even though the same background server is running. Take it over as it is,
+                // so its encoders and listeners are not disturbed.
+                if !isEnabled { enabledSince = enabledSince ?? Date(); isEnabled = true; if appliedXML == nil { adoptRunningServer() } }
+            } else {
+                isEnabled = false
+                if case .failed = state {} else if state != .needsApproval { state = .stopped }
+                if state == .needsApproval { state = .stopped }
+            }
         }
 
         if isEnabled {
@@ -177,6 +190,23 @@ final class IcecastService: ObservableObject {
     }
 
     // MARK: Helpers
+
+    /// Whether launchd has our server job loaded, whoever registered it. Asked at most every 5 seconds.
+    private var noAdoptionUntil = Date.distantPast       // just stopped: the job may still be shutting down
+    private var jobCheckedAt = Date.distantPast
+    private var jobLoaded = false
+    private func jobIsLoaded() -> Bool {
+        if Date().timeIntervalSince(jobCheckedAt) > 5 {
+            jobCheckedAt = Date()
+            jobLoaded = Launchctl.run(["print", "\(Launchctl.domain)/\(Self.label)"]) == 0
+        }
+        return jobLoaded
+    }
+
+    /// A job that is loaded while this copy of the app is not registered is another copy's server, to adopt.
+    nonisolated static func shouldAdoptRunningJob(serviceStatus: SMAppService.Status, jobLoaded: Bool) -> Bool {
+        jobLoaded && (serviceStatus == .notRegistered || serviceStatus == .notFound)
+    }
 
     /// Set when another program (often a leftover Icecast) is holding the server's port.
     private var portConflict: String?

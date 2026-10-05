@@ -132,6 +132,7 @@ struct SidebarView: View {
                 SidebarRow(color: serverColor, title: "Server", detail: serverDetail)
                     .tag(SidebarSelection.server)
             }
+            .fixedOpen()
             Section {
                 ForEach(model.config.mounts) { mount in
                     let s = model.status(for: mount)
@@ -169,6 +170,7 @@ struct SidebarView: View {
                     .help("Add a mount point")
                 }
             }
+            .fixedOpen()
         }
         .onDeleteCommand { mountToDelete = selectedMount }
         .safeAreaInset(edge: .bottom, spacing: 0) { VersionFooter() }
@@ -222,6 +224,14 @@ struct VersionFooter: View {
         }
         .buttonStyle(.plain)
         .help("About LogiKast")
+    }
+}
+
+extension Section where Parent: View, Content: View, Footer: View {
+    /// The sidebar's sections never need to be hidden. Before macOS 26, pointing at a section header slides its buttons aside
+    /// to show a disclosure triangle, which would collapse the list (macOS 14 and later can switch that off).
+    @ViewBuilder func fixedOpen() -> some View {
+        if #available(macOS 14.0, *) { self.collapsible(false) } else { self }
     }
 }
 

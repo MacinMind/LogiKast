@@ -24,6 +24,9 @@ struct ServerStatus: Equatable {
     var backupMounts: [MountStatus] = []
     /// Identifies this one Icecast instance, whatever name or address it is reached by.
     var instanceUUID: String? = nil
+    /// Every mount the server lists, including bare entries with no stream details (a mount with a fallback is listed
+    /// that way when its own source is away, even though listeners may be hearing something through it).
+    var listedPaths: [String] = []
 
     var totalListeners: Int { mounts.reduce(0) { $0 + $1.listeners } + backupMounts.reduce(0) { $0 + $1.listeners } }
 
@@ -75,7 +78,8 @@ enum StatusParser {
             serverStart: (stats["server_start_iso8601"] as? String).flatMap(date),
             mounts: mounts.filter { !BackupAudio.isInternalMount($0.path) }.sorted { $0.path < $1.path },
             backupMounts: mounts.filter { BackupAudio.isInternalMount($0.path) }.sorted { $0.path < $1.path },
-            instanceUUID: stats["instance_uuid"] as? String)
+            instanceUUID: stats["instance_uuid"] as? String,
+            listedPaths: sources.compactMap { ($0["listenurl"] as? String).flatMap { URL(string: $0)?.path } })
     }
 
     /// Trimmed string value, or nil if empty or one of Icecast's placeholder defaults.

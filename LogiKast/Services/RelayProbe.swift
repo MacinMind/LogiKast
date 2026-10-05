@@ -7,8 +7,14 @@ enum RelayProbe {
     enum Result: Equatable {
         /// The address leads back to this server (it can be a name that points at this Mac through the router).
         case thisServer
-        /// The server answered. `mount` is its listing of the requested mount, or nil if it isn't listed right now.
-        case reachable(mount: MountStatus?, checkedMount: Bool)
+        /// The server answered and the mount is on air.
+        case live(MountStatus)
+        /// The server lists the mount but not as a live stream (typically it plays through a fallback).
+        case listedNotLive
+        /// The server answered but doesn't list the mount (it may be hidden, or not set up).
+        case notListed
+        /// The server answered; there was no mount to look for (a Shoutcast server relays "/").
+        case reachable
         case unreachable
     }
 
@@ -16,8 +22,9 @@ enum RelayProbe {
     static func classify(_ remote: ServerStatus, asking r: RelaySource, ownInstance: String?) -> Result {
         if let own = ownInstance, let theirs = remote.instanceUUID, own == theirs { return .thisServer }
         // A Shoutcast server relays "/", which has no mount to look for.
-        guard r.mount != "/" else { return .reachable(mount: nil, checkedMount: false) }
-        return .reachable(mount: remote.mount(r.mount), checkedMount: true)
+        guard r.mount != "/" else { return .reachable }
+        if let live = remote.mount(r.mount) { return .live(live) }
+        return remote.listedPaths.contains(r.mount) ? .listedNotLive : .notListed
     }
 
     static func probe(_ r: RelaySource, ownInstance: String?) async -> Result {

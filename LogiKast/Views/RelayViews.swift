@@ -65,17 +65,18 @@ struct RelayEditor: View {
             case .unreachable:
                 Label("Can't reach \(relay.server.trimmingCharacters(in: .whitespaces)):\(String(relay.port)) from this Mac right now.",
                       systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
-            case .reachable(let mount, let checkedMount):
-                if let mount {
-                    Label("Reached the server. \(relay.mount) is on air" + (relayDetail(mount).map { " · \($0)" } ?? "") + ".",
-                          systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout)
-                } else if checkedMount {
-                    // Not a fault: a hosted server can serve this mount through a fallback while it lists it as not live.
-                    Label("Reached the server. \(relay.mount) isn't showing as a live stream there right now.",
-                          systemImage: "info.circle").foregroundStyle(.secondary).font(.callout)
-                } else {
-                    Label("Reached the server.", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout)
-                }
+            case .live(let mount):
+                Label("Reached the server. \(relay.mount) is on air" + (relayDetail(mount).map { " · \($0)" } ?? "") + ".",
+                      systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout)
+            case .listedNotLive:
+                // Not a fault: a hosted server can serve this mount through a fallback while it lists the mount as not live.
+                Label("Reached the server. It lists \(relay.mount) but not as a live stream, so it may be playing through a fallback.",
+                      systemImage: "info.circle").foregroundStyle(.secondary).font(.callout)
+            case .notListed:
+                Label("Reached the server, but it doesn't list \(relay.mount). The mount may be hidden or not set up there.",
+                      systemImage: "info.circle").foregroundStyle(.secondary).font(.callout)
+            case .reachable:
+                Label("Reached the server.", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout)
             }
         }
     }

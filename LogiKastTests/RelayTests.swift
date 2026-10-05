@@ -224,17 +224,28 @@ final class RelayProbeTests: XCTestCase {
         var remote = ServerStatus(mounts: [])
         remote.instanceUUID = "abc"
         XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: "abc"), .thisServer)
-        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: "xyz"), .reachable(mount: nil, checkedMount: true))
-        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: nil), .reachable(mount: nil, checkedMount: true),
+        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: "xyz"), .notListed)
+        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: nil), .notListed,
                        "with this server off there is nothing to compare")
     }
 
     func testFindsTheMountAndSkipsTheLookupForShoutcast() {
         let mount = MountStatus(path: "/listen", listeners: 2, peak: 3)
         let remote = ServerStatus(mounts: [mount])
-        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: nil), .reachable(mount: mount, checkedMount: true))
+        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: nil), .live(mount))
         var shoutcast = relay; shoutcast.mount = "/"
-        XCTAssertEqual(RelayProbe.classify(remote, asking: shoutcast, ownInstance: nil), .reachable(mount: nil, checkedMount: false))
+        XCTAssertEqual(RelayProbe.classify(remote, asking: shoutcast, ownInstance: nil), .reachable)
+    }
+
+    /// A hosted Icecast-KH server lists a mount that plays through a fallback as a bare entry: that is not "missing".
+    func testAMountListedWithoutStreamDetailsIsNotReportedAsMissing() throws {
+        let json = #"{"icestats":{"server_id":"Icecast 2.4.0-kh22","source":[{"listeners":0,"listenurl":"http://s6.example.net:8000/listen","dummy":null},{"bitrate":32,"server_type":"audio/mpeg","listeners":270,"listenurl":"http://s6.example.net:8000/listen_live"}]}}"#
+        let remote = try XCTUnwrap(StatusParser.parse(Data(json.utf8)))
+        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: nil), .listedNotLive)
+        var other = relay; other.mount = "/listen_live"
+        guard case .live = RelayProbe.classify(remote, asking: other, ownInstance: nil) else { return XCTFail("the live mount should be found") }
+        other.mount = "/elsewhere"
+        XCTAssertEqual(RelayProbe.classify(remote, asking: other, ownInstance: nil), .notListed)
     }
 
     func testStatusParserReadsTheInstanceIdentity() throws {
@@ -249,12 +260,12 @@ final class RelayProbeLiveTests: XCTestCase {
         guard let port = ProcessInfo.processInfo.environment["LOGIKAST_PROBE_PORT"].flatMap(Int.init) else { throw XCTSkip("LOGIKAST_PROBE_PORT not set") }
         var r = RelaySource(); r.server = "127.0.0.1"; r.port = port; r.mount = "/x"
         let found = await RelayProbe.probe(r, ownInstance: nil)
-        guard case .reachable(let mount, true) = found else { return XCTFail("expected reachable, got \(found)") }
-        XCTAssertEqual(mount?.path, "/x")
-        XCTAssertEqual(mount?.contentType, "audio/mpeg")
+        guard case .live(let mount) = found else { return XCTFail("expected a live mount, got \(found)") }
+        XCTAssertEqual(mount.path, "/x")
+        XCTAssertEqual(mount.contentType, "audio/mpeg")
         r.mount = "/nope"
         let missing = await RelayProbe.probe(r, ownInstance: nil)
-        XCTAssertEqual(missing, .reachable(mount: nil, checkedMount: true))
+        XCTAssertEqual(missing, .notListed)
         var closed = r; closed.port = 1
         let down = await RelayProbe.probe(closed, ownInstance: nil)
         XCTAssertEqual(down, .unreachable)
@@ -343,5 +354,18 @@ final class RelayValidationTests: XCTestCase {
         var d = Mount(); d.name = "/c"
         c.mounts = [a, b, d]             // three mounts plus one backup relay = four sources
         XCTAssertTrue(ConfigValidator.issues(for: c).contains { $0.message.contains("Raise the listener limit") })
+    }
+}
+
+final class ServerAdoptionTests: XCTestCase {
+    func testARunningJobRegisteredByAnotherCopyIsAdopted() {
+        XCTAssertTrue(IcecastService.shouldAdoptRunningJob(serviceStatus: .notRegistered, jobLoaded: true))
+        XCTAssertTrue(IcecastService.shouldAdoptRunningJob(serviceStatus: .notFound, jobLoaded: true))
+    }
+
+    func testNothingToAdoptWhenNoJobIsLoadedOrApprovalIsNeeded() {
+        XCTAssertFalse(IcecastService.shouldAdoptRunningJob(serviceStatus: .notRegistered, jobLoaded: false))
+        XCTAssertFalse(IcecastService.shouldAdoptRunningJob(serviceStatus: .requiresApproval, jobLoaded: true))
+        XCTAssertFalse(IcecastService.shouldAdoptRunningJob(serviceStatus: .enabled, jobLoaded: true), "an enabled service is handled the normal way")
     }
 }
