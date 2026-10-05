@@ -22,6 +22,7 @@ struct MountView: View {
             StatusPanel {
                 statusCard
                 IssuesView(issues: model.issues.filter { $0.mountID == mount.id })
+                if model.hasPendingChanges { PendingChangesBanner() }
             }
             SegmentedTabs(selection: $model.mountTab)
             if model.mountTab == .connect { mountNameCard }

@@ -95,7 +95,10 @@ final class AppModel: ObservableObject {
             .sink { [weak self] _, _ in self?.evaluateAlerts() }
             .store(in: &cancellables)
         Timer.publish(every: 2, on: .main, in: .common).autoconnect()
-            .sink { [weak self] _ in self?.evaluateAlerts() }
+            .sink { [weak self] _ in
+                self?.evaluateAlerts()
+                self?.enforceOnDemandRelays()
+            }
             .store(in: &cancellables)
 
         Publishers.CombineLatest($config, poller.$status)
@@ -284,6 +287,23 @@ final class AppModel: ObservableObject {
         if let m = config.mounts.first(where: { $0.id == id }) { BackupAudio.remove(m.backupFile) }
         config.mounts.removeAll { $0.id == id }
         if case .mount(id) = config.badge { config.badge = .total }
+    }
+
+    // MARK: Relays
+
+    private var idleRelays = IdleRelayTracker()
+
+    /// A relay set to "only while someone is listening" that is connected with nobody listening is closed after a short wait.
+    /// This catches one that was already connected when the switch was turned on, or when LogiKast was opened, because
+    /// Icecast reads that setting only when a relay starts. Skipped while changes are waiting to be applied: the running
+    /// server still has the old setting then.
+    private func enforceOnDemandRelays() {
+        guard server.isEnabled, !hasPendingChanges else { _ = idleRelays.update(idle: [], now: Date()); return }
+        let due = idleRelays.update(idle: RelayDemand.idleOnDemandMounts(config: config, status: poller.status), now: Date())
+        guard !due.isEmpty else { return }
+        Task { [admin] in
+            for mount in due { _ = await admin.dropSource(mount: mount) }
+        }
     }
 
     // MARK: Alerts

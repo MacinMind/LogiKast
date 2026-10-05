@@ -75,3 +75,27 @@ enum RelayDemand {
         return out
     }
 }
+
+/// Remembers how long each connected on-demand relay has had nobody listening, so one is dropped only after a grace period
+/// (a listener who has just arrived triggers the relay to connect, and is counted a moment later).
+struct IdleRelayTracker {
+    var grace: TimeInterval = 20
+    private var since: [String: Date] = [:]
+
+    /// `idle` is every connected on-demand relay with no listeners right now. Returns the ones that have been idle for the
+    /// whole grace period; each is reported once, then starts counting again if it is still connected.
+    mutating func update(idle: [String], now: Date) -> [String] {
+        since = since.filter { idle.contains($0.key) }
+        var due: [String] = []
+        for path in idle {
+            let start = since[path] ?? now
+            if now.timeIntervalSince(start) >= grace {
+                due.append(path)
+                since[path] = nil
+            } else {
+                since[path] = start
+            }
+        }
+        return due
+    }
+}

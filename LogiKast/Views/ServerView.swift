@@ -11,7 +11,7 @@ struct ServerView: View {
                     Button("Open Login Items Settings…") { model.server.openLoginItemsSettings() }
                 }
                 IssuesView(issues: model.issues)
-                if model.hasPendingChanges { pendingBanner }
+                if model.hasPendingChanges { PendingChangesBanner() }
             }
             SegmentedTabs(selection: $model.serverTab)
             if model.serverTab == .app {
@@ -206,19 +206,6 @@ struct ServerView: View {
                 Button("Restart Server…") { model.promptForRestart() }
             }
         }
-    }
-
-    private var pendingBanner: some View {
-        HStack {
-            Label(model.server.requiresRestart(for: model.config)
-                  ? "Changes not applied yet. These need a server restart."
-                  : "Changes not applied yet.", systemImage: "arrow.triangle.2.circlepath")
-            Spacer()
-            Button(model.server.requiresRestart(for: model.config) ? "Restart & Apply…" : "Apply Changes") { model.applyChanges() }
-                .disabled(!model.canStart)
-        }
-        .padding(8)
-        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
     }
 
     private var statusText: String {

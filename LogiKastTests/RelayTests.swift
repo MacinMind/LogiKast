@@ -189,6 +189,34 @@ final class RelayDemandTests: XCTestCase {
     }
 }
 
+final class IdleRelayTrackerTests: XCTestCase {
+    func testADropIsReportedOnlyAfterTheGracePeriod() {
+        var t = IdleRelayTracker(grace: 20)
+        let start = Date()
+        XCTAssertEqual(t.update(idle: ["/r"], now: start), [])
+        XCTAssertEqual(t.update(idle: ["/r"], now: start.addingTimeInterval(19)), [])
+        XCTAssertEqual(t.update(idle: ["/r"], now: start.addingTimeInterval(20)), ["/r"])
+    }
+
+    func testAListenerArrivingResetsTheWait() {
+        var t = IdleRelayTracker(grace: 20)
+        let start = Date()
+        _ = t.update(idle: ["/r"], now: start)
+        _ = t.update(idle: [], now: start.addingTimeInterval(15))                      // someone is listening
+        XCTAssertEqual(t.update(idle: ["/r"], now: start.addingTimeInterval(25)), [], "the wait starts over")
+        XCTAssertEqual(t.update(idle: ["/r"], now: start.addingTimeInterval(45)), ["/r"])
+    }
+
+    func testEachMountIsTrackedOnItsOwnAndReportedOnce() {
+        var t = IdleRelayTracker(grace: 10)
+        let start = Date()
+        _ = t.update(idle: ["/a"], now: start)
+        XCTAssertEqual(t.update(idle: ["/a", "/b"], now: start.addingTimeInterval(10)), ["/a"])
+        XCTAssertEqual(t.update(idle: ["/a", "/b"], now: start.addingTimeInterval(12)), [], "/a starts over, /b is not due yet")
+        XCTAssertEqual(t.update(idle: ["/b"], now: start.addingTimeInterval(20)), ["/b"])
+    }
+}
+
 final class RelayValidationTests: XCTestCase {
     private func issues(_ edit: (inout Mount) -> Void) -> [ConfigIssue] {
         var c = AppConfig.makeDefault()

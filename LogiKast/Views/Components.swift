@@ -205,3 +205,22 @@ struct FooterText: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+/// "Changes not applied yet" with the button that applies them. Shown at the top of the server page and of every mount page,
+/// because a setting on a mount page does nothing until the changes are applied.
+struct PendingChangesBanner: View {
+    @EnvironmentObject var model: AppModel
+
+    var body: some View {
+        HStack {
+            Label(model.server.requiresRestart(for: model.config)
+                  ? "Changes not applied yet. These need a server restart."
+                  : "Changes not applied yet.", systemImage: "arrow.triangle.2.circlepath")
+            Spacer()
+            Button(model.server.requiresRestart(for: model.config) ? "Restart & Apply…" : "Apply Changes") { model.applyChanges() }
+                .disabled(!model.canStart)
+        }
+        .padding(8)
+        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+    }
+}
