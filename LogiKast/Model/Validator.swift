@@ -13,7 +13,8 @@ struct ConfigIssue: Identifiable, Equatable {
 }
 
 enum ConfigValidator {
-    static func issues(for config: AppConfig, backupExists: (String) -> Bool = { BackupAudio.exists($0) }) -> [ConfigIssue] {
+    static func issues(for config: AppConfig, backupExists: (String) -> Bool = { BackupAudio.exists($0) },
+                       localAddresses: [String] = NetworkInfo.lanIPv4Addresses()) -> [ConfigIssue] {
         var out: [ConfigIssue] = []
         let s = config.server
 
@@ -72,8 +73,8 @@ enum ConfigValidator {
                     out.append(.init(severity: .warning, message: "Fallback mount \(m.fallbackMount) for \(m.name) isn't one of your mounts.", mountID: m.id))
                 }
             }
-            if m.isRelay { out += relayIssues(m.relay, for: m, what: m.name, config: config) }
-            if m.backupFile.isEmpty, m.backupIsRelay { out += relayIssues(m.backupRelay, for: m, what: "The backup stream for \(m.name)", config: config) }
+            if m.isRelay { out += relayIssues(m.relay, for: m, what: m.name, config: config, localAddresses: localAddresses) }
+            if m.backupFile.isEmpty, m.backupIsRelay { out += relayIssues(m.backupRelay, for: m, what: "The backup stream for \(m.name)", config: config, localAddresses: localAddresses) }
             if m.maxListeners > s.maxClients {
                 out.append(.init(severity: .warning, message: "\(m.name): max listeners is higher than the server-wide limit (\(s.maxClients)), so the server limit applies.", mountID: m.id))
             }
@@ -87,7 +88,8 @@ enum ConfigValidator {
     }
 
     /// Problems with the other server a mount (or its backup) takes audio from.
-    static func relayIssues(_ r: RelaySource, for m: Mount, what: String, config: AppConfig) -> [ConfigIssue] {
+    static func relayIssues(_ r: RelaySource, for m: Mount, what: String, config: AppConfig,
+                            localAddresses: [String] = NetworkInfo.lanIPv4Addresses()) -> [ConfigIssue] {
         var out: [ConfigIssue] = []
         let server = r.server.trimmingCharacters(in: .whitespaces)
         if server.isEmpty {
@@ -103,7 +105,10 @@ enum ConfigValidator {
         if !r.mount.hasPrefix("/") {
             out.append(.init(severity: .error, message: "\(what): the mount on the other server must start with / (use / alone for a Shoutcast server).", mountID: m.id))
         }
-        let thisServer: Set<String> = ["localhost", "127.0.0.1", "::1", "0.0.0.0", config.server.hostname.lowercased()]
+        // Names and addresses that lead to this Mac. The same port number on another machine is no problem; the same server is.
+        let host = ProcessInfo.processInfo.hostName.lowercased()
+        let thisServer: Set<String> = Set(["localhost", "127.0.0.1", "::1", "0.0.0.0", config.server.hostname.lowercased(), host,
+                                           host.replacingOccurrences(of: ".local", with: "") + ".local"] + localAddresses)
         if thisServer.contains(server.lowercased()), r.port == config.server.port {
             if r.mount == m.name || r.mount == BackupAudio.internalMount(forMount: m.name) {
                 out.append(.init(severity: .error, message: "\(what): this would relay the mount from itself. Enter another server.", mountID: m.id))

@@ -22,6 +22,8 @@ struct ServerStatus: Equatable {
     /// Internal backup-audio mounts (hidden from the mount list). Listeners on them are real
     /// listeners who are hearing the backup while the encoder is away.
     var backupMounts: [MountStatus] = []
+    /// Identifies this one Icecast instance, whatever name or address it is reached by.
+    var instanceUUID: String? = nil
 
     var totalListeners: Int { mounts.reduce(0) { $0 + $1.listeners } + backupMounts.reduce(0) { $0 + $1.listeners } }
 
@@ -72,7 +74,8 @@ enum StatusParser {
             serverID: stats["server_id"] as? String,
             serverStart: (stats["server_start_iso8601"] as? String).flatMap(date),
             mounts: mounts.filter { !BackupAudio.isInternalMount($0.path) }.sorted { $0.path < $1.path },
-            backupMounts: mounts.filter { BackupAudio.isInternalMount($0.path) }.sorted { $0.path < $1.path })
+            backupMounts: mounts.filter { BackupAudio.isInternalMount($0.path) }.sorted { $0.path < $1.path },
+            instanceUUID: stats["instance_uuid"] as? String)
     }
 
     /// Trimmed string value, or nil if empty or one of Icecast's placeholder defaults.

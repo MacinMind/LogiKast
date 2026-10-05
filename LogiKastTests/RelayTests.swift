@@ -217,6 +217,79 @@ final class IdleRelayTrackerTests: XCTestCase {
     }
 }
 
+final class RelayProbeTests: XCTestCase {
+    private let relay: RelaySource = { var r = RelaySource(); r.server = "radio.example.com"; r.mount = "/listen"; return r }()
+
+    func testAddressThatLeadsBackToThisServerIsRecognizedByItsIdentity() {
+        var remote = ServerStatus(mounts: [])
+        remote.instanceUUID = "abc"
+        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: "abc"), .thisServer)
+        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: "xyz"), .reachable(mount: nil, checkedMount: true))
+        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: nil), .reachable(mount: nil, checkedMount: true),
+                       "with this server off there is nothing to compare")
+    }
+
+    func testFindsTheMountAndSkipsTheLookupForShoutcast() {
+        let mount = MountStatus(path: "/listen", listeners: 2, peak: 3)
+        let remote = ServerStatus(mounts: [mount])
+        XCTAssertEqual(RelayProbe.classify(remote, asking: relay, ownInstance: nil), .reachable(mount: mount, checkedMount: true))
+        var shoutcast = relay; shoutcast.mount = "/"
+        XCTAssertEqual(RelayProbe.classify(remote, asking: shoutcast, ownInstance: nil), .reachable(mount: nil, checkedMount: false))
+    }
+
+    func testStatusParserReadsTheInstanceIdentity() throws {
+        let json = #"{"icestats":{"instance_uuid":"1234-abcd","server_id":"Icecast 2.5.0"}}"#
+        XCTAssertEqual(StatusParser.parse(Data(json.utf8))?.instanceUUID, "1234-abcd")
+    }
+}
+
+/// Tries the probe against a real Icecast (skipped unless LOGIKAST_PROBE_PORT is set).
+final class RelayProbeLiveTests: XCTestCase {
+    func testAgainstARealServer() async throws {
+        guard let port = ProcessInfo.processInfo.environment["LOGIKAST_PROBE_PORT"].flatMap(Int.init) else { throw XCTSkip("LOGIKAST_PROBE_PORT not set") }
+        var r = RelaySource(); r.server = "127.0.0.1"; r.port = port; r.mount = "/x"
+        let found = await RelayProbe.probe(r, ownInstance: nil)
+        guard case .reachable(let mount, true) = found else { return XCTFail("expected reachable, got \(found)") }
+        XCTAssertEqual(mount?.path, "/x")
+        XCTAssertEqual(mount?.contentType, "audio/mpeg")
+        r.mount = "/nope"
+        let missing = await RelayProbe.probe(r, ownInstance: nil)
+        XCTAssertEqual(missing, .reachable(mount: nil, checkedMount: true))
+        var closed = r; closed.port = 1
+        let down = await RelayProbe.probe(closed, ownInstance: nil)
+        XCTAssertEqual(down, .unreachable)
+        // The same server, found by its identity.
+        let uuid = try XCTUnwrap(ProcessInfo.processInfo.environment["LOGIKAST_PROBE_UUID"])
+        let same = await RelayProbe.probe(r, ownInstance: uuid)
+        XCTAssertEqual(same, .thisServer)
+    }
+}
+
+final class RelaySameServerValidationTests: XCTestCase {
+    private func issues(server: String, port: Int, mount: String, local: [String] = ["192.168.1.20"]) -> [ConfigIssue] {
+        var c = AppConfig.makeDefault()
+        c.server.port = 8000
+        var m = Mount(); m.name = "/live"; m.isRelay = true
+        m.relay.server = server; m.relay.port = port; m.relay.mount = mount
+        c.mounts = [m]
+        return ConfigValidator.issues(for: c, localAddresses: local)
+    }
+
+    func testThisMacsOwnAddressOnTheSamePortIsTheSameServer() {
+        XCTAssertTrue(issues(server: "192.168.1.20", port: 8000, mount: "/live").contains { $0.severity == .error && $0.message.contains("from itself") })
+        XCTAssertTrue(issues(server: "192.168.1.20", port: 8000, mount: "/other").contains { $0.severity == .warning })
+    }
+
+    func testTheSamePortOnAnotherMachineIsFine() {
+        XCTAssertTrue(issues(server: "radio.example.com", port: 8000, mount: "/live").isEmpty)
+        XCTAssertTrue(issues(server: "192.168.1.99", port: 8000, mount: "/live").isEmpty)
+    }
+
+    func testThisMacOnAnotherPortIsAnotherServer() {
+        XCTAssertTrue(issues(server: "192.168.1.20", port: 8001, mount: "/live").isEmpty)
+    }
+}
+
 final class RelayValidationTests: XCTestCase {
     private func issues(_ edit: (inout Mount) -> Void) -> [ConfigIssue] {
         var c = AppConfig.makeDefault()
