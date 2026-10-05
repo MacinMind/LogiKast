@@ -37,6 +37,7 @@ struct ServerView: View {
         switch model.serverTab {
         case .setup: setupTab
         case .limits: limitsTab
+        case .relay: relayTab
         case .alerts: alertsTab
         case .app: appTab
         case .updates: UpdateSettings(updater: model.updater)
@@ -83,6 +84,34 @@ struct ServerView: View {
                 IntField(title: "Queue size", value: $model.config.server.queueSize, suffix: "bytes")
                 IntField(title: "Listener timeout", value: $model.config.server.clientTimeout, suffix: "s")
                 IntField(title: "Encoder timeout", value: $model.config.server.sourceTimeout, suffix: "s")
+            }
+    }
+
+    @ViewBuilder private var relayTab: some View {
+            Section {
+                Toggle("Let other Icecast servers relay all my mounts", isOn: Binding(
+                    get: { model.config.server.allowRelaying },
+                    set: { on in
+                        model.config.server.allowRelaying = on
+                        if on, model.config.server.relayPassword.isEmpty { model.config.server.relayPassword = Password.random() }
+                    }))
+                if model.config.server.allowRelaying {
+                    PasswordRow(label: "Relay password", value: $model.config.server.relayPassword)
+                    CopyableRow(label: "Relay user", value: "relay")
+                    CopyableRow(label: "Server", value: "\(model.config.server.hostname.isEmpty ? "localhost" : model.config.server.hostname):\(model.config.server.port)")
+                }
+            } header: {
+                Text("Relaying everything")
+            } footer: {
+                FooterText("Only needed to let another Icecast server pick up all of your mounts automatically, including new ones. That server enters the address above as its master server, with the user “relay” and this password. Hidden backup mounts are not shared.")
+            }
+
+            Section {
+                Label {
+                    Text("You do not need this to let someone relay one mount. Give them that mount's address (Mount › Advanced › Relaying by other servers). It needs no password, and each relay counts as one listener.")
+                        .font(.system(size: FooterText.fontSize))
+                } icon: { Image(systemName: "info.circle") }
+                .foregroundStyle(.secondary)
             }
     }
 

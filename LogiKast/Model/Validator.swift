@@ -34,9 +34,13 @@ enum ConfigValidator {
             let eff = s.effectiveLimits
             out.append(.init(severity: .warning, message: "Max listeners (\(s.maxClients)) has to be more than twice Max encoder connections (\(s.maxSources)). The server will use \(eff.sources) encoder connection\(eff.sources == 1 ? "" : "s") instead. Raise max listeners to \(2 * s.maxSources + 1) or more to allow \(s.maxSources)."))
         }
-        let streamsNeeded = config.mounts.count + config.mounts.filter { !$0.backupFile.isEmpty }.count      // each backup file also connects like an encoder
+        // Each backup file or backup relay also connects like an encoder, and so does a relay.
+        let streamsNeeded = config.mounts.count + config.mounts.filter { !$0.backupFile.isEmpty || $0.usesBackupRelay }.count
         if s.maxClients >= 1, s.maxSources >= 1, s.effectiveLimits.sources < streamsNeeded {
             out.append(.init(severity: .warning, message: "Your limits allow \(s.effectiveLimits.sources) encoder connection\(s.effectiveLimits.sources == 1 ? "" : "s"), but you have \(config.mounts.count) stream\(config.mounts.count == 1 ? "" : "s")\(streamsNeeded > config.mounts.count ? " plus backup audio" : ""). Raise the listener limit so every stream can connect."))
+        }
+        if s.allowRelaying, s.relayPassword.isEmpty {
+            out.append(.init(severity: .error, message: "Relay password is empty. Other servers need it to relay your mounts."))
         }
         if s.burstSize < 0 || s.queueSize < 1 {
             out.append(.init(severity: .error, message: "Burst and queue sizes must be positive."))
@@ -68,6 +72,8 @@ enum ConfigValidator {
                     out.append(.init(severity: .warning, message: "Fallback mount \(m.fallbackMount) for \(m.name) isn't one of your mounts.", mountID: m.id))
                 }
             }
+            if m.isRelay { out += relayIssues(m.relay, for: m, what: m.name, config: config) }
+            if m.backupFile.isEmpty, m.backupIsRelay { out += relayIssues(m.backupRelay, for: m, what: "The backup stream for \(m.name)", config: config) }
             if m.maxListeners > s.maxClients {
                 out.append(.init(severity: .warning, message: "\(m.name): max listeners is higher than the server-wide limit (\(s.maxClients)), so the server limit applies.", mountID: m.id))
             }
@@ -75,6 +81,34 @@ enum ConfigValidator {
         for m in config.mounts where m.isPublic {
             for problem in DirectoryListing.problems(for: config) {
                 out.append(.init(severity: .warning, message: "\(m.name): \(problem)", mountID: m.id))
+            }
+        }
+        return out
+    }
+
+    /// Problems with the other server a mount (or its backup) takes audio from.
+    static func relayIssues(_ r: RelaySource, for m: Mount, what: String, config: AppConfig) -> [ConfigIssue] {
+        var out: [ConfigIssue] = []
+        let server = r.server.trimmingCharacters(in: .whitespaces)
+        if server.isEmpty {
+            out.append(.init(severity: .error, message: "\(what): enter the server to relay from.", mountID: m.id))
+            return out
+        }
+        if server.contains(where: { $0.isWhitespace || "<>&\"'/".contains($0) }) {
+            out.append(.init(severity: .error, message: "\(what): the server is a host name or address, like radio.example.com, without http:// or a path.", mountID: m.id))
+        }
+        if !(1...65535).contains(r.port) {
+            out.append(.init(severity: .error, message: "\(what): the other server's port must be between 1 and 65535.", mountID: m.id))
+        }
+        if !r.mount.hasPrefix("/") {
+            out.append(.init(severity: .error, message: "\(what): the mount on the other server must start with / (use / alone for a Shoutcast server).", mountID: m.id))
+        }
+        let thisServer: Set<String> = ["localhost", "127.0.0.1", "::1", "0.0.0.0", config.server.hostname.lowercased()]
+        if thisServer.contains(server.lowercased()), r.port == config.server.port {
+            if r.mount == m.name || r.mount == BackupAudio.internalMount(forMount: m.name) {
+                out.append(.init(severity: .error, message: "\(what): this would relay the mount from itself. Enter another server.", mountID: m.id))
+            } else {
+                out.append(.init(severity: .warning, message: "\(what): the server entered is this one. Relaying a mount from your own server works, but check it is what you meant.", mountID: m.id))
             }
         }
         return out

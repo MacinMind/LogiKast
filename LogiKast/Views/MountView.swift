@@ -8,7 +8,7 @@ struct MountView: View {
     @State private var dropMode = DropMode.nothing
     @State private var backupError: String?
     @State private var nameAtOpen = ""
-    enum DropMode: Hashable { case nothing, file, mount }
+    enum DropMode: Hashable { case nothing, file, relay, mount }
 
     private var status: MountStatus? { model.status(for: mount) }
     private var host: String { model.config.server.hostname.isEmpty ? "localhost" : model.config.server.hostname }
@@ -34,12 +34,13 @@ struct MountView: View {
         }
         .onAppear {
             nameAtOpen = mount.name
-            dropMode = !mount.backupFile.isEmpty ? .file : (!mount.fallbackMount.isEmpty ? .mount : .nothing)
+            dropMode = !mount.backupFile.isEmpty ? .file : (mount.backupIsRelay ? .relay : (!mount.fallbackMount.isEmpty ? .mount : .nothing))
         }
         .onChange(of: dropMode) { newMode in
             // Switching away from a choice clears it, so the saved settings match what is shown.
             if newMode != .file, !mount.backupFile.isEmpty { removeBackup() }
             if newMode != .mount, !mount.fallbackMount.isEmpty { mount.fallbackMount = "" }
+            mount.backupIsRelay = newMode == .relay
         }
     }
 
@@ -50,7 +51,13 @@ struct MountView: View {
                 Image(systemName: "pencil.circle.fill").foregroundStyle(Color.accentColor)
                 Text("Mount name").font(.headline)
                 Spacer()
-                Text("The one thing to set on this tab").font(.caption).foregroundStyle(Color.accentColor)
+                Picker("Audio from", selection: $mount.isRelay) {
+                    Text("An encoder").tag(false)
+                    Text("Another Icecast server").tag(true)
+                }
+                .pickerStyle(.menu)
+                .fixedSize()
+                .help("Where this stream's audio comes from: an encoder app connected to this server, or a stream relayed from another Icecast server.")
             }
             TextField("", text: $mount.name, prompt: Text("/live"))
                 .textFieldStyle(.roundedBorder)
@@ -66,7 +73,9 @@ struct MountView: View {
                       systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange).font(.callout)
             }
-            Text("The mount name identifies this stream, like /live or /jazz. Listeners and your encoder both use it, so each stream on your server needs its own. You can run several streams on one server: add another with the + button above the mount list.")
+            Text(mount.isRelay
+                 ? "The mount name is what your listeners use, like /live or /jazz. Each stream on your server needs its own. Add more with the + button above the mount list."
+                 : "The mount name identifies this stream, like /live or /jazz. Listeners and your encoder both use it, so each stream needs its own. Add more with the + button above the mount list.")
                 .font(.system(size: FooterText.fontSize)).foregroundStyle(.secondary)
         }
         .padding(14)
@@ -89,6 +98,20 @@ struct MountView: View {
     }
 
     @ViewBuilder private var connectSection: some View {
+        if mount.isRelay { relaySourceSection } else { encoderSection }
+    }
+
+    @ViewBuilder private var relaySourceSection: some View {
+        Section {
+            RelayEditor(relay: $mount.relay)
+        } header: {
+            Text("Relay from another Icecast server")
+        } footer: {
+            FooterText("No encoder is needed. LogiKast takes the stream from the server above and passes it to your listeners. If it can't be reached, the mount waits and retries every few seconds. Shoutcast servers use / as the mount.")
+        }
+    }
+
+    @ViewBuilder private var encoderSection: some View {
         Section {
             CopyableRow(label: "Server type", value: "Icecast")
             CopyableRow(label: "Address", value: host)
@@ -99,7 +122,7 @@ struct MountView: View {
         } header: {
             LinkedText(markdown: "Connect your encoder (\(Encoders.linkedList))", font: .systemFont(ofSize: 13, weight: .semibold))
         } footer: {
-            FooterText("These are filled in for you, so there is nothing to type here: copy them into your encoder. They update as you change the mount name above. The username is always “source” (lowercase). The password is the encoder password. Format (MP3, AAC, HE-AAC) and bitrate are chosen in your encoder; LogiKast detects them once it connects.")
+            FooterText("These are filled in for you: copy them into your encoder. The username is always “source” (lowercase). Format and bitrate are chosen in your encoder; LogiKast detects them once it connects.")
         }
     }
 
@@ -128,7 +151,8 @@ struct MountView: View {
                 Picker("", selection: $dropMode) {
                     Text("Nothing — listeners hear silence").tag(DropMode.nothing)
                     Text("Play a backup audio file").tag(DropMode.file)
-                    Text("Switch listeners to another stream").tag(DropMode.mount)
+                    Text("Switch listeners to a stream from another Icecast server").tag(DropMode.relay)
+                    Text("Switch listeners to another mount on this server").tag(DropMode.mount)
                 }
                 .pickerStyle(.radioGroup)
                 .labelsHidden()
@@ -138,6 +162,9 @@ struct MountView: View {
                     EmptyView()
                 case .file:
                     backupFileRows
+                case .relay:
+                    RelayEditor(relay: $mount.backupRelay)
+                    backupRelayStatus
                 case .mount:
                     LabeledContent("Other stream's mount") {
                         TextField("", text: $mount.fallbackMount, prompt: Text("e.g. /backup")).multilineTextAlignment(.trailing)
@@ -145,9 +172,11 @@ struct MountView: View {
                     Toggle("Return listeners when this stream comes back", isOn: $mount.fallbackOverride)
                 }
             } header: {
-                Text("When the encoder drops off")
+                Text(mount.isRelay ? "When the relayed stream drops off" : "When the encoder drops off")
             } footer: {
-                FooterText("Listeners keep hearing something instead of silence, and move back to the live stream automatically when your encoder reconnects.")
+                FooterText(mount.isRelay
+                           ? "Listeners keep hearing something instead of silence, and move back to the relayed stream automatically when it returns."
+                           : "Listeners keep hearing something instead of silence, and move back to the live stream automatically when your encoder reconnects.")
             }
     }
 
@@ -157,7 +186,7 @@ struct MountView: View {
                 DescriptionField(text: $mount.streamDescription, prompt: status?.streamDescription ?? "e.g. Classic hits, all day")
                 LabeledContent("Genre") { TextField("", text: $mount.genre, prompt: Text(status?.genre ?? "e.g. Variety")).multilineTextAlignment(.trailing) }
                 LabeledContent("Website") { TextField("", text: $mount.streamURL, prompt: Text(status?.streamURL ?? "https://")).multilineTextAlignment(.trailing) }
-                if let s = status, hasEncoderInfo(s) {
+                if let s = status, hasEncoderInfo(s), !mount.isRelay {
                     Button("Copy Encoder's Info Into These Fields") { copyEncoderInfo(s) }
                         .help("Saves what your encoder is sending here, so it stays even if the encoder stops sending it")
                 }
@@ -202,10 +231,42 @@ struct MountView: View {
             Section("Mount settings") {
                 IntField(title: "Max listeners (0 = no limit)", value: $mount.maxListeners)
                 IntField(title: "Burst size", value: $mount.burstSize, suffix: "bytes")
-                LabeledContent("Own encoder password") {
-                    TextField("", text: $mount.customPassword, prompt: Text("Use server password")).multilineTextAlignment(.trailing)
+                if !mount.isRelay {
+                    LabeledContent("Own encoder password") {
+                        TextField("", text: $mount.customPassword, prompt: Text("Use server password")).multilineTextAlignment(.trailing)
+                    }
                 }
             }
+
+            Section {
+                CopyableRow(label: "Server", value: host)
+                CopyableRow(label: "Port", value: String(port))
+                CopyableRow(label: "Mount", value: mount.name)
+            } header: {
+                Text("Relaying by other servers")
+            } footer: {
+                FooterText("Another Icecast server can relay this stream with these, and needs no password. Each relay counts as one listener. To let a server relay all your mounts at once, see Server › Relay.")
+            }
+    }
+
+    /// Whether the other server's stream (the backup) is connected.
+    @ViewBuilder private var backupRelayStatus: some View {
+        let connected = model.poller.status?.backupMounts.contains { $0.path == BackupAudio.internalMount(forMount: mount.name) } ?? false
+        if !model.server.isEnabled {
+            Label("The backup starts working when the server is on.", systemImage: "moon.zzz").foregroundStyle(.secondary).font(.callout)
+        } else if model.hasPendingChanges {
+            Label("Apply your changes to start the backup.", systemImage: "arrow.triangle.2.circlepath").foregroundStyle(.orange).font(.callout)
+        } else if connected {
+            Label("Ready. Listeners move to it if this stream drops off.", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout)
+        } else if mount.backupRelay.onDemand {
+            Label("Ready. It connects when this stream drops off, which takes a few seconds.", systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.callout)
+        } else if mount.backupRelay.isSet {
+            Label("Waiting for the other server.", systemImage: "clock").foregroundStyle(.secondary).font(.callout)
+        }
+        let listening = model.poller.status?.backupListeners(forMount: mount.name) ?? 0
+        if listening > 0 {
+            Label("\(listening) listener\(listening == 1 ? " is" : "s are") hearing your backup right now.", systemImage: "headphones").font(.callout)
+        }
     }
 
 
@@ -321,7 +382,7 @@ struct MountView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     StatusDot(color: status != nil ? .green : .gray)
-                    Text(status != nil ? "On air" : (model.server.isEnabled ? "Waiting for encoder" : "Server is off"))
+                    Text(status != nil ? "On air" : (model.server.isEnabled ? (mount.isRelay ? "Waiting for the other server" : "Waiting for encoder") : "Server is off"))
                         .font(.headline)
                 }
                 if let title = status?.title {

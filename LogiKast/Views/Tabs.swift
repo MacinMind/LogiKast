@@ -38,11 +38,12 @@ enum MountTab: String, TabItem {
 }
 
 enum ServerTab: String, TabItem {
-    case setup, limits, alerts, app, updates
+    case setup, limits, relay, alerts, app, updates
     var title: String {
         switch self {
         case .setup: "Setup"
         case .limits: "Limits"
+        case .relay: "Relay"
         case .alerts: "Alerts"
         case .app: "App & Log"
         case .updates: "Updates"

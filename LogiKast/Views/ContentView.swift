@@ -136,7 +136,7 @@ struct SidebarView: View {
                 ForEach(model.config.mounts) { mount in
                     let s = model.status(for: mount)
                     SidebarRow(color: s != nil ? .green : (model.server.isEnabled ? .orange : .gray),
-                               title: mount.name, detail: mountDetail(s), listeners: s?.listeners)
+                               title: mount.name, detail: mountDetail(s, mount), listeners: s?.listeners)
                         .tag(SidebarSelection.mount(mount.id))
                         .contextMenu {
                             Button("Delete \(mount.name)…", role: .destructive) { mountToDelete = mount.id }
@@ -186,9 +186,9 @@ struct SidebarView: View {
         }
     }
 
-    private func mountDetail(_ s: MountStatus?) -> String {
+    private func mountDetail(_ s: MountStatus?, _ mount: Mount) -> String {
         if let s { return s.bitrate.map { "On air · \($0) kbps" } ?? "On air" }
-        return model.server.isEnabled ? "No encoder" : "Server off"
+        return model.server.isEnabled ? (mount.isRelay ? "Waiting for server" : "No encoder") : "Server off"
     }
 
     private var serverColor: Color {

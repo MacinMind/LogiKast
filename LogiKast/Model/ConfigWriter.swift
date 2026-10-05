@@ -31,7 +31,15 @@ enum ConfigWriter {
         x.line("source-password", s.sourcePassword)
         x.line("admin-user", s.adminUser)
         x.line("admin-password", s.adminPassword)
+        // Lets another Icecast server relay every visible mount at once; it logs in as "relay". (Relaying one mount
+        // needs no password: that server simply listens to the mount.)
+        if s.allowRelaying, !s.relayPassword.isEmpty { x.line("relay-password", s.relayPassword) }
         x.close("authentication")
+
+        // A relay that can't reach its source is retried at this interval (Icecast's default is two minutes).
+        if config.mounts.contains(where: { ($0.isRelay && $0.relay.isSet) || $0.usesBackupRelay }) {
+            x.line("master-update-interval", 15)
+        }
 
         x.open("listen-socket")
         x.line("port", s.port)
@@ -52,7 +60,7 @@ enum ConfigWriter {
         for m in config.mounts {
             x.open("mount", attributes: [("type", "normal")])
             x.line("mount-name", m.name)
-            if !m.customPassword.isEmpty {
+            if !m.isRelay, !m.customPassword.isEmpty {
                 x.line("username", "source")
                 x.line("password", m.customPassword)
             }
@@ -60,10 +68,11 @@ enum ConfigWriter {
             x.line("burst-size", m.burstSize)
             // Backup audio (streamed in real time by the feeder to an internal mount) takes precedence
             // over a fallback mount.
-            let fallback = m.backupFile.isEmpty ? m.fallbackMount : BackupAudio.internalMount(forMount: m.name)
+            let usesInternalBackup = !m.backupFile.isEmpty || m.usesBackupRelay
+            let fallback = usesInternalBackup ? BackupAudio.internalMount(forMount: m.name) : m.fallbackMount
             if !fallback.isEmpty {
                 x.line("fallback-mount", fallback)
-                x.line("fallback-override", (m.backupFile.isEmpty ? m.fallbackOverride : true) ? 1 : 0)
+                x.line("fallback-override", (usesInternalBackup ? true : m.fallbackOverride) ? 1 : 0)
             }
             x.line("charset", "UTF-8")
             x.line("public", m.isPublic ? 1 : 0)
@@ -71,14 +80,16 @@ enum ConfigWriter {
             if !m.streamDescription.isEmpty { x.line("stream-description", StreamInfoText.clean(m.streamDescription)) }
             if !m.genre.isEmpty { x.line("genre", StreamInfoText.clean(m.genre)) }
             if !m.streamURL.isEmpty { x.line("stream-url", m.streamURL) }
+            if m.isRelay, m.relay.isSet { writeRelay(m.relay, into: &x) }     // this mount's audio comes from another server
             x.close("mount")
 
-            if !m.backupFile.isEmpty {
+            if !m.backupFile.isEmpty || m.usesBackupRelay {
                 x.open("mount", attributes: [("type", "normal")])
                 x.line("mount-name", BackupAudio.internalMount(forMount: m.name))
                 x.line("hidden", 1)
                 x.line("public", 0)
                 x.line("burst-size", 8192)          // small: listeners moved here should be near real time
+                if m.backupFile.isEmpty { writeRelay(m.backupRelay, into: &x) }     // a stream from another server, not a file
                 x.close("mount")
             }
         }
@@ -100,6 +111,18 @@ enum ConfigWriter {
 
         x.close("icecast")
         return x.output
+    }
+
+    /// A <relay> block: the mount that contains it takes its audio from this other server.
+    private static func writeRelay(_ r: RelaySource, into x: inout XMLBuilder) {
+        x.open("relay")
+        x.line("server", r.server.trimmingCharacters(in: .whitespaces))
+        x.line("port", r.port)
+        x.line("mount", r.mount.isEmpty ? "/" : r.mount)
+        if !r.username.isEmpty { x.line("username", r.username) }
+        if !r.password.isEmpty { x.line("password", r.password) }
+        x.line("on-demand", r.onDemand ? 1 : 0)
+        x.close("relay")
     }
 }
 

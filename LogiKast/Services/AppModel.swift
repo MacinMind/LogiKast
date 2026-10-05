@@ -55,7 +55,7 @@ final class AppModel: ObservableObject {
 
         // Forward nested objects' changes so views observing AppModel refresh.
         poller.adminLogin = { [weak self] in
-            guard let c = self?.config, c.mounts.contains(where: { !$0.backupFile.isEmpty }) else { return nil }
+            guard let c = self?.config, c.mounts.contains(where: { !$0.backupFile.isEmpty || $0.usesBackupRelay }) else { return nil }
             return (c.server.adminUser, c.server.adminPassword)
         }
 
@@ -233,7 +233,7 @@ final class AppModel: ObservableObject {
         let client = admin
         guard let live = await client.listeners(mount: mount.name) else { return nil }
         var all = live
-        if !mount.backupFile.isEmpty,
+        if !mount.backupFile.isEmpty || mount.usesBackupRelay,
            let backup = await client.listeners(mount: BackupAudio.internalMount(forMount: mount.name), onBackup: true) {
             all += backup
         }

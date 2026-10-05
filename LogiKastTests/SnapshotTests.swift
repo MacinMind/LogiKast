@@ -35,6 +35,25 @@ final class SnapshotTests: XCTestCase {
         }
         model.mountTab = .backup
         try snapshot(BackupHost().environmentObject(model), size: NSSize(width: 700, height: 820), to: "mount-backup-withfile.png", in: dir)
+        // Relay mounts: the source settings, a relay as the backup, and the mount's relay address.
+        struct RelayHost: View {
+            @State var mount: Mount = {
+                var m = Mount(); m.name = "/relayed"; m.isRelay = true
+                m.relay.server = "radio.example.com"; m.relay.mount = "/main"; return m
+            }()
+            var body: some View { MountView(mount: $mount) }
+        }
+        struct RelayBackupHost: View {
+            @State var mount: Mount = {
+                var m = Mount(); m.backupIsRelay = true; m.backupRelay.server = "backup.example.com"; m.backupRelay.mount = "/b"; return m
+            }()
+            var body: some View { MountView(mount: $mount) }
+        }
+        model.mountTab = .connect
+        try snapshot(RelayHost().environmentObject(model), size: NSSize(width: 700, height: 820), to: "mount-relay-connect.png", in: dir)
+        model.mountTab = .backup
+        try snapshot(RelayHost().environmentObject(model), size: NSSize(width: 700, height: 820), to: "mount-relay-backup.png", in: dir)
+        try snapshot(RelayBackupHost().environmentObject(model), size: NSSize(width: 700, height: 820), to: "mount-backup-relay.png", in: dir)
         for tab in ServerTab.allCases {
             model.serverTab = tab
             try snapshot(ServerView().environmentObject(model), size: NSSize(width: 700, height: 820), to: "server-\(tab.rawValue).png", in: dir)

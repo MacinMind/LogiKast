@@ -54,6 +54,7 @@ func scrollBarVisible(_ rep: NSBitmapImageRep) -> Bool {
 struct Case { let name: String; let args: [String]; var mayScroll = false }
 var cases = [Case(name: "server / setup", args: ["--skip-legacy", "--server-tab", "setup"]),
              Case(name: "server / limits", args: ["--skip-legacy", "--server-tab", "limits"]),
+             Case(name: "server / relay", args: ["--skip-legacy", "--server-tab", "relay"]),
              Case(name: "server / alerts", args: ["--skip-legacy", "--server-tab", "alerts"]),
              Case(name: "server / app", args: ["--skip-legacy", "--server-tab", "app"]),
              Case(name: "server / updates", args: ["--skip-legacy", "--server-tab", "updates"])]

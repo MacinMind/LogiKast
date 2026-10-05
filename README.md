@@ -15,9 +15,17 @@ Icecast is bundled; nothing else needs to be installed. MP3, AAC and HE-AAC stre
 - The server runs in the background: it keeps running when LogiKast is closed, restarts if it stops, and starts at login
 - Copy-and-paste connection details for your encoder, and a setup assistant for new stations
 - Listener list with search and a Disconnect button, per-stream and total bandwidth, and a button for Icecast's web admin
-- Backup audio file that plays when the encoder drops and hands back to live when it returns
+- Backup audio file, another mount, or a stream from another server that plays when the encoder drops and hands back to live when it returns
+- Relay: a mount can take its audio from another Icecast or Shoutcast server instead of an encoder, and other servers can relay your mounts
 - Share links, QR code and website player code; optional public directory listing
 - macOS 13 or later, Apple silicon and Intel
+
+## Relaying
+
+- **A mount that relays another server:** on a mount's Connect tab, set *Audio from* to *Another Icecast server* and enter the server, port, mount and (if it asks) a login. No encoder is needed. LogiKast retries a lost relay every 15 seconds.
+- **Backup from another server:** on the Backup tab, a mount can switch its listeners to a stream from another server when its own source drops, and back again when it returns.
+- **Relaying a mount of yours:** another Icecast server only needs the address on the mount's Advanced tab. It listens to the mount like a listener (counting as one) and needs no password.
+- **Relaying all your mounts at once:** Server › Relay turns on Icecast's master/slave relaying, which needs a password the other server enters (user "relay"). Hidden backup mounts are not shared.
 
 ## Building
 

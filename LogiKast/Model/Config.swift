@@ -36,6 +36,33 @@ enum BadgeTarget: Codable, Hashable {
     case mount(UUID)
 }
 
+/// Another Icecast (or Shoutcast) server whose stream a mount takes its audio from.
+struct RelaySource: Codable, Equatable {
+    var server = ""
+    var port = 8000
+    /// The mount on that server. Shoutcast servers use "/".
+    var mount = "/"
+    /// Both optional: only needed when the other server asks for a login.
+    var username = ""
+    var password = ""
+    /// When on, the stream is only pulled while someone is listening (saves bandwidth, adds a short start-up delay).
+    var onDemand = false
+
+    var isSet: Bool { !server.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        server = try c.decodeIfPresent(String.self, forKey: .server) ?? ""
+        port = try c.decodeIfPresent(Int.self, forKey: .port) ?? 8000
+        mount = try c.decodeIfPresent(String.self, forKey: .mount) ?? "/"
+        username = try c.decodeIfPresent(String.self, forKey: .username) ?? ""
+        password = try c.decodeIfPresent(String.self, forKey: .password) ?? ""
+        onDemand = try c.decodeIfPresent(Bool.self, forKey: .onDemand) ?? false
+    }
+}
+
 struct Mount: Codable, Identifiable, Equatable {
     var id = UUID()
     var name = "/live"
@@ -57,6 +84,12 @@ struct Mount: Codable, Identifiable, Equatable {
     var backupFile = ""
     /// The name of the file the user picked, for display.
     var backupName = ""
+    /// True: this mount's audio comes from another server (`relay`) instead of an encoder.
+    var isRelay = false
+    var relay = RelaySource()
+    /// True: when the main source drops off, listeners move to a stream from another server (`backupRelay`).
+    var backupIsRelay = false
+    var backupRelay = RelaySource()
 
     init() {}
 
@@ -76,7 +109,14 @@ struct Mount: Codable, Identifiable, Equatable {
         customPassword = try c.decodeIfPresent(String.self, forKey: .customPassword) ?? ""
         backupFile = try c.decodeIfPresent(String.self, forKey: .backupFile) ?? ""
         backupName = try c.decodeIfPresent(String.self, forKey: .backupName) ?? ""
+        isRelay = try c.decodeIfPresent(Bool.self, forKey: .isRelay) ?? false
+        relay = try c.decodeIfPresent(RelaySource.self, forKey: .relay) ?? RelaySource()
+        backupIsRelay = try c.decodeIfPresent(Bool.self, forKey: .backupIsRelay) ?? false
+        backupRelay = try c.decodeIfPresent(RelaySource.self, forKey: .backupRelay) ?? RelaySource()
     }
+
+    /// Whether a backup relay is in effect (a backup file takes precedence over it).
+    var usesBackupRelay: Bool { backupFile.isEmpty && backupIsRelay && backupRelay.isSet }
 }
 
 struct ServerSettings: Codable, Equatable {
@@ -105,6 +145,10 @@ struct ServerSettings: Codable, Equatable {
     var sourcePassword = ""
     var adminUser = "admin"
     var adminPassword = ""
+    /// Lets another Icecast server relay all of this server's mounts at once (it logs in as "relay" with this password).
+    /// Relaying a single mount needs none of this: the other server just listens to the mount.
+    var allowRelaying = false
+    var relayPassword = ""
 
     init() {}
 
@@ -126,6 +170,8 @@ struct ServerSettings: Codable, Equatable {
         sourcePassword = try c.decodeIfPresent(String.self, forKey: .sourcePassword) ?? d.sourcePassword
         adminUser = try c.decodeIfPresent(String.self, forKey: .adminUser) ?? d.adminUser
         adminPassword = try c.decodeIfPresent(String.self, forKey: .adminPassword) ?? d.adminPassword
+        allowRelaying = try c.decodeIfPresent(Bool.self, forKey: .allowRelaying) ?? d.allowRelaying
+        relayPassword = try c.decodeIfPresent(String.self, forKey: .relayPassword) ?? d.relayPassword
     }
 }
 
