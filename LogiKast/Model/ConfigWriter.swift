@@ -36,8 +36,18 @@ enum ConfigWriter {
         if s.allowRelaying, !s.relayPassword.isEmpty { x.line("relay-password", s.relayPassword) }
         x.close("authentication")
 
-        // A relay that can't reach its source is retried at this interval (Icecast's default is two minutes).
-        if config.mounts.contains(where: { ($0.isRelay && $0.relay.isSet) || $0.usesBackupRelay }) {
+        // Relaying all of another server's mounts: Icecast relays each one it lists, under the same name.
+        let master = s.masterRelay
+        if master.isActive {
+            x.line("master-server", master.server.trimmingCharacters(in: .whitespaces))
+            x.line("master-server-port", master.port)
+            x.line("master-username", master.username.isEmpty ? "relay" : master.username)
+            x.line("master-password", master.password)
+            x.line("relays-on-demand", master.onDemand ? 1 : 0)
+        }
+        // How often the other server is asked for new mounts, and how soon a relay that lost its source is retried
+        // (Icecast's default is two minutes).
+        if master.isActive || config.mounts.contains(where: { ($0.isRelay && $0.relay.isSet) || $0.usesBackupRelay }) {
             x.line("master-update-interval", 15)
         }
 

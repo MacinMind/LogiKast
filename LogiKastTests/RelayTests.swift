@@ -269,6 +269,17 @@ final class RelayProbeLiveTests: XCTestCase {
         var closed = r; closed.port = 1
         let down = await RelayProbe.probe(closed, ownInstance: nil)
         XCTAssertEqual(down, .unreachable)
+        // Relaying everything: the mount list needs the relay login.
+        var master = MasterRelay(); master.enabled = true; master.server = "127.0.0.1"; master.port = port; master.password = "rp"
+        let listed = await MasterProbe.probe(master, ownInstance: nil)
+        guard case .ok(let mounts) = listed else { return XCTFail("expected the mount list, got \(listed)") }
+        XCTAssertTrue(mounts.contains("/x"))
+        master.password = "wrong"
+        let denied = await MasterProbe.probe(master, ownInstance: nil)
+        XCTAssertEqual(denied, .badLogin)
+        master.port = 1
+        let gone = await MasterProbe.probe(master, ownInstance: nil)
+        XCTAssertEqual(gone, .unreachable)
         // The same server, found by its identity.
         let uuid = try XCTUnwrap(ProcessInfo.processInfo.environment["LOGIKAST_PROBE_UUID"])
         let same = await RelayProbe.probe(r, ownInstance: uuid)
@@ -298,6 +309,29 @@ final class RelaySameServerValidationTests: XCTestCase {
 
     func testThisMacOnAnotherPortIsAnotherServer() {
         XCTAssertTrue(issues(server: "192.168.1.20", port: 8001, mount: "/live").isEmpty)
+    }
+}
+
+extension RelaySampleConfigs {
+    func testWriteSampleMasterRelayServer() throws {
+        guard let out = ProcessInfo.processInfo.environment["LOGIKAST_RELAY_OUT"],
+              let share = ProcessInfo.processInfo.environment["LOGIKAST_RELAY_SHARE"] else { throw XCTSkip("LOGIKAST_RELAY_OUT not set") }
+        var c = AppConfig.makeDefault()
+        c.server.port = 19002
+        c.server.sourcePassword = "sp"
+        c.server.adminPassword = "pw"
+        c.server.maxClients = 60
+        c.server.maxSources = 20
+        c.server.masterRelay.enabled = true
+        c.server.masterRelay.server = "127.0.0.1"
+        c.server.masterRelay.port = 19001
+        c.server.masterRelay.password = "rp"
+        var own = Mount(); own.name = "/x"                    // the same name as one on the master
+        c.mounts = [own]
+        let paths = IcecastPaths(logDir: out + "/logs-master", webRoot: share + "/web", adminRoot: share + "/admin", baseDir: share)
+        try FileManager.default.createDirectory(atPath: out + "/logs-master", withIntermediateDirectories: true)
+        try ConfigWriter.xml(for: c, paths: paths).write(toFile: out + "/slave-master.xml", atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: out + "/slave-master.xml")
     }
 }
 
@@ -367,5 +401,89 @@ final class ServerAdoptionTests: XCTestCase {
         XCTAssertFalse(IcecastService.shouldAdoptRunningJob(serviceStatus: .notRegistered, jobLoaded: false))
         XCTAssertFalse(IcecastService.shouldAdoptRunningJob(serviceStatus: .requiresApproval, jobLoaded: true))
         XCTAssertFalse(IcecastService.shouldAdoptRunningJob(serviceStatus: .enabled, jobLoaded: true), "an enabled service is handled the normal way")
+    }
+}
+
+final class MasterRelayTests: XCTestCase {
+    private let paths = IcecastPaths(logDir: "/l", webRoot: "/w", adminRoot: "/a", baseDir: "/b")
+
+    private func config(_ edit: (inout MasterRelay) -> Void = { _ in }) -> AppConfig {
+        var c = AppConfig.makeDefault()
+        c.server.masterRelay.enabled = true
+        c.server.masterRelay.server = "radio.example.com"
+        c.server.masterRelay.port = 8100
+        c.server.masterRelay.password = "rp&secret"
+        edit(&c.server.masterRelay)
+        return c
+    }
+
+    func testWritesTheMasterSettingsAndTheFastCheckInterval() throws {
+        let xml = ConfigWriter.xml(for: config { $0.onDemand = true }, paths: paths)
+        let doc = try XMLDocument(xmlString: xml)
+        func value(_ tag: String) -> String? { (try? doc.nodes(forXPath: "/icecast/\(tag)"))?.first?.stringValue }
+        XCTAssertEqual(value("master-server"), "radio.example.com")
+        XCTAssertEqual(value("master-server-port"), "8100")
+        XCTAssertEqual(value("master-username"), "relay")
+        XCTAssertEqual(value("master-password"), "rp&secret")
+        XCTAssertEqual(value("relays-on-demand"), "1")
+        XCTAssertEqual(value("master-update-interval"), "15")
+        XCTAssertEqual(try doc.nodes(forXPath: "/icecast/master-update-interval").count, 1, "written once when relay mounts exist too")
+    }
+
+    func testNothingIsWrittenWhenOffOrWithoutAServer() {
+        XCTAssertFalse(ConfigWriter.xml(for: config { $0.enabled = false }, paths: paths).contains("master-server"))
+        XCTAssertFalse(ConfigWriter.xml(for: config { $0.server = " " }, paths: paths).contains("master-server"))
+        XCTAssertFalse(ConfigWriter.xml(for: AppConfig.makeDefault(), paths: paths).contains("master-"))
+    }
+
+    func testOnlyOneUpdateIntervalWhenRelayMountsAreAlsoPresent() throws {
+        var c = config()
+        var m = Mount(); m.name = "/r"; m.isRelay = true; m.relay.server = "x.example.com"
+        c.mounts = [m]
+        let xml = ConfigWriter.xml(for: c, paths: paths)
+        XCTAssertEqual(xml.components(separatedBy: "<master-update-interval>").count - 1, 1)
+    }
+
+    func testRestartIsNeededOnlyWhenARunningMasterRelayChangesOrGoesAway() {
+        let a = config()
+        let xml = ConfigWriter.xml(for: a, paths: paths)
+        XCTAssertEqual(IcecastService.masterKey(xml: xml), a.server.masterRelay.restartKey)
+        XCTAssertFalse(a.server.masterRelay.restartKey.isEmpty)
+        var changed = a; changed.server.masterRelay.password = "other"
+        XCTAssertNotEqual(IcecastService.masterKey(xml: xml), changed.server.masterRelay.restartKey)
+        XCTAssertEqual(IcecastService.masterKey(xml: ConfigWriter.xml(for: AppConfig.makeDefault(), paths: paths)), "",
+                       "no master relay running: adding one needs no restart")
+        var off = a; off.server.masterRelay.enabled = false
+        XCTAssertEqual(off.server.masterRelay.restartKey, "")
+        // An empty username is written as "relay", so it must not count as a change.
+        var blank = a; blank.server.masterRelay.username = ""
+        XCTAssertEqual(IcecastService.masterKey(xml: ConfigWriter.xml(for: blank, paths: paths)), blank.server.masterRelay.restartKey)
+    }
+
+    func testValidation() {
+        func issues(_ edit: (inout MasterRelay) -> Void) -> [ConfigIssue] {
+            ConfigValidator.issues(for: config(edit), localAddresses: ["192.168.1.20"])
+        }
+        XCTAssertTrue(issues { _ in }.isEmpty)
+        XCTAssertTrue(issues { $0.server = "" }.contains { $0.severity == .error && $0.message.contains("enter the server") })
+        XCTAssertTrue(issues { $0.password = "" }.contains { $0.severity == .error && $0.message.contains("relay password") })
+        XCTAssertTrue(issues { $0.port = 70000 }.contains { $0.severity == .error && $0.message.contains("port") })
+        XCTAssertTrue(issues { $0.server = "https://radio.example.com" }.contains { $0.severity == .error })
+        XCTAssertTrue(issues { $0.server = "192.168.1.20"; $0.port = AppConfig.makeDefault().server.port }.contains { $0.message.contains("this server") })
+        XCTAssertTrue(issues { $0.enabled = false; $0.server = ""; $0.password = "" }.isEmpty, "off: nothing to check")
+    }
+
+    func testStreamListParsing() {
+        let body = Data("/live\n/jazz\r\n\n  /rock  \nnot-a-mount\n".utf8)
+        XCTAssertEqual(MasterProbe.parseList(body), ["/live", "/jazz", "/rock"])
+        XCTAssertEqual(MasterProbe.parseList(Data()), [])
+    }
+
+    func testRoundTripAndOldConfigs() throws {
+        let c = config { $0.onDemand = true }
+        XCTAssertEqual(try JSONDecoder().decode(AppConfig.self, from: JSONEncoder().encode(c)), c)
+        let old = try JSONDecoder().decode(AppConfig.self, from: Data(#"{"server":{"port":9000}}"#.utf8))
+        XCTAssertFalse(old.server.masterRelay.enabled)
+        XCTAssertEqual(old.server.masterRelay.username, "relay")
     }
 }

@@ -188,7 +188,9 @@ final class AppModel: ObservableObject {
             return
         }
         if server.requiresRestart(for: config) {
-            promptForRestart(reason: "Changing the port or network interface needs the server to restart.")
+            promptForRestart(reason: server.masterRelayNeedsRestart(for: config)
+                             ? "Changing or turning off the relay from another server needs the server to restart."
+                             : "Changing the port or network interface needs the server to restart.")
         } else {
             server.apply(config: config)
             dropIdleOnDemandRelays()

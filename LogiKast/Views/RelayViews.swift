@@ -88,3 +88,49 @@ struct RelayEditor: View {
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }
+
+/// The mounts another server hands over, and what each is doing here (read-only).
+struct RelayedMountList: View {
+    @EnvironmentObject var model: AppModel
+    let mounts: [String]
+    let onDemand: Bool
+    private let shown = 20
+
+    var body: some View {
+        let own = Set(model.config.mounts.map(\.name))
+        let limits = model.config.server.effectiveLimits
+        let needed = model.config.mounts.count + model.config.mounts.filter { !$0.backupFile.isEmpty || $0.usesBackupRelay }.count
+                     + mounts.filter { !own.contains($0) }.count
+        Label(mounts.isEmpty ? "The login works, but the other server has no mounts to relay right now."
+                             : "The login works. \(mounts.count) mount\(mounts.count == 1 ? "" : "s") would be relayed:",
+              systemImage: mounts.isEmpty ? "info.circle" : "checkmark.circle.fill")
+            .foregroundStyle(mounts.isEmpty ? Color.secondary : Color.green).font(.callout)
+        ForEach(mounts.prefix(shown), id: \.self) { path in
+            HStack {
+                Text(path).font(.system(.callout, design: .monospaced))
+                Spacer()
+                Text(state(of: path, isOwn: own.contains(path))).font(.callout).foregroundStyle(.secondary)
+            }
+        }
+        if mounts.count > shown {
+            Text("and \(mounts.count - shown) more").font(.callout).foregroundStyle(.secondary)
+        }
+        let clashes = mounts.filter { own.contains($0) }
+        if !clashes.isEmpty {
+            Label("\(clashes.count == 1 ? "\(clashes[0]) has" : "\(clashes.count) of these have") the same name as your own mount\(clashes.count == 1 ? "" : "s"). Whichever source connects first keeps the mount, so your encoder can be turned away while the relay is using it. Rename your mount to avoid that.",
+                  systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
+        }
+        if needed > limits.sources {
+            Label("These need \(needed) encoder connections, but your limit allows \(limits.sources). Raise Max listeners and Max encoder connections under Server › Limits, or some of them will not connect.",
+                  systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
+        }
+    }
+
+    private func state(of path: String, isOwn: Bool) -> String {
+        if let s = model.poller.status?.mount(path) {
+            return "On air · \(s.listeners) listener\(s.listeners == 1 ? "" : "s")" + (isOwn ? " · same name as yours" : "")
+        }
+        if isOwn { return "Same name as your mount" }
+        return onDemand ? "Waiting for a listener" : "Not connected yet"
+    }
+}

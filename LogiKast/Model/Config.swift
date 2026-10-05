@@ -119,6 +119,39 @@ struct Mount: Codable, Identifiable, Equatable {
     var usesBackupRelay: Bool { backupFile.isEmpty && backupIsRelay && backupRelay.isSet }
 }
 
+/// Another Icecast server whose mounts this server relays all at once (Icecast calls this server the "slave").
+struct MasterRelay: Codable, Equatable {
+    var enabled = false
+    var server = ""
+    var port = 8000
+    /// The other server's relay login: the user is "relay" unless it was changed there.
+    var username = "relay"
+    var password = ""
+    /// When on, a mount is only pulled while someone listens to it here (one setting for every relayed mount).
+    var onDemand = false
+
+    var isActive: Bool { enabled && !server.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let d = MasterRelay()
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? d.enabled
+        server = try c.decodeIfPresent(String.self, forKey: .server) ?? d.server
+        port = try c.decodeIfPresent(Int.self, forKey: .port) ?? d.port
+        username = try c.decodeIfPresent(String.self, forKey: .username) ?? d.username
+        password = try c.decodeIfPresent(String.self, forKey: .password) ?? d.password
+        onDemand = try c.decodeIfPresent(Bool.self, forKey: .onDemand) ?? d.onDemand
+    }
+
+    /// What a running server has to be restarted for: Icecast does not stop relays it already made when this changes.
+    var restartKey: String {
+        guard isActive else { return "" }
+        return "\(server.trimmingCharacters(in: .whitespaces))|\(port)|\(username.isEmpty ? "relay" : username)|\(password)|\(onDemand)"
+    }
+}
+
 struct ServerSettings: Codable, Equatable {
     /// Public host name or IP that listeners use. Shown in connection info.
     var hostname = "localhost"
@@ -149,6 +182,8 @@ struct ServerSettings: Codable, Equatable {
     /// Relaying a single mount needs none of this: the other server just listens to the mount.
     var allowRelaying = false
     var relayPassword = ""
+    /// Relay every visible mount of another Icecast server.
+    var masterRelay = MasterRelay()
 
     init() {}
 
@@ -172,6 +207,7 @@ struct ServerSettings: Codable, Equatable {
         adminPassword = try c.decodeIfPresent(String.self, forKey: .adminPassword) ?? d.adminPassword
         allowRelaying = try c.decodeIfPresent(Bool.self, forKey: .allowRelaying) ?? d.allowRelaying
         relayPassword = try c.decodeIfPresent(String.self, forKey: .relayPassword) ?? d.relayPassword
+        masterRelay = try c.decodeIfPresent(MasterRelay.self, forKey: .masterRelay) ?? d.masterRelay
     }
 }
 

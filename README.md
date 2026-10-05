@@ -25,6 +25,7 @@ Icecast is bundled; nothing else needs to be installed. MP3, AAC and HE-AAC stre
 - **A mount that relays another server:** on a mount's Connect tab, set *Audio from* to *Another Icecast server* and enter the server, port, mount and (if it asks) a login. No encoder is needed. LogiKast retries a lost relay every 15 seconds.
 - **Backup from another server:** on the Backup tab, a mount can switch its listeners to a stream from another server when its own source drops, and back again when it returns.
 - **Relaying a mount of yours:** another Icecast server only needs the address on the mount's Advanced tab. It listens to the mount like a listener (counting as one) and needs no password.
+- **Relaying everything from another server:** Server › Relay can also take every visible mount from another Icecast server (it needs that server's relay password), under the same names, and picks up new ones within about 20 seconds. Changing or turning this off needs a server restart.
 - **Relaying all your mounts at once:** Server › Relay turns on Icecast's master/slave relaying, which needs a password the other server enters (user "relay"). Hidden backup mounts are not shared.
 
 ## Building

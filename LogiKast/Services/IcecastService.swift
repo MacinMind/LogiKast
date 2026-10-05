@@ -54,9 +54,26 @@ final class IcecastService: ObservableObject {
         }
     }
 
-    /// True if applying `config` needs a full restart (port or network interface changed).
+    /// True if applying `config` needs a full restart: the port or network interface changed, or the relay from another
+    /// server (all of its mounts) was changed or turned off, which Icecast only acts on when it starts.
     func requiresRestart(for config: AppConfig) -> Bool {
-        isEnabled && Self.listenKey(config) != listenKey
+        isEnabled && (Self.listenKey(config) != listenKey || masterRelayNeedsRestart(for: config))
+    }
+
+    /// True if the running server is relaying another server and `config` changes or removes that.
+    func masterRelayNeedsRestart(for config: AppConfig) -> Bool {
+        guard isEnabled, let xml = appliedXML else { return false }
+        let running = Self.masterKey(xml: xml)
+        return !running.isEmpty && running != config.server.masterRelay.restartKey
+    }
+
+    /// The relay-from-another-server settings of a written icecast.xml, in the same form as `MasterRelay.restartKey`.
+    nonisolated static func masterKey(xml: String) -> String {
+        guard let doc = try? XMLDocument(xmlString: xml) else { return "" }
+        func text(_ tag: String) -> String { (try? doc.nodes(forXPath: "/icecast/\(tag)"))?.first?.stringValue ?? "" }
+        let server = text("master-server")
+        guard !server.isEmpty else { return "" }
+        return "\(server)|\(text("master-server-port"))|\(text("master-username"))|\(text("master-password"))|\(text("relays-on-demand") == "1")"
     }
 
     // MARK: Control

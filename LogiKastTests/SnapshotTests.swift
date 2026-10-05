@@ -49,6 +49,17 @@ final class SnapshotTests: XCTestCase {
             }()
             var body: some View { MountView(mount: $mount) }
         }
+        struct MasterListHost: View {
+            var body: some View {
+                Form {
+                    Section {
+                        Toggle("Relay all mounts from another Icecast server", isOn: .constant(true))
+                        RelayedMountList(mounts: ["/live", "/jazz", "/rock", "/news"], onDemand: false)
+                    } header: { Text("Relay everything from another server") }
+                }.formStyle(.grouped)
+            }
+        }
+        try snapshot(MasterListHost().environmentObject(model), size: NSSize(width: 700, height: 520), to: "master-relay-list.png", in: dir)
         model.mountTab = .connect
         try snapshot(RelayHost().environmentObject(model), size: NSSize(width: 700, height: 820), to: "mount-relay-connect.png", in: dir)
         model.mountTab = .backup

@@ -43,6 +43,7 @@ enum ConfigValidator {
         if s.allowRelaying, s.relayPassword.isEmpty {
             out.append(.init(severity: .error, message: "Relay password is empty. Other servers need it to relay your mounts."))
         }
+        if s.masterRelay.enabled { out += masterRelayIssues(s.masterRelay, config: config, localAddresses: localAddresses) }
         if s.burstSize < 0 || s.queueSize < 1 {
             out.append(.init(severity: .error, message: "Burst and queue sizes must be positive."))
         }
@@ -87,6 +88,36 @@ enum ConfigValidator {
         return out
     }
 
+    /// Problems with the settings for relaying everything from another server.
+    static func masterRelayIssues(_ m: MasterRelay, config: AppConfig, localAddresses: [String]) -> [ConfigIssue] {
+        let server = m.server.trimmingCharacters(in: .whitespaces)
+        if server.isEmpty {
+            return [.init(severity: .error, message: "Relay from another server: enter the server to relay from (Server › Relay).")]
+        }
+        var out: [ConfigIssue] = []
+        if server.contains(where: { $0.isWhitespace || "<>&\"'/".contains($0) }) {
+            out.append(.init(severity: .error, message: "Relay from another server: the server is a host name or address, like radio.example.com, without http:// or a path."))
+        }
+        if !(1...65535).contains(m.port) {
+            out.append(.init(severity: .error, message: "Relay from another server: the port must be between 1 and 65535."))
+        }
+        if m.password.isEmpty {
+            out.append(.init(severity: .error, message: "Relay from another server: enter the relay password that server gave you."))
+        }
+        if isThisServer(server, port: m.port, config: config, localAddresses: localAddresses) {
+            out.append(.init(severity: .error, message: "Relay from another server: that is this server. Enter a different one."))
+        }
+        return out
+    }
+
+    /// Names and addresses that lead to this Mac, on this server's port. (The same port on another machine is no problem.)
+    static func isThisServer(_ server: String, port: Int, config: AppConfig, localAddresses: [String]) -> Bool {
+        let host = ProcessInfo.processInfo.hostName.lowercased()
+        let names: Set<String> = Set(["localhost", "127.0.0.1", "::1", "0.0.0.0", config.server.hostname.lowercased(), host,
+                                      host.replacingOccurrences(of: ".local", with: "") + ".local"] + localAddresses)
+        return names.contains(server.lowercased()) && port == config.server.port
+    }
+
     /// Problems with the other server a mount (or its backup) takes audio from.
     static func relayIssues(_ r: RelaySource, for m: Mount, what: String, config: AppConfig,
                             localAddresses: [String] = NetworkInfo.lanIPv4Addresses()) -> [ConfigIssue] {
@@ -105,11 +136,8 @@ enum ConfigValidator {
         if !r.mount.hasPrefix("/") {
             out.append(.init(severity: .error, message: "\(what): the mount on the other server must start with / (use / alone for a Shoutcast server).", mountID: m.id))
         }
-        // Names and addresses that lead to this Mac. The same port number on another machine is no problem; the same server is.
-        let host = ProcessInfo.processInfo.hostName.lowercased()
-        let thisServer: Set<String> = Set(["localhost", "127.0.0.1", "::1", "0.0.0.0", config.server.hostname.lowercased(), host,
-                                           host.replacingOccurrences(of: ".local", with: "") + ".local"] + localAddresses)
-        if thisServer.contains(server.lowercased()), r.port == config.server.port {
+        // The same port number on another machine is no problem; the same server is.
+        if isThisServer(server, port: r.port, config: config, localAddresses: localAddresses) {
             if r.mount == m.name || r.mount == BackupAudio.internalMount(forMount: m.name) {
                 out.append(.init(severity: .error, message: "\(what): this would relay the mount from itself. Enter another server.", mountID: m.id))
             } else {

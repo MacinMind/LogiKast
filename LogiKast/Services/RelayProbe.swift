@@ -37,7 +37,8 @@ enum RelayProbe {
     /// A plain HTTP GET over a direct connection. (URLSession refuses plain http:// to a named host under App Transport
     /// Security, and a relay's other server is whatever address the user enters.) HTTP/1.0 with the connection closed
     /// afterwards, so the reply is simply everything until the server hangs up.
-    static func get(host: String, port: Int, path: String, timeout: TimeInterval = 4, maxBytes: Int = 1_000_000) async -> (status: Int, body: Data)? {
+    static func get(host: String, port: Int, path: String, headers: [String: String] = [:], timeout: TimeInterval = 4,
+                    maxBytes: Int = 1_000_000) async -> (status: Int, body: Data)? {
         guard !host.isEmpty, let nwPort = NWEndpoint.Port(rawValue: UInt16(clamping: port)) else { return nil }
         let connection = NWConnection(host: NWEndpoint.Host(host), port: nwPort, using: .tcp)
         return await withCheckedContinuation { (continuation: CheckedContinuation<(status: Int, body: Data)?, Never>) in
@@ -72,7 +73,8 @@ enum RelayProbe {
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    let request = "GET \(path) HTTP/1.0\r\nHost: \(host):\(port)\r\nUser-Agent: LogiKast\r\nConnection: close\r\n\r\n"
+                    let extra = headers.map { "\($0.key): \($0.value)\r\n" }.joined()
+                    let request = "GET \(path) HTTP/1.0\r\nHost: \(host):\(port)\r\nUser-Agent: LogiKast\r\n\(extra)Connection: close\r\n\r\n"
                     connection.send(content: Data(request.utf8), completion: .contentProcessed { error in
                         if error != nil { finish(nil) } else { readMore() }
                     })
@@ -84,6 +86,43 @@ enum RelayProbe {
             }
             queue.asyncAfter(deadline: .now() + timeout) { finish(finished ? nil : parse()) }
             connection.start(queue: queue)
+        }
+    }
+}
+
+/// Asks the other server of a "relay everything" setup which mounts it would hand over, using the relay login.
+enum MasterProbe {
+    enum Result: Equatable {
+        /// The login works; these are the mounts the other server offers.
+        case ok([String])
+        case badLogin
+        case unreachable
+        /// The address leads back to this server.
+        case thisServer
+    }
+
+    /// The mounts in Icecast's /admin/streamlist.txt: one per line.
+    static func parseList(_ body: Data) -> [String] {
+        String(decoding: body, as: UTF8.self)
+            .split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { $0.hasPrefix("/") }
+    }
+
+    static func probe(_ m: MasterRelay, ownInstance: String?) async -> Result {
+        let host = m.server.trimmingCharacters(in: .whitespaces)
+        if let own = ownInstance,
+           let reply = await RelayProbe.get(host: host, port: m.port, path: "/status-json.xsl"),
+           reply.status == 200, StatusParser.parse(reply.body)?.instanceUUID == own {
+            return .thisServer
+        }
+        let login = Data("\(m.username.isEmpty ? "relay" : m.username):\(m.password)".utf8).base64EncodedString()
+        guard let reply = await RelayProbe.get(host: host, port: m.port, path: "/admin/streamlist.txt",
+                                               headers: ["Authorization": "Basic \(login)"]) else { return .unreachable }
+        switch reply.status {
+        case 200: return .ok(parseList(reply.body))
+        case 401, 403: return .badLogin
+        default: return .unreachable
         }
     }
 }

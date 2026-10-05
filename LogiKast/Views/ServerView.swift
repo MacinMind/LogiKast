@@ -101,18 +101,88 @@ struct ServerView: View {
                     CopyableRow(label: "Server", value: "\(model.config.server.hostname.isEmpty ? "localhost" : model.config.server.hostname):\(model.config.server.port)")
                 }
             } header: {
-                Text("Relaying everything")
+                Text("Let others relay everything")
             } footer: {
-                FooterText("Only needed to let another Icecast server pick up all of your mounts automatically, including new ones. That server enters the address above as its master server, with the user “relay” and this password. Hidden backup mounts are not shared.")
+                FooterText("Not needed to let someone relay one mount: give them that mount's address (Mount › Advanced › Relaying by other servers). That needs no password. This is for a server that should pick up all your mounts automatically, including new ones. Hidden backup mounts are not shared.")
             }
 
-            Section {
-                Label {
-                    Text("You do not need this to let someone relay one mount. Give them that mount's address (Mount › Advanced › Relaying by other servers). It needs no password, and each relay counts as one listener.")
-                        .font(.system(size: FooterText.fontSize))
-                } icon: { Image(systemName: "info.circle") }
-                .foregroundStyle(.secondary)
+            masterRelaySection
+    }
+
+    // MARK: Relay everything from another server
+
+    private var masterBinding: Binding<MasterRelay> { $model.config.server.masterRelay }
+
+    @State private var masterResult: MasterProbe.Result?
+    @State private var masterChecking = false
+
+    @ViewBuilder private var masterRelaySection: some View {
+        let master = model.config.server.masterRelay
+        Section {
+            Toggle("Relay all mounts from another Icecast server", isOn: masterBinding.enabled)
+                .task(id: MasterCheckKey(master: master, ownInstance: model.poller.status?.instanceUUID)) { await watchMaster() }
+            if master.enabled {
+                LabeledContent("Server") {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        TextField("", text: masterBinding.server, prompt: Text("e.g. radio.example.com"))
+                            .multilineTextAlignment(.trailing).autocorrectionDisabled()
+                        Text(":").foregroundStyle(.secondary)
+                        TextField("", value: masterBinding.port, format: .number.grouping(.never))
+                            .multilineTextAlignment(.trailing).frame(width: 56)
+                    }
+                }
+                LabeledContent("Relay login") {
+                    HStack(spacing: 8) {
+                        TextField("", text: masterBinding.username, prompt: Text("relay")).multilineTextAlignment(.trailing).autocorrectionDisabled()
+                        SecureField("", text: masterBinding.password, prompt: Text("Password")).multilineTextAlignment(.trailing)
+                    }
+                }
+                Toggle("Only pull streams while someone is listening", isOn: masterBinding.onDemand)
+                masterStatusRows(master)
             }
+        } header: {
+            Text("Relay everything from another server")
+        } footer: {
+            FooterText("Takes every visible mount from the other Icecast server, under the same names, and picks up new ones within about 20 seconds. It needs that server's relay password (on a LogiKast server: Server › Relay). Changing or turning this off needs a server restart.")
+        }
+    }
+
+    private struct MasterCheckKey: Equatable { var master: MasterRelay; var ownInstance: String? }
+
+    /// Checks the other server once the settings stop changing, then every 20 seconds while this page is open.
+    private func watchMaster() async {
+        masterResult = nil
+        let m = model.config.server.masterRelay
+        guard m.isActive, (1...65535).contains(m.port) else { masterChecking = false; return }
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }     // tests make no network calls
+        masterChecking = true
+        try? await Task.sleep(nanoseconds: 800_000_000)
+        while !Task.isCancelled {
+            let result = await MasterProbe.probe(m, ownInstance: model.poller.status?.instanceUUID)
+            guard !Task.isCancelled else { return }
+            masterResult = result
+            masterChecking = false
+            try? await Task.sleep(nanoseconds: 20_000_000_000)
+        }
+    }
+
+    @ViewBuilder private func masterStatusRows(_ master: MasterRelay) -> some View {
+        if masterChecking {
+            HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Checking the server…").foregroundStyle(.secondary).font(.callout) }
+        } else if let masterResult {
+            switch masterResult {
+            case .thisServer:
+                Label("That is your own server. Enter a different one.", systemImage: "xmark.octagon.fill").foregroundStyle(.red).font(.callout)
+            case .unreachable:
+                Label("Can't reach \(master.server.trimmingCharacters(in: .whitespaces)):\(String(master.port)) from this Mac right now.",
+                      systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
+            case .badLogin:
+                Label("The server answered, but not to that login. Check the relay user and password with whoever runs it.",
+                      systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
+            case .ok(let mounts):
+                RelayedMountList(mounts: mounts, onDemand: master.onDemand)
+            }
+        }
     }
 
     @ViewBuilder private var alertsTab: some View {
