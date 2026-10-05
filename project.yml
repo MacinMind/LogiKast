@@ -48,7 +48,7 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSMinimumSystemVersion: "13.0"
         LSApplicationCategoryType: public.app-category.music
-        NSHumanReadableCopyright: "© 2026 MacinMind Software, Inc.\nFree software (GPLv2)."
+        NSHumanReadableCopyright: "© 2026 MacinMind Software, Inc.\nLicensed under the GNU GPL, version 2."
     entitlements:
       path: LogiKast/LogiKast.entitlements
       properties: {}
