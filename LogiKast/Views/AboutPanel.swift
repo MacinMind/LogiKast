@@ -22,8 +22,9 @@ enum AboutPanel {
         add("github.com/MacinMind/LogiKast", link: "https://github.com/MacinMind/LogiKast")
         add("\nRuns ")
         add("Icecast", link: "https://icecast.org")
-        add(" from the Xiph.Org Foundation, under the GPL version 2.\nAlso includes libxml2, libxslt, libogg, libvorbis, libigloo, curl and RHash. ")
+        add(" from the Xiph.Org Foundation, under the GPL version 2.\nAlso includes libxml2, libxslt, libogg, libvorbis, libigloo, curl and RHash.")
         if let notices = Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt") {
+            add("\n")
             add("View licenses and notices", link: notices.absoluteString)
         }
         return out
