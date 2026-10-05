@@ -157,6 +157,38 @@ final class RelaySampleConfigs: XCTestCase {
     }
 }
 
+final class RelayDemandTests: XCTestCase {
+    private func status(_ mounts: [(String, Int)], backups: [(String, Int)] = []) -> ServerStatus {
+        func ms(_ p: String, _ l: Int) -> MountStatus { MountStatus(path: p, listeners: l, peak: l) }
+        return ServerStatus(mounts: mounts.map { ms($0.0, $0.1) }, backupMounts: backups.map { ms($0.0, $0.1) })
+    }
+
+    private func config(onDemand: Bool) -> AppConfig {
+        var c = AppConfig.makeDefault()
+        var r = Mount(); r.name = "/r"; r.isRelay = true; r.relay.server = "x.example.com"; r.relay.onDemand = onDemand
+        var b = Mount(); b.name = "/b"; b.backupIsRelay = true; b.backupRelay.server = "y.example.com"; b.backupRelay.onDemand = onDemand
+        c.mounts = [r, b]
+        return c
+    }
+
+    func testIdleConnectedOnDemandRelaysAreDropped() {
+        let st = status([("/r", 0), ("/b", 3)], backups: [(BackupAudio.internalMount(forMount: "/b"), 0)])
+        XCTAssertEqual(RelayDemand.idleOnDemandMounts(config: config(onDemand: true), status: st),
+                       ["/r", BackupAudio.internalMount(forMount: "/b")])
+    }
+
+    func testRelaysWithListenersOrNotConnectedAreLeftAlone() {
+        XCTAssertEqual(RelayDemand.idleOnDemandMounts(config: config(onDemand: true), status: status([("/r", 2)])), [])
+        XCTAssertEqual(RelayDemand.idleOnDemandMounts(config: config(onDemand: true), status: status([])), [], "not connected: nothing to drop")
+        XCTAssertEqual(RelayDemand.idleOnDemandMounts(config: config(onDemand: true), status: nil), [])
+    }
+
+    func testAlwaysOnRelaysAreNeverDropped() {
+        let st = status([("/r", 0)], backups: [(BackupAudio.internalMount(forMount: "/b"), 0)])
+        XCTAssertEqual(RelayDemand.idleOnDemandMounts(config: config(onDemand: false), status: st), [])
+    }
+}
+
 final class RelayValidationTests: XCTestCase {
     private func issues(_ edit: (inout Mount) -> Void) -> [ConfigIssue] {
         var c = AppConfig.makeDefault()

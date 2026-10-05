@@ -54,3 +54,24 @@ enum BackupState: Equatable {
         }
     }
 }
+
+/// Relays set to "only pull the stream while someone is listening".
+enum RelayDemand {
+    /// Icecast applies that setting only when a relay starts, so a relay that was already connected keeps running when
+    /// the switch is turned on. These are the connected relays (mount, or a backup's internal mount) that nobody is
+    /// listening to: dropping them makes the switch take effect now. They reconnect by themselves when a listener arrives.
+    static func idleOnDemandMounts(config: AppConfig, status: ServerStatus?) -> [String] {
+        guard let status else { return [] }
+        var out: [String] = []
+        for m in config.mounts {
+            if m.isRelay, m.relay.isSet, m.relay.onDemand, let s = status.mount(m.name), s.listeners == 0 {
+                out.append(m.name)
+            }
+            if m.usesBackupRelay, m.backupRelay.onDemand {
+                let path = BackupAudio.internalMount(forMount: m.name)
+                if let b = status.backupMounts.first(where: { $0.path == path }), b.listeners == 0 { out.append(path) }
+            }
+        }
+        return out
+    }
+}

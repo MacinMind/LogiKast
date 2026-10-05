@@ -47,4 +47,12 @@ struct AdminClient {
               let (_, resp) = try? await Self.session.data(for: req) else { return false }
         return (resp as? HTTPURLResponse)?.statusCode == 200
     }
+
+    /// Disconnects a mount's source. For a relay that is set to "only while someone is listening" this closes the connection
+    /// to the other server, which then opens again only when a listener arrives.
+    func dropSource(mount: String) async -> Bool {
+        guard let req = request("killsource", mount: mount),
+              let (_, resp) = try? await Self.session.data(for: req) else { return false }
+        return (resp as? HTTPURLResponse)?.statusCode == 200
+    }
 }

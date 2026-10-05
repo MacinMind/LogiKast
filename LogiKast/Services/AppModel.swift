@@ -188,6 +188,19 @@ final class AppModel: ObservableObject {
             promptForRestart(reason: "Changing the port or network interface needs the server to restart.")
         } else {
             server.apply(config: config)
+            dropIdleOnDemandRelays()
+        }
+    }
+
+    /// After a reload, close connections that "only while someone is listening" says should not be open (see RelayDemand).
+    private func dropIdleOnDemandRelays() {
+        guard config.mounts.contains(where: { ($0.isRelay && $0.relay.onDemand) || ($0.usesBackupRelay && $0.backupRelay.onDemand) }) else { return }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)          // let the reload finish and the status refresh
+            guard let self else { return }
+            for mount in RelayDemand.idleOnDemandMounts(config: self.config, status: self.poller.status) {
+                _ = await self.admin.dropSource(mount: mount)
+            }
         }
     }
 
