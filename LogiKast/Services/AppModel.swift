@@ -313,7 +313,8 @@ final class AppModel: ObservableObject {
     private func evaluateAlerts() {
         let limits = Dictionary(uniqueKeysWithValues: config.mounts.map { ($0.name, $0.maxListeners) })
         let events = alerts.update(now: Date(), enabled: server.isEnabled, status: poller.status,
-                                   serverLimit: config.server.maxClients, mountLimits: limits)
+                                   serverLimit: config.server.maxClients, mountLimits: limits,
+                                   relayMounts: Set(config.mounts.filter(\.isRelay).map(\.name)))
         for e in events where config.notifications.allows(e) { notifier.post(e) }
     }
 

@@ -86,6 +86,19 @@ final class AlertTrackerTests: XCTestCase {
         XCTAssertEqual(step(&tr, 30, status([("/live", 1)])), [])
     }
 
+    func testRelayMountsSayRelayNotEncoder() {
+        var tr = AlertTracker()
+        func go(_ t: TimeInterval, _ st: ServerStatus) -> [AlertEvent] {
+            tr.update(now: at(t), enabled: true, status: st, serverLimit: 0, mountLimits: [:], relayMounts: ["/r"])
+        }
+        _ = go(0, status([("/live", 0)]))
+        XCTAssertEqual(go(2, status([("/live", 0), ("/r", 0)])), [.relayConnected(mount: "/r")])
+        _ = go(3, status([("/live", 0)]))
+        XCTAssertEqual(go(8, status([("/live", 0)])), [.relayDropped(mount: "/r")])
+        XCTAssertEqual(AlertEvent.relayDropped(mount: "/r").title, "Relay dropped off — /r")
+        XCTAssertTrue(AlertEvent.relayDropped(mount: "/r").isUrgent)
+    }
+
     func testMessagesAndCategories() {
         XCTAssertEqual(AlertEvent.encoderDropped(mount: "/live").title, "Encoder dropped off — /live")
         XCTAssertTrue(AlertEvent.encoderDropped(mount: "/live").isUrgent)

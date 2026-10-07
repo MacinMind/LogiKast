@@ -3,6 +3,8 @@ import Foundation
 enum AlertEvent: Equatable {
     case encoderConnected(mount: String)
     case encoderDropped(mount: String)
+    case relayConnected(mount: String)      // a mount that pulls from another server
+    case relayDropped(mount: String)
     case serverNotResponding
     case serverRecovered
     case listenerLimitReached(mount: String?, listeners: Int, limit: Int)   // nil mount = whole server
@@ -11,7 +13,7 @@ enum AlertEvent: Equatable {
 
     var category: Category {
         switch self {
-        case .encoderConnected, .encoderDropped: .encoder
+        case .encoderConnected, .encoderDropped, .relayConnected, .relayDropped: .encoder
         case .serverNotResponding, .serverRecovered: .serverProblem
         case .listenerLimitReached: .listenerLimit
         }
@@ -21,6 +23,8 @@ enum AlertEvent: Equatable {
         switch self {
         case .encoderConnected(let m): "Encoder connected — \(m)"
         case .encoderDropped(let m): "Encoder dropped off — \(m)"
+        case .relayConnected(let m): "Relay connected — \(m)"
+        case .relayDropped(let m): "Relay dropped off — \(m)"
         case .serverNotResponding: "Your server isn't responding"
         case .serverRecovered: "Your server is back"
         case .listenerLimitReached: "Listener limit reached"
@@ -29,10 +33,12 @@ enum AlertEvent: Equatable {
 
     var message: String {
         switch self {
-        case .encoderConnected(let m):
+        case .encoderConnected(let m), .relayConnected(let m):
             "\(m) is on the air."
         case .encoderDropped(let m):
             "No audio is reaching \(m). Listeners hear silence unless you've set backup audio."
+        case .relayDropped(let m):
+            "No audio is reaching \(m) from the other server. Listeners hear silence unless you've set backup audio."
         case .serverNotResponding:
             "Your station may be off the air. Open LogiKast to see why."
         case .serverRecovered:
@@ -45,7 +51,7 @@ enum AlertEvent: Equatable {
     /// Alerts that mean something is wrong play a sound.
     var isUrgent: Bool {
         switch self {
-        case .encoderDropped, .serverNotResponding: true
+        case .encoderDropped, .relayDropped, .serverNotResponding: true
         default: false
         }
     }
@@ -72,7 +78,8 @@ struct AlertTracker {
     /// - status: nil means the server did not answer.
     /// - mountLimits: per-mount listener caps (0 = none). serverLimit: server-wide cap.
     mutating func update(now: Date, enabled: Bool, status: ServerStatus?,
-                         serverLimit: Int, mountLimits: [String: Int]) -> [AlertEvent] {
+                         serverLimit: Int, mountLimits: [String: Int],
+                         relayMounts: Set<String> = []) -> [AlertEvent] {
         guard enabled else { reset(); return [] }
         var events: [AlertEvent] = []
 
@@ -106,14 +113,14 @@ struct AlertTracker {
         } else {
             for m in nowLive.subtracting(live).sorted() {
                 live.insert(m); missingSince[m] = nil
-                events.append(.encoderConnected(mount: m))
+                events.append(relayMounts.contains(m) ? .relayConnected(mount: m) : .encoderConnected(mount: m))
             }
             for m in live.subtracting(nowLive).sorted() {
                 let since = missingSince[m] ?? now
                 missingSince[m] = since
                 if now.timeIntervalSince(since) >= encoderGrace {
                     live.remove(m); missingSince[m] = nil
-                    events.append(.encoderDropped(mount: m))
+                    events.append(relayMounts.contains(m) ? .relayDropped(mount: m) : .encoderDropped(mount: m))
                 }
             }
             for m in nowLive { missingSince[m] = nil }   // back before the grace ran out: quiet

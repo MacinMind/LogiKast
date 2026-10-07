@@ -201,7 +201,7 @@ struct ServerView: View {
             Section {
                 Toggle("Send notifications", isOn: $model.config.notifications.enabled)
                 if model.config.notifications.enabled {
-                    Toggle("Encoder connects or drops off", isOn: $model.config.notifications.encoderEvents)
+                    Toggle("Encoder or relay connects or drops off", isOn: $model.config.notifications.encoderEvents)
                     Toggle("Server stops responding or recovers", isOn: $model.config.notifications.serverProblems)
                     Toggle("Listener limit reached", isOn: $model.config.notifications.listenerLimit)
                 }
