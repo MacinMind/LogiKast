@@ -94,7 +94,8 @@ final class Worker {
 
     private func stream() {
         set("connecting")
-        guard let data = FileManager.default.contents(atPath: feed.file) else { set("error", "The backup audio file is missing."); return }
+        // Mapped, not read: the file is paged in as it plays and can be dropped again, so a long backup does not sit in memory.
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: feed.file), options: .alwaysMapped) else { set("error", "The backup audio file is missing."); return }
         let kind: AudioKind = feed.contentType == "audio/mpeg" ? .mp3 : .aac
         let frames = AudioFrames.parse(data, kind: kind)
         guard !frames.isEmpty else { set("error", "No audio was found in the backup file."); return }

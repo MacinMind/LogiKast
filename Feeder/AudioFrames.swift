@@ -14,9 +14,12 @@ enum AudioKind: Equatable {
 
 /// Splits MP3 and ADTS-AAC files into frames so they can be sent at real-time speed.
 enum AudioFrames {
+    /// Reads the bytes in place: a long backup file is not copied (a copy is as large as the file again).
     static func parse(_ data: Data, kind: AudioKind) -> [AudioFrame] {
-        let b = [UInt8](data)
-        return kind == .mp3 ? parseMP3(b) : parseADTS(b)
+        data.withUnsafeBytes { raw in
+            let b = raw.bindMemory(to: UInt8.self)
+            return kind == .mp3 ? parseMP3(b) : parseADTS(b)
+        }
     }
 
     // MARK: MP3
@@ -31,7 +34,7 @@ enum AudioFrames {
     private static let br2L23 = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160]
 
     /// Length and duration of the MP3 frame whose header starts at `i`, or nil if it isn't a valid header.
-    static func mp3Header(_ b: [UInt8], at i: Int) -> (length: Int, duration: Double)? {
+    static func mp3Header(_ b: UnsafeBufferPointer<UInt8>, at i: Int) -> (length: Int, duration: Double)? {
         guard i + 4 <= b.count, b[i] == 0xFF, (b[i + 1] & 0xE0) == 0xE0 else { return nil }
         let version = Int((b[i + 1] >> 3) & 3)          // 0: 2.5, 1: reserved, 2: MPEG-2, 3: MPEG-1
         let layer = Int((b[i + 1] >> 1) & 3)            // 1: III, 2: II, 3: I, 0: reserved
@@ -65,7 +68,7 @@ enum AudioFrames {
         return (length, Double(samples) / Double(rate))
     }
 
-    private static func parseMP3(_ b: [UInt8]) -> [AudioFrame] {
+    private static func parseMP3(_ b: UnsafeBufferPointer<UInt8>) -> [AudioFrame] {
         var pos = 0
         if b.count >= 10, b[0] == 0x49, b[1] == 0x44, b[2] == 0x33 {          // ID3v2 tag: skip it
             let size = (Int(b[6] & 0x7F) << 21) | (Int(b[7] & 0x7F) << 14) | (Int(b[8] & 0x7F) << 7) | Int(b[9] & 0x7F)
@@ -91,7 +94,7 @@ enum AudioFrames {
 
     private static let aacRates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350]
 
-    static func adtsHeader(_ b: [UInt8], at i: Int) -> (length: Int, duration: Double)? {
+    static func adtsHeader(_ b: UnsafeBufferPointer<UInt8>, at i: Int) -> (length: Int, duration: Double)? {
         guard i + 7 <= b.count, b[i] == 0xFF, (b[i + 1] & 0xF6) == 0xF0 else { return nil }   // sync, layer 00
         let srIndex = Int((b[i + 2] >> 2) & 0x0F)
         guard srIndex < aacRates.count else { return nil }
@@ -101,7 +104,7 @@ enum AudioFrames {
         return (length, Double(1024 * blocks) / Double(aacRates[srIndex]))
     }
 
-    private static func parseADTS(_ b: [UInt8]) -> [AudioFrame] {
+    private static func parseADTS(_ b: UnsafeBufferPointer<UInt8>) -> [AudioFrame] {
         var pos = 0
         if b.count >= 10, b[0] == 0x49, b[1] == 0x44, b[2] == 0x33 {
             let size = (Int(b[6] & 0x7F) << 21) | (Int(b[7] & 0x7F) << 14) | (Int(b[8] & 0x7F) << 7) | Int(b[9] & 0x7F)
