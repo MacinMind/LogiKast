@@ -11,6 +11,8 @@ struct MountStatus: Identifiable, Equatable {
     var streamDescription: String?
     var contentType: String?
     var bitrate: Int?
+    var sampleRate: Int?
+    var channels: Int?
     var streamStart: Date?
     var id: String { path }
 }
@@ -59,6 +61,7 @@ enum StatusParser {
             guard src["stream_start_iso8601"] != nil || src["server_type"] != nil || src["content-type"] != nil else { return nil }
             guard let listenURL = src["listenurl"] as? String,
                   let path = URL(string: listenURL)?.path, !path.isEmpty else { return nil }
+            let info = audioInfo(src["audio_info"])
             return MountStatus(
                 path: path,
                 listeners: int(src["listeners"]) ?? 0,
@@ -69,7 +72,9 @@ enum StatusParser {
                 streamURL: nonEmpty(src["server_url"]),
                 streamDescription: nonEmpty(src["server_description"], ignoring: ["Unspecified description"]),
                 contentType: (src["server_type"] as? String) ?? (src["content-type"] as? String),
-                bitrate: int(src["bitrate"]) ?? int(src["ice-bitrate"]),
+                bitrate: int(src["bitrate"]) ?? int(src["ice-bitrate"]) ?? info["bitrate"],
+                sampleRate: int(src["samplerate"]) ?? info["samplerate"],
+                channels: int(src["channels"]) ?? info["channels"],
                 streamStart: (src["stream_start_iso8601"] as? String).flatMap(date)
             )
         }
@@ -80,6 +85,18 @@ enum StatusParser {
             backupMounts: mounts.filter { BackupAudio.isInternalMount($0.path) }.sorted { $0.path < $1.path },
             instanceUUID: stats["instance_uuid"] as? String,
             listedPaths: sources.compactMap { ($0["listenurl"] as? String).flatMap { URL(string: $0)?.path } })
+    }
+
+    /// Icecast's `audio_info` text, such as "ice-samplerate=44100;ice-bitrate=128;ice-channels=2", as numbers by short name.
+    static func audioInfo(_ v: Any?) -> [String: Int] {
+        guard let text = v as? String else { return [:] }
+        var out: [String: Int] = [:]
+        for pair in text.split(separator: ";") {
+            let kv = pair.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+            guard kv.count == 2, let n = Int(kv[1]) else { continue }
+            out[kv[0].hasPrefix("ice-") ? String(kv[0].dropFirst(4)) : kv[0]] = n
+        }
+        return out
     }
 
     /// Trimmed string value, or nil if empty or one of Icecast's placeholder defaults.

@@ -57,6 +57,10 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.macinmind.logikast
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # LAME (MP3 encoder) for converting backup audio; built by scripts/build-lame.sh.
+        SWIFT_OBJC_BRIDGING_HEADER: LogiKast/LogiKast-Bridging-Header.h
+        HEADER_SEARCH_PATHS: "$(SRCROOT)/build/lame/include"
+        OTHER_LDFLAGS: "$(SRCROOT)/build/lame/lib/libmp3lame.a"
     postBuildScripts:
       - name: Bundle Icecast
         basedOnDependencyAnalysis: false

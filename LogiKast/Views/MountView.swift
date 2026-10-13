@@ -7,6 +7,9 @@ struct MountView: View {
     @Binding var mount: Mount
     @State private var dropMode = DropMode.nothing
     @State private var backupError: String?
+    @State private var backupNotice: String?
+    @State private var backupAudio: (text: String, info: BackupConverter.Info)?
+    @State private var conversion: ConversionJob?
     @State private var nameAtOpen = ""
     enum DropMode: Hashable { case nothing, file, relay, mount }
 
@@ -289,11 +292,16 @@ struct MountView: View {
         if let v = s.streamDescription { mount.streamDescription = v }
     }
 
+    /// The live stream's format, when there is one to copy.
+    private var liveTarget: BackupTarget? { status.flatMap(BackupTarget.matching) }
+
     @ViewBuilder private var backupFileRows: some View {
-        if mount.backupFile.isEmpty {
+        if let job = conversion {
+            ConversionRow(job: job)
+        } else if mount.backupFile.isEmpty {
             HStack {
                 Button("Choose Audio File…", action: chooseBackup)
-                Text("MP3 or AAC").foregroundStyle(.secondary).font(.callout)
+                Text("Any audio file. LogiKast converts it if needed.").foregroundStyle(.secondary).font(.callout)
                 Spacer()
             }
         } else {
@@ -301,7 +309,7 @@ struct MountView: View {
                 Image(systemName: "waveform").foregroundStyle(Color.accentColor)
                 VStack(alignment: .leading) {
                     Text(mount.backupName.isEmpty ? mount.backupFile : mount.backupName)
-                    Text(BackupAudio.kind(ofStored: mount.backupFile)?.label ?? "Audio")
+                    Text(backupAudio?.text ?? BackupAudio.kind(ofStored: mount.backupFile)?.label ?? "Audio")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -309,18 +317,46 @@ struct MountView: View {
                 Button("Remove") { removeBackup() }
             }
         }
-        if let live = status?.contentType.flatMap(StreamFormat.init(contentType:)),
-           let kind = BackupAudio.kind(ofStored: mount.backupFile),
-           (kind == .aac) != live.isAAC {
-            Label("Your live stream is \(live.label) but this backup is \(kind.label). Players may stop when the stream switches. Use a backup in the same format.",
-                  systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
+        if let backupNotice {
+            Label(backupNotice, systemImage: "checkmark.circle.fill").foregroundStyle(.secondary).font(.callout)
+        }
+        if conversion == nil, let warning = backupMismatch, let live = liveTarget {
+            HStack {
+                Label(warning, systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.callout)
+                Spacer()
+                Button("Convert to Match") { reconvertBackup(to: live) }
+            }
         }
         if let backupError {
             Label(backupError, systemImage: "xmark.octagon.fill").foregroundStyle(.red).font(.callout)
         }
         backupStatusRows
-        Text("The file plays in a loop at normal speed whenever your encoder is away, and listeners switch back to the live stream within a few seconds of it returning. For the smoothest switch, use the same format, sample rate and bitrate as your live stream.")
+        Text("The file plays in a loop at normal speed whenever your encoder is away, and listeners switch back to the live stream within a few seconds of it returning. LogiKast converts the file to your live stream's format, so the switch is smooth.")
             .font(.callout).foregroundStyle(.secondary)
+            .task(id: mount.backupFile) { await loadBackupInfo() }
+    }
+
+    /// Why the stored backup doesn't match the live stream, or nil when it does (or there is nothing to compare).
+    private var backupMismatch: String? {
+        guard let live = liveTarget, let kind = BackupAudio.kind(ofStored: mount.backupFile) else { return nil }
+        if kind != live.kind { return "Your live stream is \(live.kind.label) but this backup is \(kind.label). Players may stop when the stream switches." }
+        guard let info = backupAudio?.info else { return nil }
+        let rate = Int(info.sampleRate.rounded())
+        if rate != live.sampleRate || info.channels != live.channels {
+            return "Your live stream is \(BackupAudio.rateText(live.sampleRate)) \(live.channels == 1 ? "mono" : "stereo"), but this backup is \(BackupAudio.rateText(rate)) \(info.channels == 1 ? "mono" : "stereo"). Players may glitch when the stream switches."
+        }
+        return nil
+    }
+
+    private func loadBackupInfo() async {
+        let stored = mount.backupFile
+        guard !stored.isEmpty else { backupAudio = nil; return }
+        let loaded = await Task.detached(priority: .utility) { () -> (text: String, info: BackupConverter.Info)? in
+            guard let text = BackupAudio.describe(stored: stored),
+                  let info = BackupConverter.info(of: AppPaths.backupDir.appendingPathComponent(stored)) else { return nil }
+            return (text, info)
+        }.value
+        if stored == mount.backupFile { backupAudio = loaded }
     }
 
     /// Whether the helper that plays the backup is ready, and who is hearing it right now.
@@ -357,17 +393,52 @@ struct MountView: View {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.mp3, .audio]
-        panel.message = "Choose an MP3 or AAC audio file to play when your encoder drops off."
+        panel.allowedContentTypes = [.audio]
+        panel.message = "Choose an audio file to play when your encoder drops off. If it isn't already in your stream's format, LogiKast converts it."
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        do {
-            let installed = try BackupAudio.install(from: url, mountName: mount.name)
-            mount.backupFile = installed.storedName
-            mount.backupName = installed.displayName
-            mount.fallbackMount = ""
-            backupError = nil
-        } catch {
-            backupError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        let mountName = mount.name, target = liveTarget
+        runBackupJob(name: url.lastPathComponent, target: target) { cancel, progress in
+            try BackupAudio.install(from: url, mountName: mountName, target: target, cancel: cancel, progress: progress)
+        }
+    }
+
+    private func reconvertBackup(to target: BackupTarget) {
+        let mountName = mount.name, stored = mount.backupFile
+        let display = mount.backupName.isEmpty ? mount.backupFile : mount.backupName
+        runBackupJob(name: display, target: target) { cancel, progress in
+            try BackupAudio.reconvert(stored: stored, displayName: display, mountName: mountName, target: target, cancel: cancel, progress: progress)
+        }
+    }
+
+    /// Runs a copy or conversion off the main thread, showing progress, and applies the result to this mount.
+    private func runBackupJob(name: String, target: BackupTarget?,
+                              _ work: @escaping @Sendable (CancelFlag, @escaping (Double) -> Void) throws -> BackupAudio.Installed) {
+        let job = ConversionJob(name: name)
+        conversion = job
+        backupError = nil
+        backupNotice = nil
+        let mountID = mount.id
+        Task {
+            do {
+                let installed = try await Task.detached(priority: .userInitiated) {
+                    try work(job.cancel) { f in job.report(f) }
+                }.value
+                if let i = model.config.mounts.firstIndex(where: { $0.id == mountID }) {
+                    model.config.mounts[i].backupFile = installed.storedName
+                    model.config.mounts[i].backupName = installed.displayName
+                    model.config.mounts[i].fallbackMount = ""
+                }
+                if let t = installed.convertedTo {
+                    backupNotice = target != nil
+                        ? "Converted to \(t.summary) to match your live stream."
+                        : "Converted to \(t.summary). Once your stream is on the air, LogiKast can convert it again to match."
+                }
+            } catch BackupAudio.BackupError.cancelled {
+                // The user canceled: nothing changes.
+            } catch {
+                backupError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            }
+            conversion = nil
         }
     }
 
@@ -376,6 +447,7 @@ struct MountView: View {
         mount.backupFile = ""
         mount.backupName = ""
         backupError = nil
+        backupNotice = nil
     }
 
     private var statusCard: some View {
@@ -418,5 +490,36 @@ struct MountView: View {
             Text(value).font(.system(size: 20, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
         }
         .frame(width: width, alignment: .trailing)
+    }
+}
+
+/// A backup file being converted: its progress, and the Cancel switch.
+final class ConversionJob: ObservableObject, @unchecked Sendable {
+    let name: String
+    let cancel = CancelFlag()
+    @Published var fraction = 0.0
+    private var lastShown = -1.0
+
+    init(name: String) { self.name = name }
+
+    /// Called from the converting thread; updates the window at most every 1%.
+    func report(_ f: Double) {
+        guard f - lastShown >= 0.01 || f >= 1 else { return }
+        lastShown = f
+        DispatchQueue.main.async { self.fraction = f }
+    }
+}
+
+private struct ConversionRow: View {
+    @ObservedObject var job: ConversionJob
+
+    var body: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Preparing “\(job.name)”…")
+                ProgressView(value: job.fraction)
+            }
+            Button("Cancel") { job.cancel.cancel() }
+        }
     }
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds LogiKast/Resources/ThirdPartyNotices.txt from the license files inside the pinned source tarballs in
-third_party/src (downloaded by scripts/build-icecast.sh). Run after changing a bundled library's version.
+third_party/src (downloaded by scripts/build-icecast.sh and scripts/build-lame.sh). Run after changing a bundled library's version.
 Usage: scripts/make-notices.py"""
 import tarfile
 from pathlib import Path
@@ -19,11 +19,12 @@ PARTS = [
     ("libxml2 2.13.9", "libxml2-2.13.9", ["Copyright"], "https://gitlab.gnome.org/GNOME/libxml2", "XML library.", "MIT"),
     ("libxslt 1.1.43", "libxslt-1.1.43", ["Copyright"], "https://gitlab.gnome.org/GNOME/libxslt", "XSLT library (Icecast's web pages).", "MIT"),
     ("curl 8.22.0", "curl-8.22.0", ["COPYING"], "https://curl.se", "network library.", "curl license (MIT-style)"),
+    ("LAME 3.100", "lame-3.100", ["COPYING"], "https://lame.sourceforge.io", "MP3 encoder, used to convert backup audio files to MP3.", "GNU Library General Public License (LGPL) version 2"),
     ("RHash 1.4.6", "RHash-1.4.6", ["COPYING"], "https://github.com/rhash/RHash", "hashing library.", "BSD Zero Clause"),
 ]
 TARBALLS = {"icecast-2.5.0": "icecast-2.5.0.tar.gz", "libigloo-0.9.5": "libigloo-0.9.5.tar.gz", "libogg-1.3.6": "libogg-1.3.6.tar.xz",
             "libvorbis-1.3.7": "libvorbis-1.3.7.tar.xz", "libxml2-2.13.9": "libxml2-2.13.9.tar.xz", "libxslt-1.1.43": "libxslt-1.1.43.tar.xz",
-            "curl-8.22.0": "curl-8.22.0.tar.xz", "RHash-1.4.6": "v1.4.6.tar.gz"}
+            "curl-8.22.0": "curl-8.22.0.tar.xz", "lame-3.100": "lame-3.100.tar.gz", "RHash-1.4.6": "v1.4.6.tar.gz"}
 
 def read(tar, member):
     return tar.extractfile(member).read().decode("utf-8", "replace").rstrip()

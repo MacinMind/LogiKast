@@ -41,6 +41,7 @@ if [ "$NOTARIZE" = 1 ]; then
     || { echo "error: no working notarytool profile '$PROFILE'. See the usage note at the top of this script." >&2; exit 1; }
 fi
 [ -x build/icecast/icecast ] || { echo "error: run scripts/build-icecast.sh first" >&2; exit 1; }
+[ -f build/lame/lib/libmp3lame.a ] || { echo "error: run scripts/build-lame.sh first" >&2; exit 1; }
 
 VERSION=$(sed -nE 's/^ *MARKETING_VERSION: *"([^"]+)".*/\1/p' project.yml)
 BUILD=$(sed -nE 's/^ *CURRENT_PROJECT_VERSION: *"([^"]+)".*/\1/p' project.yml)

@@ -15,7 +15,7 @@ Icecast is bundled; nothing else needs to be installed. MP3, AAC and HE-AAC stre
 - The server runs in the background: it keeps running when LogiKast is closed, restarts if it stops, and starts at login
 - Copy-and-paste connection details for your encoder, and a setup assistant for new stations
 - Listener list with search and a Disconnect button, per-stream and total bandwidth, and a button for Icecast's web admin
-- Backup audio file, another mount, or a stream from another server that plays when the encoder drops and hands back to live when it returns
+- Backup audio that plays when the encoder drops and hands back to live when it returns: choose any audio file (MP3, AAC, M4A, WAV, AIFF, FLAC...) and LogiKast converts it to your stream's format, or use another mount or a stream from another server
 - Relay: a mount can take its audio from another Icecast or Shoutcast server instead of an encoder, and other servers can relay your mounts
 - Share links, QR code and website player code; optional public directory listing
 - macOS 13 or later, Apple silicon and Intel
@@ -40,12 +40,17 @@ scripts/build-icecast.sh
 ```
 
 ```bash
-# 2. Create LogiKast.xcodeproj from project.yml
+# 2. Build the LAME MP3 encoder into build/lame (LogiKast uses it to convert backup audio to MP3)
+scripts/build-lame.sh
+```
+
+```bash
+# 3. Create LogiKast.xcodeproj from project.yml
 xcodegen generate
 ```
 
 ```bash
-# 3. Build, then test
+# 4. Build, then test
 xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -derivedDataPath build/xcode build
 xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -derivedDataPath build/xcode test
 ```
@@ -71,7 +76,7 @@ the public version. Both are set in `project.yml`.
 
 ## Credits
 
-LogiKast runs [Icecast](https://icecast.org), the open source streaming server from the Xiph.Org Foundation and its contributors (GPLv2). It also bundles libxml2, libxslt, libogg, libvorbis, libigloo, curl and RHash, each under its own license. The licenses and notices are in [LogiKast/Resources/ThirdPartyNotices.txt](LogiKast/Resources/ThirdPartyNotices.txt) and in the app's About window. The exact versions, the three small patches applied, and the build recipe are in `third_party/` and `scripts/build-icecast.sh`.
+LogiKast runs [Icecast](https://icecast.org), the open source streaming server from the Xiph.Org Foundation and its contributors (GPLv2). It also bundles libxml2, libxslt, libogg, libvorbis, libigloo, curl, RHash and the LAME MP3 encoder, each under its own license. The licenses and notices are in [LogiKast/Resources/ThirdPartyNotices.txt](LogiKast/Resources/ThirdPartyNotices.txt) and in the app's About window. The exact versions, the three small patches applied, and the build recipe are in `third_party/`, `scripts/build-icecast.sh` and `scripts/build-lame.sh`.
 
 ## License
 

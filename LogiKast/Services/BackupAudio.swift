@@ -1,8 +1,8 @@
 import Foundation
 
-/// Backup audio files: played in a loop (by Icecast) when a mount's encoder drops off.
-/// Files live inside Icecast's web root so the server can stream them, and they are copied
-/// in so the original can be moved or deleted.
+/// Backup audio files: played in a loop (by the feeder) when a mount's encoder drops off.
+/// They are copied into the app's backup folder so the original can be moved or deleted. Anything that isn't already
+/// MP3 or AAC (ADTS) in the live stream's format is converted on the way in (see BackupConverter).
 enum BackupAudio {
     enum Kind: Equatable {
         case mp3, aac
@@ -13,20 +13,30 @@ enum BackupAudio {
     enum BackupError: LocalizedError, Equatable {
         case unreadable
         case tooLarge
-        case mp4Container
-        case unsupported
+        case cannotRead
+        case cancelled
+        case conversionFailed(String)
 
         var errorDescription: String? {
             switch self {
             case .unreadable: "That file couldn't be read."
-            case .tooLarge: "That file is larger than 200 MB. Use a shorter backup loop."
-            case .mp4Container: "M4A / MP4 files can't be streamed directly. Export the audio as MP3, or as AAC (ADTS), and choose that file."
-            case .unsupported: "Use an MP3 or AAC (ADTS) audio file. Other formats can't be streamed by the server."
+            case .tooLarge: "That file is larger than 200 MB once prepared. Use a shorter backup loop."
+            case .cannotRead: "macOS can't read that audio file. It may be copy-protected or in a format macOS doesn't support (such as Ogg). Try MP3, AAC, M4A, WAV, AIFF, FLAC or ALAC."
+            case .cancelled: "Conversion canceled."
+            case .conversionFailed(let why): "The file couldn't be converted. \(why)"
             }
         }
     }
 
+    /// Largest backup file that is kept (after any conversion).
     static let maxBytes = 200 * 1024 * 1024
+    /// Largest file accepted for conversion: an uncompressed WAV is much bigger than the MP3 made from it.
+    static let maxSourceBytes = 1024 * 1024 * 1024
+
+    static func rateText(_ hz: Int) -> String {
+        let k = Double(hz) / 1000
+        return k == k.rounded() ? "\(Int(k)) kHz" : String(format: "%g kHz", k)
+    }
 
     /// Internal mount the feeder streams a mount's backup audio to. Hidden from listings.
     static let internalPrefix = "/_backup/"
@@ -64,27 +74,81 @@ enum BackupAudio {
         var displayName: String
         var kind: Kind
         var bytes: Int
+        /// Set when the file was converted: what it was turned into.
+        var convertedTo: BackupTarget? = nil
     }
 
-    /// Validates and copies `source` into the backup folder for `mountName`.
-    static func install(from source: URL, mountName: String, into dir: URL = AppPaths.backupDir) throws -> Installed {
+    /// Validates and copies `source` into the backup folder for `mountName`, converting it first when it isn't already
+    /// MP3 or AAC (ADTS) in the `target` format. With no `target` (no live stream to copy), an MP3 or AAC file is kept as it
+    /// is, and anything else becomes `BackupTarget.standard`.
+    static func install(from source: URL, mountName: String, target: BackupTarget? = nil, into dir: URL = AppPaths.backupDir,
+                        cancel: CancelFlag = CancelFlag(), progress: (Double) -> Void = { _ in }) throws -> Installed {
         let fm = FileManager.default
         guard let attrs = try? fm.attributesOfItem(atPath: source.path),
               let size = attrs[.size] as? Int,
               let handle = try? FileHandle(forReadingFrom: source) else { throw BackupError.unreadable }
-        defer { try? handle.close() }
-        guard size <= maxBytes else { throw BackupError.tooLarge }
         let head = (try? handle.read(upToCount: 16)) ?? Data()
-        if isMP4(head) { throw BackupError.mp4Container }
-        guard let kind = sniff(head) else { throw BackupError.unsupported }
+        try? handle.close()
+        guard size <= maxSourceBytes else { throw BackupError.tooLarge }
 
+        let kind = isMP4(head) ? nil : sniff(head)
+        if let kind, size <= maxBytes, keepsAsIs(source, kind: kind, target: target) {
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            let stored = storedName(forMount: mountName, kind: kind)
+            let dest = dir.appendingPathComponent(stored)
+            clearBackups(forMount: mountName, in: dir)
+            try fm.copyItem(at: source, to: dest)
+            return Installed(storedName: stored, displayName: source.lastPathComponent, kind: kind, bytes: size)
+        }
+        return try convert(source, displayName: source.lastPathComponent, mountName: mountName,
+                           target: target ?? .standard, into: dir, cancel: cancel, progress: progress)
+    }
+
+    /// Converts the backup already stored for `mountName` to `target` (used when the live stream turns out to differ).
+    static func reconvert(stored: String, displayName: String, mountName: String, target: BackupTarget, into dir: URL = AppPaths.backupDir,
+                          cancel: CancelFlag = CancelFlag(), progress: (Double) -> Void = { _ in }) throws -> Installed {
+        try convert(dir.appendingPathComponent(stored), displayName: displayName, mountName: mountName,
+                    target: target, into: dir, cancel: cancel, progress: progress)
+    }
+
+    private static func keepsAsIs(_ source: URL, kind: Kind, target: BackupTarget?) -> Bool {
+        guard let target else { return true }
+        guard kind == target.kind, let info = BackupConverter.info(of: source) else { return false }
+        return Int(info.sampleRate.rounded()) == target.sampleRate && info.channels == target.channels
+    }
+
+    private static func convert(_ source: URL, displayName: String, mountName: String, target: BackupTarget, into dir: URL,
+                                cancel: CancelFlag, progress: (Double) -> Void) throws -> Installed {
+        let fm = FileManager.default
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        let stored = storedName(forMount: mountName, kind: kind)
-        let dest = dir.appendingPathComponent(stored)
-        // Clear any earlier backup for this mount (either format).
-        for k in [Kind.mp3, .aac] { try? fm.removeItem(at: dir.appendingPathComponent(storedName(forMount: mountName, kind: k))) }
-        try fm.copyItem(at: source, to: dest)
-        return Installed(storedName: stored, displayName: source.lastPathComponent, kind: kind, bytes: size)
+        let stored = storedName(forMount: mountName, kind: target.kind)
+        let temp = dir.appendingPathComponent(".converting-\(UUID().uuidString)")
+        defer { try? fm.removeItem(at: temp) }
+        try BackupConverter.convert(from: source, to: temp, target: target, cancel: cancel, progress: progress)
+        let bytes = (try? fm.attributesOfItem(atPath: temp.path)[.size] as? Int) ?? 0
+        guard bytes > 0 else { throw BackupError.conversionFailed("Nothing was produced.") }
+        guard bytes <= maxBytes else { throw BackupError.tooLarge }
+        let head = (try? FileHandle(forReadingFrom: temp)).flatMap { h -> Data? in defer { try? h.close() }; return try? h.read(upToCount: 16) } ?? Data()
+        guard sniff(head) == target.kind else { throw BackupError.conversionFailed("The result isn't a valid \(target.kind.label) file.") }
+        clearBackups(forMount: mountName, in: dir)
+        try fm.moveItem(at: temp, to: dir.appendingPathComponent(stored))
+        return Installed(storedName: stored, displayName: displayName, kind: target.kind, bytes: bytes, convertedTo: target)
+    }
+
+    /// Removes any earlier backup for this mount (either format).
+    private static func clearBackups(forMount name: String, in dir: URL) {
+        for k in [Kind.mp3, .aac] { try? FileManager.default.removeItem(at: dir.appendingPathComponent(storedName(forMount: name, kind: k))) }
+    }
+
+    /// "MP3 · 44.1 kHz · stereo · about 128 kbps" for a stored backup file, or nil if it can't be read.
+    static func describe(stored: String, in dir: URL = AppPaths.backupDir) -> String? {
+        let url = dir.appendingPathComponent(stored)
+        guard let kind = kind(ofStored: stored), let info = BackupConverter.info(of: url) else { return nil }
+        var parts = [kind.label, rateText(Int(info.sampleRate.rounded())), info.channels == 1 ? "mono" : "stereo"]
+        if info.seconds > 1, let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size]) as? Int {
+            parts.append("about \(Int((Double(bytes) * 8 / info.seconds / 1000).rounded())) kbps")
+        }
+        return parts.joined(separator: " · ")
     }
 
     static func remove(_ storedName: String, from dir: URL = AppPaths.backupDir) {

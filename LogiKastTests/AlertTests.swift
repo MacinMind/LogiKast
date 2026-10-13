@@ -179,11 +179,12 @@ final class BackupAudioTests: XCTestCase {
     func testRejections() throws {
         let dir = try tempDir(); defer { try? FileManager.default.removeItem(at: dir) }
         let dest = dir.appendingPathComponent("b")
+        // Not audio macOS can read (a stub MP4 header, a stub WAV header): nothing is kept.
         XCTAssertThrowsError(try BackupAudio.install(from: try file(m4a, named: "x.m4a", in: dir), mountName: "/a", into: dest)) {
-            XCTAssertEqual($0 as? BackupAudio.BackupError, .mp4Container)
+            XCTAssertEqual($0 as? BackupAudio.BackupError, .cannotRead)
         }
         XCTAssertThrowsError(try BackupAudio.install(from: try file([0x52, 0x49, 0x46, 0x46], named: "x.wav", in: dir), mountName: "/a", into: dest)) {
-            XCTAssertEqual($0 as? BackupAudio.BackupError, .unsupported)
+            XCTAssertEqual($0 as? BackupAudio.BackupError, .cannotRead)
         }
         XCTAssertThrowsError(try BackupAudio.install(from: dir.appendingPathComponent("missing.mp3"), mountName: "/a", into: dest)) {
             XCTAssertEqual($0 as? BackupAudio.BackupError, .unreadable)

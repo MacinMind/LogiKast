@@ -55,7 +55,7 @@ The server runs in the background as a per-user launch agent: it keeps running w
 
 ## Credits and license text (put on the Info page footer)
 
-LogiKast runs Icecast (https://icecast.org), the open source streaming server from the Xiph.Org Foundation and its contributors, under GPLv2. It also bundles libxml2, libxslt, libogg, libvorbis, libigloo, curl and RHash, each under its own license. LogiKast's source code is GPLv2. The LogiKast icon is derived from the Radiologik icon, is © MacinMind Software, Inc., all rights reserved, and is not covered by the GPL.
+LogiKast runs Icecast (https://icecast.org), the open source streaming server from the Xiph.Org Foundation and its contributors, under GPLv2. It also bundles libxml2, libxslt, libogg, libvorbis, libigloo, curl, RHash and the LAME MP3 encoder, each under its own license. LogiKast's source code is GPLv2. The LogiKast icon is derived from the Radiologik icon, is © MacinMind Software, Inc., all rights reserved, and is not covered by the GPL.
 
 ## Screenshots page
 
