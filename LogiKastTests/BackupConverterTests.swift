@@ -98,9 +98,42 @@ final class BackupConverterTests: XCTestCase {
         XCTAssertEqual(left, [])
     }
 
+    /// HE-AAC (AAC+) is a different stream from plain AAC to a player: a plain AAC backup under an HE-AAC stream
+    /// makes players stop. The backup has to be HE-AAC too.
+    func testHEAACBackupMatchesAnHEAACStream() throws {
+        let he = BackupTarget(kind: .aac, sampleRate: 44100, channels: 2, bitrateKbps: 64, highEfficiency: true)
+        let installed = try BackupAudio.install(from: try wav(rate: 44100, channels: 2), mountName: "/live", target: he, into: dest)
+        XCTAssertEqual(installed.storedName, "live-backup-he.aac")
+        XCTAssertTrue(BackupAudio.isHighEfficiency(installed.storedName))
+        let url = dest.appendingPathComponent(installed.storedName)
+        // Like a live HE-AAC encoder: the ADTS headers say 22.05 kHz, the audio is 44.1 kHz.
+        let head = try Data(contentsOf: url).prefix(4)
+        XCTAssertEqual((head[head.startIndex + 2] >> 2) & 0x0F, 7)
+        XCTAssertEqual(Int(try XCTUnwrap(BackupConverter.info(of: url)).sampleRate), 44100)
+        XCTAssertTrue(BackupAudio.looksHighEfficiency(adtsHead: head, playbackRate: 44100))
+        XCTAssertEqual(try seconds(installed.storedName, .aac), 3, accuracy: 0.3)
+        XCTAssertEqual(BackupAudio.describe(stored: installed.storedName, in: dest)?.hasPrefix("HE-AAC · 44.1 kHz · stereo"), true)
+
+        // The feeder announces it as audio/aacp, and a plain AAC backup as audio/aac.
+        var c = AppConfig.makeDefault()
+        c.mounts[0].name = "/live"; c.mounts[0].backupFile = installed.storedName
+        XCTAssertEqual(BackupFeeds.make(for: c, backupDir: dest, fileExists: { _ in true }).feeds.first?.contentType, "audio/aacp")
+
+        // The same HE-AAC file is kept for an HE-AAC stream, and replaced for a plain AAC one.
+        XCTAssertNil(try BackupAudio.install(from: url, mountName: "/x", target: he, into: dest).convertedTo)
+        let lc = BackupTarget(kind: .aac, sampleRate: 44100, channels: 2, bitrateKbps: 128)
+        let plain = try BackupAudio.install(from: url, mountName: "/live", target: lc, into: dest)
+        XCTAssertEqual(plain.storedName, "live-backup.aac")
+        XCTAssertFalse(BackupAudio.exists("live-backup-he.aac", in: dest))
+        c.mounts[0].backupFile = plain.storedName
+        XCTAssertEqual(BackupFeeds.make(for: c, backupDir: dest, fileExists: { _ in true }).feeds.first?.contentType, "audio/aac")
+    }
+
     func testTargetFromLiveStatus() {
         var live = MountStatus(path: "/live", listeners: 0, peak: 0)
         live.contentType = "audio/aacp"; live.sampleRate = 48000; live.channels = 2; live.bitrate = 96
+        XCTAssertEqual(BackupTarget.matching(live), BackupTarget(kind: .aac, sampleRate: 48000, channels: 2, bitrateKbps: 96, highEfficiency: true))
+        live.contentType = "audio/aac"
         XCTAssertEqual(BackupTarget.matching(live), BackupTarget(kind: .aac, sampleRate: 48000, channels: 2, bitrateKbps: 96))
         live.contentType = "audio/mpeg"; live.sampleRate = 96000; live.channels = nil; live.bitrate = nil
         XCTAssertEqual(BackupTarget.matching(live), BackupTarget(kind: .mp3, sampleRate: 48000, channels: 2, bitrateKbps: 128))

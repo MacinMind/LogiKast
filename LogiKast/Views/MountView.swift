@@ -339,7 +339,11 @@ struct MountView: View {
     /// Why the stored backup doesn't match the live stream, or nil when it does (or there is nothing to compare).
     private var backupMismatch: String? {
         guard let live = liveTarget, let kind = BackupAudio.kind(ofStored: mount.backupFile) else { return nil }
-        if kind != live.kind { return "Your live stream is \(live.kind.label) but this backup is \(kind.label). Players may stop when the stream switches." }
+        let he = BackupAudio.isHighEfficiency(mount.backupFile)
+        let have = he ? "HE-AAC" : kind.label
+        if kind != live.kind || (kind == .aac && he != live.highEfficiency) {
+            return "Your live stream is \(live.formatLabel) but this backup is \(have). Players stop when the stream switches to a different format."
+        }
         guard let info = backupAudio?.info else { return nil }
         let rate = Int(info.sampleRate.rounded())
         if rate != live.sampleRate || info.channels != live.channels {

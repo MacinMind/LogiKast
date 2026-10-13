@@ -54,6 +54,16 @@ enum BackupAudio {
         return .mp3
     }
 
+    /// True when the first bytes are an ADTS header whose sample rate is half of `playbackRate`: the way a live HE-AAC (AAC+)
+    /// stream marks itself (44.1 kHz audio is labeled 22.05 kHz, and players find the extra half from the stream itself).
+    static func looksHighEfficiency(adtsHead head: Data, playbackRate: Double) -> Bool {
+        let b = [UInt8](head.prefix(4))
+        guard b.count >= 3, b[0] == 0xFF, (b[1] & 0xF6) == 0xF0 else { return false }
+        let rates: [Double] = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000]
+        let index = Int((b[2] >> 2) & 0x0F)
+        return index < rates.count && abs(rates[index] * 2 - playbackRate) < 1
+    }
+
     static func isMP4(_ head: Data) -> Bool {
         let b = [UInt8](head.prefix(12))
         return b.count >= 8 && b[4] == 0x66 && b[5] == 0x74 && b[6] == 0x79 && b[7] == 0x70   // "ftyp"
@@ -65,9 +75,12 @@ enum BackupAudio {
         return joined.isEmpty ? "mount" : joined
     }
 
-    static func storedName(forMount name: String, kind: Kind) -> String {
-        "\(slug(name))-backup.\(kind.fileExtension)"
+    static func storedName(forMount name: String, kind: Kind, highEfficiency: Bool = false) -> String {
+        "\(slug(name))-backup\(highEfficiency ? "-he" : "").\(kind.fileExtension)"
     }
+
+    /// True for an HE-AAC backup that LogiKast made (its name ends in -he.aac).
+    static func isHighEfficiency(_ storedName: String) -> Bool { storedName.hasSuffix("-he.aac") }
 
     struct Installed: Equatable {
         var storedName: String
@@ -92,9 +105,10 @@ enum BackupAudio {
         guard size <= maxSourceBytes else { throw BackupError.tooLarge }
 
         let kind = isMP4(head) ? nil : sniff(head)
-        if let kind, size <= maxBytes, keepsAsIs(source, kind: kind, target: target) {
+        if let kind, size <= maxBytes, keepsAsIs(source, kind: kind, head: head, target: target) {
             try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-            let stored = storedName(forMount: mountName, kind: kind)
+            let he = kind == .aac && (target?.highEfficiency ?? false)
+            let stored = storedName(forMount: mountName, kind: kind, highEfficiency: he)
             let dest = dir.appendingPathComponent(stored)
             clearBackups(forMount: mountName, in: dir)
             try fm.copyItem(at: source, to: dest)
@@ -111,9 +125,10 @@ enum BackupAudio {
                     target: target, into: dir, cancel: cancel, progress: progress)
     }
 
-    private static func keepsAsIs(_ source: URL, kind: Kind, target: BackupTarget?) -> Bool {
+    private static func keepsAsIs(_ source: URL, kind: Kind, head: Data, target: BackupTarget?) -> Bool {
         guard let target else { return true }
         guard kind == target.kind, let info = BackupConverter.info(of: source) else { return false }
+        if kind == .aac, looksHighEfficiency(adtsHead: head, playbackRate: info.sampleRate) != target.highEfficiency { return false }
         return Int(info.sampleRate.rounded()) == target.sampleRate && info.channels == target.channels
     }
 
@@ -121,7 +136,7 @@ enum BackupAudio {
                                 cancel: CancelFlag, progress: (Double) -> Void) throws -> Installed {
         let fm = FileManager.default
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        let stored = storedName(forMount: mountName, kind: target.kind)
+        let stored = storedName(forMount: mountName, kind: target.kind, highEfficiency: target.highEfficiency)
         let temp = dir.appendingPathComponent(".converting-\(UUID().uuidString)")
         defer { try? fm.removeItem(at: temp) }
         try BackupConverter.convert(from: source, to: temp, target: target, cancel: cancel, progress: progress)
@@ -138,13 +153,15 @@ enum BackupAudio {
     /// Removes any earlier backup for this mount (either format).
     private static func clearBackups(forMount name: String, in dir: URL) {
         for k in [Kind.mp3, .aac] { try? FileManager.default.removeItem(at: dir.appendingPathComponent(storedName(forMount: name, kind: k))) }
+        try? FileManager.default.removeItem(at: dir.appendingPathComponent(storedName(forMount: name, kind: .aac, highEfficiency: true)))
     }
 
     /// "MP3 · 44.1 kHz · stereo · about 128 kbps" for a stored backup file, or nil if it can't be read.
     static func describe(stored: String, in dir: URL = AppPaths.backupDir) -> String? {
         let url = dir.appendingPathComponent(stored)
         guard let kind = kind(ofStored: stored), let info = BackupConverter.info(of: url) else { return nil }
-        var parts = [kind.label, rateText(Int(info.sampleRate.rounded())), info.channels == 1 ? "mono" : "stereo"]
+        let he = isHighEfficiency(stored)
+        var parts = [he ? "HE-AAC" : kind.label, rateText(Int(info.sampleRate.rounded())), info.channels == 1 ? "mono" : "stereo"]
         if info.seconds > 1, let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size]) as? Int {
             parts.append("about \(Int((Double(bytes) * 8 / info.seconds / 1000).rounded())) kbps")
         }

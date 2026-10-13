@@ -4,9 +4,12 @@ import AudioToolbox
 /// What a backup file should be, so listeners can switch to it and back without the player noticing.
 struct BackupTarget: Equatable {
     var kind: BackupAudio.Kind
-    var sampleRate: Int
+    var sampleRate: Int        // what listeners hear (for HE-AAC, the full rate: 44.1 kHz, though its headers say 22.05)
     var channels: Int          // 1 or 2
     var bitrateKbps: Int
+    /// AAC only: HE-AAC (AAC+), which players treat as a different stream from plain AAC. A backup must be the same kind,
+    /// or players stop when the stream switches.
+    var highEfficiency = false
 
     /// Used when there is no live stream to copy: the most widely played MP3 settings.
     static let standard = BackupTarget(kind: .mp3, sampleRate: 44100, channels: 2, bitrateKbps: 128)
@@ -18,11 +21,14 @@ struct BackupTarget: Equatable {
         let rate = live.sampleRate.flatMap { $0 > 0 ? $0 : nil } ?? standard.sampleRate
         let channels = min(max(live.channels ?? standard.channels, 1), 2)
         return BackupTarget(kind: kind, sampleRate: kind == .mp3 ? BackupConverter.nearestMP3Rate(rate) : rate,
-                            channels: channels, bitrateKbps: live.bitrate.flatMap { $0 > 0 ? $0 : nil } ?? standard.bitrateKbps)
+                            channels: channels, bitrateKbps: live.bitrate.flatMap { $0 > 0 ? $0 : nil } ?? standard.bitrateKbps,
+                            highEfficiency: type == .aacPlus)
     }
 
+    var formatLabel: String { highEfficiency ? "HE-AAC" : kind.label }
+
     var summary: String {
-        "\(kind.label) · \(BackupAudio.rateText(sampleRate)) · \(channels == 1 ? "mono" : "stereo") · \(bitrateKbps) kbps"
+        "\(formatLabel) · \(BackupAudio.rateText(sampleRate)) · \(channels == 1 ? "mono" : "stereo") · \(bitrateKbps) kbps"
     }
 }
 
@@ -187,7 +193,9 @@ private final class AACSink: Sink {
 
     init(to url: URL, target: BackupTarget, pcm: inout AudioStreamBasicDescription) throws {
         var aac = AudioStreamBasicDescription(
-            mSampleRate: Float64(target.sampleRate), mFormatID: kAudioFormatMPEG4AAC, mFormatFlags: 0,
+            // HE-AAC is described by its core rate, half of what listeners hear (as the headers of a live HE-AAC stream are).
+            mSampleRate: Float64(target.highEfficiency ? target.sampleRate / 2 : target.sampleRate),
+            mFormatID: target.highEfficiency ? kAudioFormatMPEG4AAC_HE : kAudioFormatMPEG4AAC, mFormatFlags: 0,
             mBytesPerPacket: 0, mFramesPerPacket: 1024, mBytesPerFrame: 0,
             mChannelsPerFrame: UInt32(target.channels), mBitsPerChannel: 0, mReserved: 0)
         var ref: ExtAudioFileRef?

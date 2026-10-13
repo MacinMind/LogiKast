@@ -10,7 +10,7 @@ enum BackupFeeds {
             guard !m.backupFile.isEmpty, fileExists(m.backupFile), let kind = BackupAudio.kind(ofStored: m.backupFile) else { return nil }
             return .init(mount: BackupAudio.internalMount(forMount: m.name),
                          file: backupDir.appendingPathComponent(m.backupFile).path,
-                         contentType: kind == .mp3 ? "audio/mpeg" : "audio/aac",
+                         contentType: kind == .mp3 ? "audio/mpeg" : (BackupAudio.isHighEfficiency(m.backupFile) ? "audio/aacp" : "audio/aac"),
                          name: "LogiKast backup for \(m.name)")
         }
         return BackupFeedsFile(host: host, port: config.server.port, password: config.server.sourcePassword, feeds: feeds)
