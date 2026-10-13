@@ -1,0 +1,109 @@
+Icecast 2.5.0 can deadlock when a source connects or disconnects while an admin command for a mount is running
+(listclients, killsource, metadata and others: LogiKast uses them for the Listeners tab and for relays). The admin
+handler holds the source-tree read lock for the whole command, and sending the response takes the same read lock a
+second time. If a writer (a source going away) is queued in between, the second read waits behind the writer, and the
+writer waits for the first read to be released: the server stops answering until it is restarted. Do not take the
+lock again in a thread that already holds it. Also release the lock when an unsafe admin request is refused, which
+returned with it still held.
+
+--- a/src/admin.c
++++ b/src/admin.c
+@@ -740,8 +740,11 @@
+     }
+ 
+     if (handler->safeness == ADMINSAFE_UNSAFE) {
+-        if (admin_enforce_unsafe(client))
++        if (admin_enforce_unsafe(client)) {
++            if (source)
++                avl_tree_unlock(global.source_tree);
+             return;
++        }
+     }
+ 
+     if (handler->format == ADMIN_FORMAT_AUTO) {
+@@ -750,6 +753,8 @@
+         format = handler->format;
+     }
+ 
++    client_source_tree_held = source ? 1 : 0;
++
+     switch (client->parser->req_type) {
+         case httpp_req_get:
+         case httpp_req_post:
+@@ -782,6 +787,7 @@
+         break;
+     }
+ 
++    client_source_tree_held = 0;
+     if (source) {
+         avl_tree_unlock(global.source_tree);
+     }
+--- a/src/client.c
++++ b/src/client.c
+@@ -551,8 +551,11 @@
+     client_destroy(client);
+ }
+ 
++__thread int client_source_tree_held = 0;
++
+ void client_send_buffer(client_t *client, int status, const char *mediatype, const char *charset, const char *buffer, ssize_t len, const char *extra_headers)
+ {
++    const int tree_held = client_source_tree_held;
+     source_t *source;
+     size_t buf_len_ours;
+     size_t buf_len;
+@@ -593,7 +596,10 @@
+     client->refbuf = refbuf_new(buf_len);
+     client->reuse = ICECAST_REUSE_KEEPALIVE;
+ 
+-    avl_tree_rlock(global.source_tree);
++    /* The admin handler already holds this lock for the whole command. Taking it again would block behind a waiting
++     * writer (a source disconnecting) that is itself waiting for the first lock to be released: a deadlock. */
++    if (!tree_held)
++        avl_tree_rlock(global.source_tree);
+     source = source_find_mount_raw(client->uri);
+ 
+     ret = util_http_build_header(client->refbuf->data, buf_len, 0,
+@@ -602,7 +608,7 @@
+             NULL, source, client);
+ 
+     if (ret < 0) {
+-        avl_tree_unlock(global.source_tree);
++        if (!tree_held) avl_tree_unlock(global.source_tree);
+         ICECAST_LOG_ERROR("Dropping client as we can not build response headers.");
+         client_send_error_by_id(client, ICECAST_ERROR_GEN_HEADER_GEN_FAILED);
+         return;
+@@ -619,19 +625,19 @@
+                     mediatype, charset,
+                     NULL, source, client);
+             if (ret == -1 || buf_len < (ret + buf_len_ours)) {
+-                avl_tree_unlock(global.source_tree);
++                if (!tree_held) avl_tree_unlock(global.source_tree);
+                 ICECAST_LOG_ERROR("Dropping client as we can not build response headers.");
+                 client_send_error_by_id(client, ICECAST_ERROR_GEN_HEADER_GEN_FAILED);
+                 return;
+             }
+         } else {
+-            avl_tree_unlock(global.source_tree);
++            if (!tree_held) avl_tree_unlock(global.source_tree);
+             ICECAST_LOG_ERROR("Client buffer reallocation failed. Dropping client.");
+             client_send_error_by_id(client, ICECAST_ERROR_GEN_BUFFER_REALLOC);
+             return;
+         }
+     }
+-    avl_tree_unlock(global.source_tree);
++    if (!tree_held) avl_tree_unlock(global.source_tree);
+ 
+     memcpy(client->refbuf->data + ret, header, headerlen);
+     ret += headerlen;
+--- a/src/client.h
++++ b/src/client.h
+@@ -163,6 +163,8 @@
+ void client_send_426(client_t *client, reuse_t reuse);
+ void client_send_redirect(client_t *client, const char *uuid, int status, const char *location);
+ void client_send_reportxml(client_t *client, reportxml_t *report, document_domain_t domain, const char *xsl, admin_format_t admin_format_hint, int status, const char *location);
++/* Non-zero in a thread that already holds global.source_tree (set by the admin handler). */
++extern __thread int client_source_tree_held;
+ void client_send_buffer(client_t *client, int status, const char *mediatype, const char *charset, const char *buffer, ssize_t len, const char *extra_headers);
+ reportxml_t *client_get_reportxml(const char *state_definition, const char *state_akindof, const char *state_text);
+ reportxml_t *client_get_empty_reportxml(void);

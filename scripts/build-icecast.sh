@@ -13,6 +13,9 @@ for a in "${ARCHS[@]}"; do
   case "$a" in arm64|x86_64) ;; *) echo "error: unknown architecture '$a' (use arm64 and/or x86_64, or no arguments for both)" >&2; exit 1 ;; esac
 done
 JOBS=$(sysctl -n hw.ncpu)
+# Use Xcode's SDK when there is one: a newer Command Line Tools SDK can be too new for Xcode's linker.
+XSDK="$(xcode-select -p)/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+[ -d "$XSDK" ] && export SDKROOT="$XSDK"
 
 # name|url  (versions pinned; checksums recorded in third_party/SHA256SUMS)
 DEPS=(

@@ -1,0 +1,40 @@
+Icecast 2.5.0's admin command "listclients" (which LogiKast uses for the Listeners tab) reads each listener's listen
+socket details with listensocket_get_listener(), which takes a read lock, and never gives it back with
+listensocket_release_listener(). The lock stays held for good, so the next configuration reload (SIGHUP) waits for it
+forever: the server stops answering and no stream or backup can connect until it is restarted. Release the lock
+after reading the socket's id.
+
+--- a/src/admin.c
++++ b/src/admin.c
+@@ -961,13 +961,25 @@
+             }
+         }
+ 
+-        sock = listensocket_get_listener(con->listensocket_real)->id;
+-        if (sock)
+-            xmlNewTextChild(node, NULL, XMLSTR("listensocketreal"), XMLSTR(sock));
++        {
++            /* Every listensocket_get_listener() takes a read lock that listensocket_release_listener() must give back.
++             * Not releasing it left the lock held for good, so the next configuration reload waited for it forever. */
++            const listener_t *listener = listensocket_get_listener(con->listensocket_real);
++            if (listener) {
++                sock = listener->id;
++                if (sock)
++                    xmlNewTextChild(node, NULL, XMLSTR("listensocketreal"), XMLSTR(sock));
++                listensocket_release_listener(con->listensocket_real);
++            }
+ 
+-        sock = listensocket_get_listener(con->listensocket_effective)->id;
+-        if (sock)
+-            xmlNewTextChild(node, NULL, XMLSTR("listensocketeffective"), XMLSTR(sock));
++            listener = listensocket_get_listener(con->listensocket_effective);
++            if (listener) {
++                sock = listener->id;
++                if (sock)
++                    xmlNewTextChild(node, NULL, XMLSTR("listensocketeffective"), XMLSTR(sock));
++                listensocket_release_listener(con->listensocket_effective);
++            }
++        }
+     }
+ 
+     do {
