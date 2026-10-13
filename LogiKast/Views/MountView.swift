@@ -10,6 +10,7 @@ struct MountView: View {
     @State private var backupNotice: String?
     @State private var backupAudio: (text: String, info: BackupConverter.Info)?
     @State private var conversion: ConversionJob?
+    @State private var backupDropTargeted = false
     @State private var nameAtOpen = ""
     enum DropMode: Hashable { case nothing, file, relay, mount }
 
@@ -34,6 +35,8 @@ struct MountView: View {
             } else {
                 Form { tabContent }
                     .formStyle(.grouped)
+                    .onDrop(of: [.fileURL], isTargeted: $backupDropTargeted, perform: dropBackup)
+                    .overlay { if backupDropTargeted && model.mountTab == .backup && conversion == nil { BackupDropHint() } }
             }
         }
         .onAppear {
@@ -301,7 +304,7 @@ struct MountView: View {
         } else if mount.backupFile.isEmpty {
             HStack {
                 Button("Choose Audio File…", action: chooseBackup)
-                Text("Any audio file. LogiKast converts it if needed.").foregroundStyle(.secondary).font(.callout)
+                Text("or drag a file here. Any audio file works; LogiKast converts it if needed.").foregroundStyle(.secondary).font(.callout)
                 Spacer()
             }
         } else {
@@ -400,6 +403,23 @@ struct MountView: View {
         panel.allowedContentTypes = [.audio]
         panel.message = "Choose an audio file to play when your encoder drops off. If it isn't already in your stream's format, LogiKast converts it."
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        addBackup(from: url)
+    }
+
+    /// A file dropped on the Backup tab becomes the backup, as if it had been chosen with the button.
+    private func dropBackup(_ providers: [NSItemProvider]) -> Bool {
+        guard model.mountTab == .backup, conversion == nil, let provider = providers.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) }) else { return false }
+        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) { item, _ in
+            guard let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil), !url.hasDirectoryPath else { return }
+            DispatchQueue.main.async {
+                dropMode = .file
+                addBackup(from: url)
+            }
+        }
+        return true
+    }
+
+    private func addBackup(from url: URL) {
         let mountName = mount.name, target = liveTarget
         runBackupJob(name: url.lastPathComponent, target: target) { cancel, progress in
             try BackupAudio.install(from: url, mountName: mountName, target: target, cancel: cancel, progress: progress)
@@ -525,5 +545,20 @@ private struct ConversionRow: View {
             }
             Button("Cancel") { job.cancel.cancel() }
         }
+    }
+}
+
+/// Shown over the Backup tab while a file is dragged across it.
+private struct BackupDropHint: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12).strokeBorder(Color.accentColor, lineWidth: 3).padding(6)
+            Label("Drop to use as your backup audio", systemImage: "waveform.badge.plus")
+                .font(.headline)
+                .padding(.horizontal, 16).padding(.vertical, 10)
+                .background(.regularMaterial, in: Capsule())
+        }
+        .background(Color.accentColor.opacity(0.08))
+        .allowsHitTesting(false)
     }
 }
