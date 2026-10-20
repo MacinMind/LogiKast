@@ -9,9 +9,9 @@ Hand this file to the Claude project that maintains macinmind.com. Task: add a *
 | Name | LogiKast |
 | Publisher | MacinMind Software, Inc. |
 | Price | Free. Open source, GPLv2 |
-| Current version | 1.0 (public version `1.0`, build 18). Final release |
+| Current version | 1.1 (public version `1.1`, build 20). Final release |
 | Requires | macOS 13 Ventura or later. Universal: Apple silicon and Intel |
-| Size | About 7.4 MB (DMG) |
+| Size | About 7.7 MB (DMG) |
 | Bundle ID | com.macinmind.logikast |
 | Signed | Developer ID (MacinMind Software, Inc.) and notarized by Apple; opens without Gatekeeper warnings |
 | Source and releases | https://github.com/MacinMind/LogiKast (releases at https://github.com/MacinMind/LogiKast/releases) |
@@ -74,20 +74,20 @@ Icon (square, 1024 px) is in the app repo at `Design/logikast-icon-1024.png`; th
 
 ## Download page
 
-- Primary button: **Download LogiKast 1.0** (DMG, about 7.4 MB). Release asset on GitHub: `LogiKast-1.0.dmg`. The direct link has the form
-  `https://github.com/MacinMind/LogiKast/releases/download/v1.0/LogiKast-1.0.dmg`
-  (confirm against the Releases page; the tag is `v1.0`).
-- SHA-256: `abcdbe661c997d209b034f6a04c0bf3d26db304241e92c7e8d99c0e8e90a5a19`
+- Primary button: **Download LogiKast 1.1** (DMG, about 7.7 MB). Release asset on GitHub: `LogiKast-1.1.dmg`. The direct link has the form
+  `https://github.com/MacinMind/LogiKast/releases/download/v1.1/LogiKast-1.1.dmg`
+  (confirm against the Releases page; the tag is `v1.1`).
+- SHA-256: `2ab0637e05e286a10b9543509aeea9619db37ba0116a428fb83d00bec79f2c72`
 - This is a final release; no beta labeling needed.
 - Install steps: open the DMG, drag LogiKast to Applications, open it. On first run, approve the background server under System Settings > General > Login Items & Extensions if macOS asks.
 - Requirements line: macOS 13 or later, Apple silicon or Intel.
-- Updating: the app updates itself with Sparkle. Beta 2 testers must install 1.0 manually (beta 2 had no updater).
+- Updating: the app updates itself with Sparkle. Beta 2 testers must install 1.1 manually (beta 2 had no updater).
 - Link to the source and release notes on GitHub, and mention it is free and open source.
 - Keep the version, size and checksum in one place on the site so each release is a single edit.
 
-### Version notes for 1.0 (optional "What's new" section)
+### Version notes for 1.1 (optional "What's new" section)
 
-Ask the user for the exact notes; they are published in the appcast and the GitHub release. Highlights of the 1.0 betas: Sparkle automatic updates with a beta switch; Version Notes in the Help menu; fixes for Icecast CPU use and a web admin dashboard crash; sturdier server start-up; a refreshed window (header, status in the sidebar, Start/Stop Server button, delete mounts from the sidebar); the app was renamed from iceKast to LogiKast.
+Ask the user for the exact notes; they are published in the appcast and the GitHub release. What's new in 1.1: backup audio can be any audio file (LogiKast converts it to match the stream), drag and drop onto the Backup tab, Convert to Match, and a fix for the server occasionally freezing after applying changes. Highlights of 1.0: Sparkle automatic updates with a beta switch; Version Notes in the Help menu; fixes for Icecast CPU use and a web admin dashboard crash; sturdier server start-up; a refreshed window (header, status in the sidebar, Start/Stop Server button, delete mounts from the sidebar); the app was renamed from iceKast to LogiKast.
 
 ## Things not to claim
 
