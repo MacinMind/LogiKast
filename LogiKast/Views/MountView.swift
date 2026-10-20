@@ -564,6 +564,17 @@ private struct BackupDropHint: View {
 }
 
 #if DEBUG
+#Preview("Mount: Connect") { MountPagePreview(model: PreviewData.model(mountTab: .connect), mount: PreviewData.liveMount) }
+#Preview("Mount: Stream Info") { MountPagePreview(model: PreviewData.model(mountTab: .streamInfo), mount: PreviewData.liveMount) }
+#Preview("Mount: Share") { MountPagePreview(model: PreviewData.model(mountTab: .share), mount: PreviewData.liveMount) }
+#Preview("Mount: Listeners") { MountPagePreview(model: PreviewData.model(mountTab: .listeners), mount: PreviewData.liveMount) }
+#Preview("Mount: Backup, none") { MountPagePreview(model: PreviewData.model(mountTab: .backup), mount: PreviewData.liveMount) }
+#Preview("Mount: Backup, audio file") { MountPagePreview(model: PreviewData.model(mountTab: .backup), mount: PreviewData.backupFileMount) }
+#Preview("Mount: Backup, other server") { MountPagePreview(model: PreviewData.model(mountTab: .backup), mount: PreviewData.backupServerMount) }
+#Preview("Mount: Advanced") { MountPagePreview(model: PreviewData.model(mountTab: .advanced), mount: PreviewData.liveMount) }
+#Preview("Mount: Waiting for encoder") { MountPagePreview(model: PreviewData.model(onAir: false, mountTab: .connect), mount: PreviewData.liveMount) }
+#Preview("Mount: From another server") { MountPagePreview(model: PreviewData.model(onAir: false, mountTab: .connect), mount: PreviewData.relayMount) }
+
 #Preview("Backup: converting a file") {
     let job = ConversionJob(name: "Be Right Back.wav")
     job.fraction = 0.4

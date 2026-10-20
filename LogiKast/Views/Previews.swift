@@ -1,9 +1,9 @@
 #if DEBUG
 import SwiftUI
 
-// Xcode previews (Editor ▸ Canvas, or ⌥⌘↩). Each #Preview below is one screen with sample data, so you can
-// see and adjust the layout without running the app. Previews run in an isolated temporary folder (see
-// RunContext), so they never touch your settings, your running server or the network.
+// Xcode previews (Editor ▸ Canvas, or ⌥⌘↩). Each view file ends with its own #Preview blocks, so opening a file
+// shows its screens in the Canvas. They all use the sample data and helper views in this file. Previews run in an
+// isolated temporary folder (see RunContext), so they never touch your settings, your running server or the network.
 
 /// Sample stations and server states for the previews.
 @MainActor
@@ -83,62 +83,5 @@ struct ServerPagePreview: View {
             .environmentObject(model)
             .frame(width: 590, height: 720)
     }
-}
-
-// MARK: Mount pages
-
-#Preview("Mount: Connect") { MountPagePreview(model: PreviewData.model(mountTab: .connect), mount: PreviewData.liveMount) }
-#Preview("Mount: Stream Info") { MountPagePreview(model: PreviewData.model(mountTab: .streamInfo), mount: PreviewData.liveMount) }
-#Preview("Mount: Share") { MountPagePreview(model: PreviewData.model(mountTab: .share), mount: PreviewData.liveMount) }
-#Preview("Mount: Listeners") { MountPagePreview(model: PreviewData.model(mountTab: .listeners), mount: PreviewData.liveMount) }
-#Preview("Mount: Backup, none") { MountPagePreview(model: PreviewData.model(mountTab: .backup), mount: PreviewData.liveMount) }
-#Preview("Mount: Backup, audio file") { MountPagePreview(model: PreviewData.model(mountTab: .backup), mount: PreviewData.backupFileMount) }
-#Preview("Mount: Backup, other server") { MountPagePreview(model: PreviewData.model(mountTab: .backup), mount: PreviewData.backupServerMount) }
-#Preview("Mount: Advanced") { MountPagePreview(model: PreviewData.model(mountTab: .advanced), mount: PreviewData.liveMount) }
-#Preview("Mount: Waiting for encoder") { MountPagePreview(model: PreviewData.model(onAir: false, mountTab: .connect), mount: PreviewData.liveMount) }
-#Preview("Mount: From another server") { MountPagePreview(model: PreviewData.model(onAir: false, mountTab: .connect), mount: PreviewData.relayMount) }
-
-// MARK: Server pages
-
-#Preview("Server: Setup") { ServerPagePreview(model: PreviewData.model(serverTab: .setup)) }
-#Preview("Server: Limits") { ServerPagePreview(model: PreviewData.model(serverTab: .limits)) }
-#Preview("Server: Relay") { ServerPagePreview(model: PreviewData.model(serverTab: .relay)) }
-#Preview("Server: Alerts") { ServerPagePreview(model: PreviewData.model(serverTab: .alerts)) }
-#Preview("Server: App & Log") { ServerPagePreview(model: PreviewData.model(serverTab: .app)) }
-#Preview("Server: Updates") { ServerPagePreview(model: PreviewData.model(serverTab: .updates)) }
-
-// MARK: Whole window
-
-#Preview("Window: Server") {
-    ContentView(initialSelection: .server)
-        .environmentObject(PreviewData.model(serverTab: .setup))
-        .frame(width: 960, height: 700)
-}
-
-#Preview("Window: Mount") {
-    let model = PreviewData.model(mountTab: .backup)
-    return ContentView(initialSelection: .mount(model.config.mounts[0].id))
-        .environmentObject(model)
-        .frame(width: 960, height: 700)
-}
-
-// MARK: Setup assistant
-
-#Preview("Setup: Welcome") { SetupWizard(initialStep: .welcome).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
-#Preview("Setup: Your station") { SetupWizard(initialStep: .station).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
-#Preview("Setup: Network") { SetupWizard(initialStep: .network).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
-#Preview("Setup: Listeners") { SetupWizard(initialStep: .listeners).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
-#Preview("Setup: Encoder") { SetupWizard(initialStep: .encoder).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
-
-// MARK: Pieces
-
-#Preview("Relay: mounts from another server") {
-    Form {
-        Section {
-            RelayedMountList(mounts: ["/live", "/jazz", "/rock", "/news"], onDemand: false)
-        } header: { Text("Relay everything from another server") }
-    }
-    .formStyle(.grouped)
-    .frame(width: 590, height: 420)
 }
 #endif

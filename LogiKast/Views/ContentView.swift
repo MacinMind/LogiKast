@@ -378,3 +378,18 @@ private struct WindowSetup: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
     final class Coordinator { var done = false }
 }
+
+#if DEBUG
+#Preview("Window: Server") {
+    ContentView(initialSelection: .server)
+        .environmentObject(PreviewData.model(serverTab: .setup))
+        .frame(width: 960, height: 700)
+}
+
+#Preview("Window: Mount") {
+    let model = PreviewData.model(mountTab: .backup)
+    return ContentView(initialSelection: .mount(model.config.mounts[0].id))
+        .environmentObject(model)
+        .frame(width: 960, height: 700)
+}
+#endif

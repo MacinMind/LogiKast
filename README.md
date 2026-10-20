@@ -55,6 +55,30 @@ xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -derivedDataPath build/x
 xcodebuild -project LogiKast.xcodeproj -scheme LogiKast -derivedDataPath build/xcode test
 ```
 
+## Working on the code
+
+After the build steps above, open `LogiKast.xcodeproj` in Xcode. The project file is generated from `project.yml` and isn't checked in, so change targets and settings in `project.yml`, then run `xcodegen generate` again.
+
+Where things are:
+
+| Folder | What's in it |
+|---|---|
+| `LogiKast/Views` | The SwiftUI screens: the window, the mount and server pages, the setup assistant |
+| `LogiKast/Model` | Settings, the Icecast configuration writer, validation and status parsing. Plain logic with tests |
+| `LogiKast/Services` | Everything that talks to the outside: the Icecast server job, its admin interface, network checks, backup audio files |
+| `Feeder` | The small helper that streams a backup audio file to the server |
+| `Launcher` | The tiny program launchd runs to keep Icecast and the feeder going |
+| `LogiKastTests` | Unit tests, plus tests that render every screen to images |
+| `third_party`, `scripts` | The pinned Icecast and LAME sources with LogiKast's patches, and the build and release scripts |
+
+**Seeing a screen without running the app.** Each file in `LogiKast/Views` ends with `#Preview` blocks. Open the file, then choose Editor › Canvas (⌥⌘↩) to see its screens with sample data. The sample data is in `Views/Previews.swift`. Previews use a temporary folder, so they never touch your settings or a running server.
+
+**Tests.** Press ⌘U, or run `xcodebuild test`. To save pictures of every screen for a visual check, set `TEST_RUNNER_LOGIKAST_SNAPSHOT_DIR` to a folder when running the tests.
+
+**Running a development build** uses your real settings, and the server it starts keeps running in the background after you quit. Stop it from the app's Server button first if you want a clean start.
+
+Please use U.S. English spelling in the interface and comments. LogiKast is GPLv2, and contributions are accepted under the same license.
+
 ## Updates (Sparkle)
 
 LogiKast updates itself with [Sparkle](https://sparkle-project.org) 2.10.0: automatic checks, **Check for Updates…** in the LogiKast menu, and a switch for beta versions under Server › App & Log. Final releases come from `https://macinmind.com/pads/LogiKast.xml`; the beta feed, `https://macinmind.com/pads/LogiKastbeta.xml`, lists betas and finals. Update files are signed with an EdDSA key (the public half is `SUPublicEDKey` in `project.yml`; the private half is in the release manager's keychain).

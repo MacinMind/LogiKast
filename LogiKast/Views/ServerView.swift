@@ -370,3 +370,12 @@ struct UpdateSettings: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Server: Setup") { ServerPagePreview(model: PreviewData.model(serverTab: .setup)) }
+#Preview("Server: Limits") { ServerPagePreview(model: PreviewData.model(serverTab: .limits)) }
+#Preview("Server: Relay") { ServerPagePreview(model: PreviewData.model(serverTab: .relay)) }
+#Preview("Server: Alerts") { ServerPagePreview(model: PreviewData.model(serverTab: .alerts)) }
+#Preview("Server: App & Log") { ServerPagePreview(model: PreviewData.model(serverTab: .app)) }
+#Preview("Server: Updates") { ServerPagePreview(model: PreviewData.model(serverTab: .updates)) }
+#endif

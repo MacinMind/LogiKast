@@ -134,3 +134,15 @@ struct RelayedMountList: View {
         return onDemand ? "Waiting for a listener" : "Not connected yet"
     }
 }
+
+#if DEBUG
+#Preview("Relay: mounts from another server") {
+    Form {
+        Section {
+            RelayedMountList(mounts: ["/live", "/jazz", "/rock", "/news"], onDemand: false)
+        } header: { Text("Relay everything from another server") }
+    }
+    .formStyle(.grouped)
+    .frame(width: 590, height: 420)
+}
+#endif

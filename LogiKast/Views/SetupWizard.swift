@@ -447,3 +447,11 @@ private struct EncoderStep: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Setup: Welcome") { SetupWizard(initialStep: .welcome).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
+#Preview("Setup: Your station") { SetupWizard(initialStep: .station).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
+#Preview("Setup: Network") { SetupWizard(initialStep: .network).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
+#Preview("Setup: Listeners") { SetupWizard(initialStep: .listeners).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
+#Preview("Setup: Encoder") { SetupWizard(initialStep: .encoder).environmentObject(PreviewData.model()).frame(width: 640, height: 650) }
+#endif
