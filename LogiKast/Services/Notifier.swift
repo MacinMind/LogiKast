@@ -12,7 +12,7 @@ final class Notifier: NSObject, ObservableObject, UNUserNotificationCenterDelega
     private let log = Logger(subsystem: "com.macinmind.logikast", category: "alerts")
     private var center: UNUserNotificationCenter? {
         // Unit tests run inside the app without a real notification context.
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil ? UNUserNotificationCenter.current() : nil
+        !RunContext.isIsolated ? UNUserNotificationCenter.current() : nil
     }
 
     override init() {

@@ -562,3 +562,15 @@ private struct BackupDropHint: View {
         .allowsHitTesting(false)
     }
 }
+
+#if DEBUG
+#Preview("Backup: converting a file") {
+    let job = ConversionJob(name: "Be Right Back.wav")
+    job.fraction = 0.4
+    return Form { Section { ConversionRow(job: job) } }.formStyle(.grouped).frame(width: 590, height: 120)
+}
+
+#Preview("Backup: drop hint") {
+    BackupDropHint().frame(width: 590, height: 300)
+}
+#endif

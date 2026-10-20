@@ -43,7 +43,7 @@ struct RelayEditor: View {
 
     private func check() async {
         probe = nil
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }     // tests make no network calls
+        if RunContext.isIsolated { return }     // tests make no network calls
         guard relay.isSet, (1...65535).contains(relay.port) else { checking = false; return }
         checking = true
         try? await Task.sleep(nanoseconds: 800_000_000)               // wait until typing pauses

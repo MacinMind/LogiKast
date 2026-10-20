@@ -1,10 +1,17 @@
 import Foundation
 
+/// Unit tests and Xcode previews run inside the real app: they must stay away from the user's settings, the running
+/// server and the network.
+enum RunContext {
+    static let isTest = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    static let isPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+    static var isIsolated: Bool { isTest || isPreview }
+}
+
 enum AppPaths {
     static var supportDir: URL {
-        // Unit tests run inside the real app; keep them away from the user's actual settings.
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
-            return FileManager.default.temporaryDirectory.appendingPathComponent("LogiKast-tests", isDirectory: true)
+        if RunContext.isIsolated {
+            return FileManager.default.temporaryDirectory.appendingPathComponent(RunContext.isTest ? "LogiKast-tests" : "LogiKast-previews", isDirectory: true)
         }
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return base.appendingPathComponent("LogiKast", isDirectory: true)
@@ -20,8 +27,8 @@ enum AppPaths {
     @discardableResult
     static func migrateLegacySupport(from old: URL? = nil, to new: URL? = nil) -> Bool {
         let fm = FileManager.default
-        // Tests run inside the real app: never copy the user's real settings into the test folder.
-        if old == nil, ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return false }
+        // Tests and previews run inside the real app: never copy the user's real settings into their folder.
+        if old == nil, RunContext.isIsolated { return false }
         let old = old ?? legacySupportDir, new = new ?? supportDir
         guard !fm.fileExists(atPath: new.appendingPathComponent("config.json").path),
               fm.fileExists(atPath: old.appendingPathComponent("config.json").path) else { return false }

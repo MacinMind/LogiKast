@@ -40,7 +40,7 @@ final class Updater: NSObject, ObservableObject, SPUUpdaterDelegate {
         super.init()
         UserDefaults.standard.set(includeBetas, forKey: Self.betaKey)      // the feed callback reads this directly
         // Unit tests run inside the app and must not talk to the network or show update windows.
-        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
+        guard !RunContext.isIsolated else { return }
         let c = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
         controller = c
         automaticChecks = c.updater.automaticallyChecksForUpdates

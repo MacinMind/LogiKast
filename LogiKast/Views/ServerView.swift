@@ -166,7 +166,7 @@ struct ServerView: View {
         masterResult = nil
         let m = model.config.server.masterRelay
         guard m.isActive, (1...65535).contains(m.port) else { masterChecking = false; return }
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }     // tests make no network calls
+        if RunContext.isIsolated { return }     // tests make no network calls
         masterChecking = true
         try? await Task.sleep(nanoseconds: 800_000_000)
         while !Task.isCancelled {

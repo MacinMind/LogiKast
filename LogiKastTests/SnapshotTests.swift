@@ -100,6 +100,32 @@ final class SnapshotTests: XCTestCase {
         try rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: dir).appendingPathComponent(name))
     }
 
+    /// The sample screens behind the Xcode previews (Previews.swift) must keep rendering. Always runs; the images are
+    /// kept only when LOGIKAST_SNAPSHOT_DIR is set.
+    func testPreviewScreensRender() throws {
+        let dir = ProcessInfo.processInfo.environment["LOGIKAST_SNAPSHOT_DIR"]
+            ?? FileManager.default.temporaryDirectory.appendingPathComponent("LogiKast-preview-snapshots-\(UUID().uuidString)").path
+        try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        let size = NSSize(width: 590, height: 720)
+        for tab in MountTab.allCases {
+            try snapshot(MountPagePreview(model: PreviewData.model(mountTab: tab), mount: PreviewData.liveMount), size: size, to: "preview-mount-\(tab.rawValue).png", in: dir)
+        }
+        try snapshot(MountPagePreview(model: PreviewData.model(mountTab: .backup), mount: PreviewData.backupFileMount), size: size, to: "preview-mount-backup-file.png", in: dir)
+        try snapshot(MountPagePreview(model: PreviewData.model(mountTab: .backup), mount: PreviewData.backupServerMount), size: size, to: "preview-mount-backup-server.png", in: dir)
+        try snapshot(MountPagePreview(model: PreviewData.model(onAir: false), mount: PreviewData.relayMount), size: size, to: "preview-mount-relay.png", in: dir)
+        for tab in ServerTab.allCases {
+            try snapshot(ServerPagePreview(model: PreviewData.model(serverTab: tab)), size: size, to: "preview-server-\(tab.rawValue).png", in: dir)
+        }
+        let model = PreviewData.model(mountTab: .backup)
+        try snapshot(ContentView(initialSelection: .mount(model.config.mounts[0].id)).environmentObject(model),
+                     size: NSSize(width: 960, height: 700), to: "preview-window-mount.png", in: dir)
+        for url in try FileManager.default.contentsOfDirectory(atPath: dir) where url.hasPrefix("preview-") {
+            let bytes = (try? FileManager.default.attributesOfItem(atPath: dir + "/" + url)[.size] as? Int) ?? 0
+            XCTAssertGreaterThan(bytes, 1000, "\(url) rendered empty")
+        }
+        if ProcessInfo.processInfo.environment["LOGIKAST_SNAPSHOT_DIR"] == nil { try? FileManager.default.removeItem(atPath: dir) }
+    }
+
     /// Renders each page tall, at the real detail-pane width, so its natural content height can be
     /// measured (only when LOGIKAST_MEASURE_DIR is set).
     func testRenderPagesForHeightMeasurement() throws {

@@ -19,7 +19,7 @@ enum LegacyServer {
 
     /// True while the old iceKast server job is loaded for this user.
     static var isLoaded: Bool {
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil
+        !RunContext.isIsolated
             && launchctl(["print", "\(domain)/\(label)"]) == 0
     }
 
