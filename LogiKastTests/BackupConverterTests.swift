@@ -21,8 +21,12 @@ final class BackupConverterTests: XCTestCase {
         }
         func le32(_ n: Int) -> [UInt8] { (0..<4).map { UInt8((n >> (8 * $0)) & 0xFF) } }
         func le16(_ n: Int) -> [UInt8] { (0..<2).map { UInt8((n >> (8 * $0)) & 0xFF) } }
-        var d = Data("RIFF".utf8) + Data(le32(36 + pcm.count)) + Data("WAVEfmt ".utf8) + Data(le32(16)) + Data(le16(1)) + Data(le16(channels))
-        d += Data(le32(rate)) + Data(le32(rate * channels * 2)) + Data(le16(channels * 2)) + Data(le16(16)) + Data("data".utf8) + Data(le32(pcm.count)) + pcm
+        // Built piece by piece: one long chain of + is too much for the compiler to type-check.
+        var d = Data()
+        d.append(Data("RIFF".utf8)); d.append(Data(le32(36 + pcm.count))); d.append(Data("WAVEfmt ".utf8))
+        d.append(Data(le32(16))); d.append(Data(le16(1))); d.append(Data(le16(channels)))
+        d.append(Data(le32(rate))); d.append(Data(le32(rate * channels * 2))); d.append(Data(le16(channels * 2)))
+        d.append(Data(le16(16))); d.append(Data("data".utf8)); d.append(Data(le32(pcm.count))); d.append(pcm)
         let url = dir.appendingPathComponent(name)
         try d.write(to: url)
         return url
